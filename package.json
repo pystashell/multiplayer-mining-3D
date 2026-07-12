@@ -1,0 +1,24 @@
+{
+  "name": "3d-multiplayer-mining",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "wrangler dev",
+    "start": "wrangler dev",
+    "test": "node --test tests/*.test.js",
+    "test:live": "node tests/live-room-smoke.js",
+    "deploy:dry": "wrangler deploy --dry-run",
+    "deploy": "wrangler deploy"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "wrangler": "4.110.0"
+  }
+}

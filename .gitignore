@@ -1,0 +1,40 @@
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+
+# Cloudflare local state and local secrets
+.wrangler/
+.dev.vars
+.dev.vars.*
+.env
+.env.*
+!.env.example
+
+# Credentials and certificates
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+
+# Local archives and backups
+*.zip
+*.tar
+*.tar.gz
+*.7z
+*.bak
+
+# Personal editor and AI-agent configuration
+.vscode/
+.idea/
+.claude/
+.openai/
+.agents/
+
+# Operating-system and temporary files
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+~*
