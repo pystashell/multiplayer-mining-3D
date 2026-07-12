@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomClient } from './room-client.js';
+import { initialLanguage, translate } from './i18n.js';
 
 // -------------------------------------------------------------
 // 1. 音效合成器模块 (Web Audio API)
@@ -284,6 +285,7 @@ class ParticleSystem {
 // -------------------------------------------------------------
 class HoloSweeperGame {
   constructor() {
+    this.language = initialLanguage();
     this.roomClient = new RoomClient({
       onSnapshot: (snapshot, initial) => this.applyRoomSnapshot(snapshot, initial),
       onWelcome: (message) => this.handleRoomWelcome(message),
@@ -343,6 +345,7 @@ class HoloSweeperGame {
     
     // UI 绑定
     this.bindUI();
+    this.applyLanguage(this.language, true);
     // 初始化 3D 渲染环境
     this.initThree();
     // 开启循环渲染
@@ -359,7 +362,7 @@ class HoloSweeperGame {
       const nickname = document.getElementById('input-nickname').value.trim();
       const roomCode = document.getElementById('input-room').value.trim();
       if (!nickname || !roomCode) {
-        alert("请输入昵称和房间号！");
+        this.handleRoomError({ code: !nickname ? 'INVALID_NAME' : 'ROOM_CODE' });
         return;
       }
       localStorage.setItem('holo-sweeper.nickname', nickname);
@@ -369,25 +372,29 @@ class HoloSweeperGame {
     document.getElementById('btn-create-room').addEventListener('click', async () => {
       const nickname = document.getElementById('input-nickname').value.trim();
       if (!nickname) {
-        alert("请先输入昵称！");
+        this.handleRoomError({ code: 'INVALID_NAME' });
         return;
       }
       localStorage.setItem('holo-sweeper.nickname', nickname);
       try { await this.roomClient.create(nickname); } catch (error) { this.handleRoomError(error); }
     });
 
-    document.getElementById('input-nickname').value = localStorage.getItem('holo-sweeper.nickname') || '';
+    document.getElementById('input-nickname').value = localStorage.getItem('holo-sweeper.nickname') || this.t('nickname.default');
     document.getElementById('input-room').addEventListener('input', (event) => {
       event.target.value = event.target.value.toUpperCase().replace(/[^A-HJ-NP-Z2-9]/g, '').slice(0, 6);
     });
     document.getElementById('btn-copy-invite').addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(this.roomClient.inviteUrl());
-        this.appendChatMessage({ system: true, message: '[系统] 邀请链接已复制' });
+        this.appendChatMessage({ system: true, message: this.systemText(this.t('system.inviteCopied')) });
       } catch {
-        prompt('复制这个邀请链接：', this.roomClient.inviteUrl());
+        prompt(this.t('system.copyPrompt'), this.roomClient.inviteUrl());
       }
     });
+
+    const toggleLanguage = () => this.applyLanguage(this.language === 'zh' ? 'en' : 'zh');
+    document.getElementById('btn-language-toggle').addEventListener('click', toggleLanguage);
+    document.getElementById('btn-language-toggle-lobby').addEventListener('click', toggleLanguage);
 
     // Chat UI
     const chatInput = document.getElementById('input-chat');
@@ -424,7 +431,7 @@ class HoloSweeperGame {
     const soundBtn = document.getElementById('btn-sound-toggle');
     soundBtn.addEventListener('click', () => {
       sfx.enabled = !sfx.enabled;
-      soundBtn.innerText = `🔊 音效:${sfx.enabled ? '开' : '关'}`;
+      soundBtn.innerText = this.t(sfx.enabled ? 'action.soundOn' : 'action.soundOff');
     });
 
     // 操作模式按钮
@@ -494,32 +501,78 @@ class HoloSweeperGame {
     document.getElementById('btn-mode-flag').classList.toggle('active', mode === 'flag');
   }
 
+  t(key, params = {}) {
+    return translate(this.language, key, params);
+  }
+
+  systemText(message) {
+    return `${this.t('system.prefix')} ${message}`;
+  }
+
+  applyLanguage(language, initializing = false) {
+    const previousLanguage = this.language;
+    const previousDefault = translate(previousLanguage, 'nickname.default');
+    this.language = language;
+    try { localStorage.setItem('holo-sweeper.language', language); } catch {}
+    document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en';
+    document.title = this.t('document.title');
+    document.querySelector('meta[name="description"]')?.setAttribute('content', this.t('document.description'));
+    document.querySelectorAll('[data-i18n]').forEach((element) => {
+      element.textContent = this.t(element.dataset.i18n);
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach((element) => {
+      element.placeholder = this.t(element.dataset.i18nPlaceholder);
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach((element) => {
+      element.title = this.t(element.dataset.i18nTitle);
+    });
+
+    const nicknameInput = document.getElementById('input-nickname');
+    const savedNickname = localStorage.getItem('holo-sweeper.nickname');
+    if (!savedNickname && (initializing || !nicknameInput.value || nicknameInput.value === previousDefault)) {
+      nicknameInput.value = this.t('nickname.default');
+    }
+    document.getElementById('btn-sound-toggle').innerText = this.t(sfx.enabled ? 'action.soundOn' : 'action.soundOff');
+    const code = this.roomSnapshot?.code || '-';
+    document.getElementById('room-code-display').innerText = this.t('players.roomCode', { code });
+    const me = this.roomSnapshot?.players?.find(player => player.id === this.currentPlayerId);
+    document.getElementById('btn-restart').title = me && !me.isHost ? this.t('error.HOST_ONLY') : '';
+    if (this.roomSnapshot) {
+      this.renderRoomMessages(this.roomSnapshot);
+      if (this.roomSnapshot.phase === 'revive') this.syncRevival(this.roomSnapshot);
+      if (this.roomSnapshot.phase === 'lost') {
+        document.getElementById('modal-title').innerText = this.t('result.lostTitle');
+        document.getElementById('modal-message').innerText = this.t('result.lostMessage');
+      } else if (this.roomSnapshot.phase === 'won') {
+        document.getElementById('modal-title').innerText = this.t('result.wonTitle');
+        document.getElementById('modal-message').innerText = this.t('result.wonMessage');
+      }
+    }
+  }
+
   // -------------------------------------------------------------
   // 4. Three.js 场景搭建
   // -------------------------------------------------------------
   
   
   setLobbyStatus(status) {
-    const labels = {
-      creating: '正在创建量子房间…', joining: '正在申请接入房间…', connecting: '正在建立安全连接…',
-      reconnecting: '网络波动，正在恢复房间…', connected: '连接成功', disconnected: '连接已断开',
-    };
     const element = document.getElementById('lobby-status');
-    if (element) element.innerText = labels[status] || '';
+    if (element) element.innerText = status ? this.t(`status.${status}`) : '';
   }
 
   handleRoomWelcome(message) {
     this.currentPlayerId = message.identity.playerId;
     document.getElementById('lobby-overlay').classList.add('hidden');
-    document.getElementById('room-code-display').innerText = `房间号: ${message.snapshot.code}`;
+    document.getElementById('room-code-display').innerText = this.t('players.roomCode', { code: message.snapshot.code });
     document.getElementById('btn-copy-invite').style.display = '';
   }
 
   handleRoomError(error) {
-    const message = error?.message || '房间连接失败。';
+    const translated = error?.code ? this.t(`error.${error.code}`) : '';
+    const message = translated && translated !== `error.${error.code}` ? translated : (error?.message || this.t('error.roomFallback'));
     const status = document.getElementById('lobby-status');
     if (status && !document.getElementById('lobby-overlay').classList.contains('hidden')) status.innerText = message;
-    else this.appendChatMessage({ system: true, message: `[系统] ⚠️ ${message}` });
+    else this.appendChatMessage({ system: true, message: this.systemText(`⚠️ ${message}`) });
   }
 
   applyRoomSnapshot(snapshot, initial = false) {
@@ -535,16 +588,7 @@ class HoloSweeperGame {
     }
 
     this.renderPlayers(snapshot.players);
-    for (const activity of snapshot.activity || []) {
-      if (this.seenActivityIds.has(activity.id)) continue;
-      this.seenActivityIds.add(activity.id);
-      this.appendChatMessage({ system: true, message: `[系统] ${activity.message}` });
-    }
-    for (const chat of snapshot.chat || []) {
-      if (this.seenChatIds.has(chat.id)) continue;
-      this.seenChatIds.add(chat.id);
-      this.appendChatMessage({ system: false, playerName: chat.playerName, message: chat.message });
-    }
+    this.renderRoomMessages(snapshot);
 
     const desiredFlags = new Set((snapshot.flags || []).map(point => `${point.x}:${point.y}:${point.z}`));
     for (let x = 0; x < this.width; x++) for (let y = 0; y < this.height; y++) for (let z = 0; z < this.depth; z++) {
@@ -578,7 +622,7 @@ class HoloSweeperGame {
     const me = snapshot.players.find(player => player.id === this.currentPlayerId);
     const restart = document.getElementById('btn-restart');
     restart.disabled = Boolean(me && !me.isHost);
-    restart.title = me && !me.isHost ? '只有房主可以重新初始化矩阵' : '';
+    restart.title = me && !me.isHost ? this.t('error.HOST_ONLY') : '';
     this.roomSnapshot = snapshot;
     this.updateStats();
   }
@@ -595,6 +639,29 @@ class HoloSweeperGame {
       dot.textContent = '● ';
       li.append(dot, document.createTextNode(`${player.name}${player.isHost ? ' 👑' : ''}`));
       ul.appendChild(li);
+    }
+  }
+
+  renderRoomMessages(snapshot) {
+    const container = document.getElementById('chat-messages');
+    if (!container) return;
+    container.replaceChildren();
+    const welcome = document.createElement('div');
+    welcome.style.cssText = 'color:#888;font-style:italic;text-align:center;';
+    welcome.textContent = this.t('chat.welcome');
+    container.appendChild(welcome);
+    const entries = [
+      ...(snapshot.activity || []).map(activity => ({ kind: 'activity', at: activity.at, value: activity })),
+      ...(snapshot.chat || []).map(chat => ({ kind: 'chat', at: chat.at, value: chat })),
+    ].sort((left, right) => left.at - right.at);
+    for (const entry of entries) {
+      if (entry.kind === 'chat') {
+        this.appendChatMessage({ system: false, playerName: entry.value.playerName, message: entry.value.message });
+      } else {
+        const activity = entry.value;
+        const localized = activity.key ? this.t(`activity.${activity.key}`, activity.params || {}) : activity.message;
+        this.appendChatMessage({ system: true, message: this.systemText(localized || '') });
+      }
     }
   }
 
@@ -679,19 +746,19 @@ class HoloSweeperGame {
     clearInterval(this.revivalTimer);
     if (!snapshot.reviveEndsAt) {
       button.disabled = false;
-      button.innerText = '观看广告';
+      button.innerText = this.t('revive.watch');
       endButton.disabled = false;
       endButton.style.display = '';
-      message.textContent = '您触碰了反物质地雷！是否观看 10 秒广告进行量子回溯？';
+      message.textContent = this.t('revive.prompt');
       return;
     }
     button.disabled = true;
     endButton.style.display = 'none';
-    message.textContent = '广告播放中（广告位招租中……）';
+    message.textContent = this.t('revive.playing');
     const offset = snapshot.serverTime - Date.now();
     const update = () => {
       const seconds = Math.max(0, Math.ceil((snapshot.reviveEndsAt - Date.now() - offset) / 1000));
-      button.innerText = seconds > 0 ? `广告播放中 (${seconds})...` : '正在完成量子回溯…';
+      button.innerText = seconds > 0 ? this.t('revive.countdown', { seconds }) : this.t('revive.finishing');
     };
     update();
     this.revivalTimer = setInterval(update, 250);
@@ -1416,10 +1483,10 @@ class HoloSweeperGame {
 
     this.pendingGameOver = { x, y, z };
     const adModal = document.getElementById('ad-modal-overlay');
-    document.getElementById('ad-modal-message').innerHTML = "您不小心触碰了反物质地雷！是否观看一段 10 秒广告进行量子回溯重组？";
+    document.getElementById('ad-modal-message').textContent = this.t('revive.prompt');
     
     const btnAd = document.getElementById('btn-watch-ad');
-    btnAd.innerText = "观看广告";
+    btnAd.innerText = this.t('revive.watch');
     btnAd.disabled = false;
     const btnDie = document.getElementById('btn-ad-die');
     btnDie.disabled = false;
@@ -1719,9 +1786,9 @@ class HoloSweeperGame {
       const icon = document.getElementById('modal-icon');
       
       icon.innerText = "💀";
-      title.innerText = "矩阵崩溃";
+      title.innerText = this.t('result.lostTitle');
       title.className = "modal-title text-glow-red";
-      msg.innerText = "您误触了反物质地雷，导致当前时空矩阵发生连锁坍缩。";
+      msg.innerText = this.t('result.lostMessage');
       
       document.getElementById('modal-stat-time').innerText = this.formatTime(this.timer);
       const totalCells = this.width * this.height * this.depth;
@@ -1757,9 +1824,9 @@ class HoloSweeperGame {
         const icon = document.getElementById('modal-icon');
         
         icon.innerText = "🏆";
-        title.innerText = "净化完成";
+        title.innerText = this.t('result.wonTitle');
         title.className = "modal-title text-glow-green";
-        msg.innerText = "完美避开所有危险能量节点，该空间维度已被成功净化归零！";
+        msg.innerText = this.t('result.wonMessage');
         
         document.getElementById('modal-stat-time').innerText = this.formatTime(this.timer);
         document.getElementById('modal-stat-progress').innerText = "100%";

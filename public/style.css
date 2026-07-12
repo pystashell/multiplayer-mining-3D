@@ -157,9 +157,17 @@ body {
  * ------------------------------------------------------------- */
 
 .panel-header {
+  position: relative;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding-bottom: 12px;
   margin-bottom: 4px;
+}
+
+.header-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .logo {
@@ -661,6 +669,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 .game-modal {
+  position: relative;
   width: 380px;
   padding: 40px 30px;
   border-radius: 20px;

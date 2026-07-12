@@ -27,7 +27,13 @@
       errorDiv.style.fontFamily = 'monospace';
       errorDiv.style.fontSize = '12px';
       errorDiv.style.whiteSpace = 'pre-wrap';
-      errorDiv.innerText = '⚠️ 游戏运行错误: ' + e.message + '\n文件: ' + e.filename + '\n行号: ' + e.lineno + ':' + e.colno + '\n堆栈: ' + (e.error ? e.error.stack : '');
+      let savedLanguage = '';
+      try { savedLanguage = localStorage.getItem('holo-sweeper.language') || ''; } catch {}
+      const english = savedLanguage ? savedLanguage === 'en' : !navigator.language.toLowerCase().startsWith('zh');
+      errorDiv.innerText = (english ? '⚠️ Game runtime error: ' : '⚠️ 游戏运行错误: ') + e.message
+        + (english ? '\nFile: ' : '\n文件: ') + e.filename
+        + (english ? '\nLine: ' : '\n行号: ') + e.lineno + ':' + e.colno
+        + (english ? '\nStack: ' : '\n堆栈: ') + (e.error ? e.error.stack : '');
       document.body.appendChild(errorDiv);
     });
   </script>
@@ -56,23 +62,26 @@
     <!-- 左侧控制面板 -->
     <aside class="panel left-panel glass" id="control-panel">
       <header class="panel-header">
-        <h1 class="logo">HOLO-SWEEPER <span>3D</span></h1>
-        <p class="subtitle">全息空间扫雷终端</p>
+        <div class="header-title-row">
+          <h1 class="logo">HOLO-SWEEPER <span>3D</span></h1>
+          <button id="btn-language-toggle" class="btn-secondary" style="padding:4px 7px; min-height:0; font-size:11px; flex:none;" data-i18n="language.toggle">EN</button>
+        </div>
+        <p class="subtitle" data-i18n="subtitle">全息空间扫雷终端</p>
       </header>
 
       <!-- 游戏数据统计 -->
       <section class="panel-section stats-section">
         <div class="stat-card glass-inner">
-          <span class="stat-label">⏱️ 时间</span>
+          <span class="stat-label" data-i18n="stats.time">⏱️ 时间</span>
           <span id="stat-time" class="stat-value text-glow-cyan">00:00</span>
         </div>
         <div class="stat-card glass-inner">
-          <span class="stat-label">🚩 标记/地雷</span>
+          <span class="stat-label" data-i18n="stats.mines">🚩 标记/地雷</span>
           <span id="stat-mines" class="stat-value text-glow-orange">0 / 0</span>
         </div>
         <div class="stat-card glass-inner full-width">
           <div class="progress-header">
-            <span class="stat-label">💠 空间净化率</span>
+            <span class="stat-label" data-i18n="stats.progress">💠 空间净化率</span>
             <span id="stat-progress-percent" class="stat-value-sm">0%</span>
           </div>
           <div class="progress-bar-container">
@@ -83,40 +92,40 @@
 
       <!-- 游戏设置与预设 -->
       <section class="panel-section settings-section">
-        <h2 class="section-title">维度矩阵设置</h2>
+        <h2 class="section-title" data-i18n="settings.title">维度矩阵设置</h2>
         
         <div class="preset-buttons">
           <button id="btn-preset-easy" class="btn-preset active" data-w="3" data-h="3" data-d="3" data-m="3">
-            <span>初级</span><small>3x3x3 (3雷)</small>
+            <span data-i18n="settings.easy">初级</span><small data-i18n="settings.easyMeta">3x3x3 (3雷)</small>
           </button>
           <button id="btn-preset-medium" class="btn-preset" data-w="5" data-h="5" data-d="5" data-m="15">
-            <span>中级</span><small>5x5x5 (15雷)</small>
+            <span data-i18n="settings.medium">中级</span><small data-i18n="settings.mediumMeta">5x5x5 (15雷)</small>
           </button>
           <button id="btn-preset-hard" class="btn-preset" data-w="7" data-h="7" data-d="7" data-m="45">
-            <span>高级</span><small>7x7x7 (45雷)</small>
+            <span data-i18n="settings.hard">高级</span><small data-i18n="settings.hardMeta">7x7x7 (45雷)</small>
           </button>
         </div>
 
         <div class="custom-toggle-header" id="custom-toggle">
-          <span>⚙️ 自定义矩阵</span>
+          <span data-i18n="settings.custom">⚙️ 自定义矩阵</span>
           <span class="arrow">▼</span>
         </div>
 
         <div class="custom-inputs-wrapper hidden" id="custom-inputs">
           <div class="input-row">
-            <label for="input-w">X轴 (宽):</label>
+            <label for="input-w" data-i18n="settings.width">X轴 (宽):</label>
             <input type="number" id="input-w" min="2" max="15" value="5">
           </div>
           <div class="input-row">
-            <label for="input-h">Y轴 (高):</label>
+            <label for="input-h" data-i18n="settings.height">Y轴 (高):</label>
             <input type="number" id="input-h" min="2" max="15" value="5">
           </div>
           <div class="input-row">
-            <label for="input-d">Z轴 (深):</label>
+            <label for="input-d" data-i18n="settings.depth">Z轴 (深):</label>
             <input type="number" id="input-d" min="2" max="15" value="5">
           </div>
           <div class="input-row">
-            <label for="input-m">地雷数量:</label>
+            <label for="input-m" data-i18n="settings.mineCount">地雷数量:</label>
             <input type="number" id="input-m" min="1" max="200" value="15">
           </div>
         </div>
@@ -124,23 +133,23 @@
 
       <!-- 操作模式切换 -->
       <section class="panel-section action-section">
-        <h2 class="section-title">操作模式</h2>
+        <h2 class="section-title" data-i18n="mode.title">操作模式</h2>
         <div class="mode-toggles">
-          <button id="btn-mode-dig" class="btn-mode active" title="快捷键: D">
-            <span class="icon">⛏️</span> 挖掘模式
+          <button id="btn-mode-dig" class="btn-mode active" title="快捷键: D" data-i18n-title="mode.digTitle">
+            <span data-i18n="mode.dig">⛏️ 挖掘模式</span>
           </button>
-          <button id="btn-mode-flag" class="btn-mode" title="快捷键: F">
-            <span class="icon text-orange">🚩</span> 标记模式
+          <button id="btn-mode-flag" class="btn-mode" title="快捷键: F" data-i18n-title="mode.flagTitle">
+            <span data-i18n="mode.flag">🚩 标记模式</span>
           </button>
         </div>
       </section>
 
       <!-- 常用控制按钮 -->
       <footer class="panel-footer">
-        <button id="btn-restart" class="btn-primary glow-cyan-box">初始化矩阵</button>
+        <button id="btn-restart" class="btn-primary glow-cyan-box" data-i18n="action.restart">初始化矩阵</button>
         <div class="utility-buttons">
-          <button id="btn-reset-camera" class="btn-secondary" title="重置相机视角">🎥 重置视角</button>
-          <button id="btn-sound-toggle" class="btn-secondary" title="切换音效">🔊 音效:开</button>
+          <button id="btn-reset-camera" class="btn-secondary" title="重置相机视角" data-i18n="action.resetCamera" data-i18n-title="action.resetCameraTitle">🎥 重置视角</button>
+          <button id="btn-sound-toggle" class="btn-secondary" title="切换音效" data-i18n-title="action.soundTitle">🔊 音效:开</button>
         </div>
       </footer>
     </aside>
@@ -174,30 +183,30 @@
         <input type="range" id="slice-z-max" min="0" max="4" value="4" style="width: 50px; height: 4px;">
       </div>
 
-      <button id="btn-reset-slices" class="btn-secondary" style="padding: 4px 10px; font-size: 12px; white-space: nowrap; margin-left: 5px; min-height: 24px;">重置切片</button>
+      <button id="btn-reset-slices" class="btn-secondary" style="padding: 4px 10px; font-size: 12px; white-space: nowrap; margin-left: 5px; min-height: 24px;" data-i18n="action.resetSlices">重置切片</button>
     </header>
 
     <!-- 右侧社交面板 (操作说明、玩家列表、聊天) -->
     <aside class="panel right-panel glass" id="social-panel" style="display: flex; flex-direction: column; padding: 0;">
       <!-- 操作指南 -->
       <section class="panel-section guide-section" style="padding: 15px; border-bottom: 1px solid rgba(0, 240, 255, 0.1);">
-        <h3 class="guide-title" style="margin-top: 0;">🖱️ 操作说明</h3>
+        <h3 class="guide-title" style="margin-top: 0;" data-i18n="guide.title">🖱️ 操作说明</h3>
         <ul class="guide-list" style="margin-bottom: 0; font-size: 12px;">
-          <li><strong>左键拖拽:</strong> 旋转空间视角</li>
-          <li><strong>右键拖拽:</strong> 平移视角</li>
-          <li><strong>左键点击:</strong> 挖掘 / 插旗</li>
-          <li><strong>右键点击:</strong> 快捷插旗/取消标记</li>
-          <li><strong>[D] / [F] 键:</strong> 模式切换</li>
+          <li data-i18n="guide.rotate">左键拖拽: 旋转空间视角</li>
+          <li data-i18n="guide.pan">右键拖拽: 平移视角</li>
+          <li data-i18n="guide.click">左键点击: 挖掘 / 插旗</li>
+          <li data-i18n="guide.flag">右键点击: 快捷插旗/取消标记</li>
+          <li data-i18n="guide.keys">[D] / [F] 键: 模式切换</li>
         </ul>
       </section>
 
       <!-- 玩家列表 -->
       <section class="panel-section player-list-section" style="padding: 15px; border-bottom: 1px solid rgba(0, 240, 255, 0.1);">
         <h3 class="guide-title" style="margin-top: 0; margin-bottom: 10px; display: flex; justify-content: space-between;">
-          <span>👥 房间玩家</span>
+          <span data-i18n="players.title">👥 房间玩家</span>
           <span style="display:flex; gap:6px; align-items:center;">
             <span id="room-code-display" class="text-glow-cyan" style="font-size: 12px; font-family: 'Share Tech Mono', monospace;">房间号: -</span>
-            <button id="btn-copy-invite" class="btn-secondary" style="padding:3px 6px; min-height:0; font-size:11px; display:none;">复制邀请</button>
+            <button id="btn-copy-invite" class="btn-secondary" style="padding:3px 6px; min-height:0; font-size:11px; display:none;" data-i18n="players.copyInvite">复制邀请</button>
           </span>
         </h3>
         <ul id="player-list-ul" style="list-style: none; padding: 0; margin: 0; font-size: 14px; max-height: 150px; overflow-y: auto;">
@@ -207,14 +216,14 @@
 
       <!-- 聊天与事故记录窗口 -->
       <section class="panel-section chat-section" style="flex: 1; padding: 15px; display: flex; flex-direction: column; overflow: hidden;">
-        <h3 class="guide-title" style="margin-top: 0; margin-bottom: 10px;">💬 事故与交流记录</h3>
+        <h3 class="guide-title" style="margin-top: 0; margin-bottom: 10px;" data-i18n="chat.title">💬 事故与交流记录</h3>
         <div id="chat-messages" style="flex: 1; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 10px; font-size: 13px; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; gap: 8px;">
           <!-- 消息记录 -->
-          <div style="color: #888; font-style: italic; text-align: center;">-- 欢迎加入量子网络 --</div>
+          <div style="color: #888; font-style: italic; text-align: center;" data-i18n="chat.welcome">-- 欢迎加入量子网络 --</div>
         </div>
         <div style="display: flex; gap: 8px; margin-top: 10px;">
-          <input type="text" id="input-chat" placeholder="按回车发送消息..." style="flex: 1; padding: 8px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(0, 240, 255, 0.3); color: #fff; font-size: 13px; border-radius: 4px;">
-          <button id="btn-send-chat" class="btn-primary" style="padding: 8px 12px;">发送</button>
+          <input type="text" id="input-chat" placeholder="按回车发送消息..." data-i18n-placeholder="chat.placeholder" style="flex: 1; padding: 8px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(0, 240, 255, 0.3); color: #fff; font-size: 13px; border-radius: 4px;">
+          <button id="btn-send-chat" class="btn-primary" style="padding: 8px 12px;" data-i18n="chat.send">发送</button>
         </div>
       </section>
     </aside>
@@ -224,23 +233,23 @@
   <div id="modal-overlay" class="modal-overlay hidden">
     <div id="game-modal" class="game-modal glass">
       <div class="modal-icon" id="modal-icon">💀</div>
-      <h2 id="modal-title" class="modal-title text-glow-red">矩阵崩溃</h2>
-      <p id="modal-message" class="modal-message">你触发了空间地雷，维度解体。</p>
+      <h2 id="modal-title" class="modal-title text-glow-red" data-i18n="result.lostTitle">矩阵崩溃</h2>
+      <p id="modal-message" class="modal-message" data-i18n="result.lostDefault">你触发了空间地雷，维度解体。</p>
       
       <div class="modal-stats glass-inner">
         <div class="modal-stat">
-          <span class="modal-stat-label">所用时间</span>
+          <span class="modal-stat-label" data-i18n="result.elapsed">所用时间</span>
           <span id="modal-stat-time" class="modal-stat-value">00:00</span>
         </div>
         <div class="modal-stat">
-          <span class="modal-stat-label">空间净化</span>
+          <span class="modal-stat-label" data-i18n="result.progress">空间净化</span>
           <span id="modal-stat-progress" class="modal-stat-value">0%</span>
         </div>
       </div>
 
       <div class="modal-buttons" style="display: flex; gap: 15px; width: 100%;">
-        <button id="btn-modal-close" class="btn-secondary" style="flex: 1;">查看战场</button>
-        <button id="btn-modal-restart" class="btn-primary glow-red-box" style="flex: 1;">重新初始化</button>
+        <button id="btn-modal-close" class="btn-secondary" style="flex: 1;" data-i18n="result.inspect">查看战场</button>
+        <button id="btn-modal-restart" class="btn-primary glow-red-box" style="flex: 1;" data-i18n="result.restart">重新初始化</button>
       </div>
     </div>
   </div>
@@ -248,12 +257,12 @@
   <div id="ad-modal-overlay" class="modal-overlay hidden">
     <div id="ad-modal" class="game-modal glass">
       <div class="modal-icon" style="color: #ffaa00; text-shadow: 0 0 20px #ffaa00;">📺</div>
-      <h2 class="modal-title" style="color: #ffaa00; text-shadow: 0 0 10px #ffaa00;">看广告复活？</h2>
-      <p id="ad-modal-message" class="modal-message">您不小心触碰了反物质地雷！是否观看一段 10 秒广告进行量子回溯重组？</p>
+      <h2 class="modal-title" style="color: #ffaa00; text-shadow: 0 0 10px #ffaa00;" data-i18n="revive.title">看广告复活？</h2>
+      <p id="ad-modal-message" class="modal-message" data-i18n="revive.prompt">您不小心触碰了反物质地雷！是否观看一段 10 秒广告进行量子回溯重组？</p>
       
       <div class="modal-buttons" style="display: flex; gap: 15px; width: 100%; margin-top: 20px;">
-        <button id="btn-watch-ad" class="btn-primary" style="flex: 1; background: #ffaa00; border-color: #ffaa00; box-shadow: 0 0 15px rgba(255, 170, 0, 0.4);">观看广告</button>
-        <button id="btn-ad-die" class="btn-secondary" style="flex: 1;">结束游戏</button>
+        <button id="btn-watch-ad" class="btn-primary" style="flex: 1; background: #ffaa00; border-color: #ffaa00; box-shadow: 0 0 15px rgba(255, 170, 0, 0.4);" data-i18n="revive.watch">观看广告</button>
+        <button id="btn-ad-die" class="btn-secondary" style="flex: 1;" data-i18n="revive.end">结束游戏</button>
       </div>
     </div>
   </div>
@@ -263,22 +272,23 @@
   <div id="lobby-overlay" class="modal-overlay">
     <div id="lobby-modal" class="game-modal glass" style="width: 400px; padding: 40px;">
       <div class="modal-icon" style="color: #00f0ff; text-shadow: 0 0 20px #00f0ff;">🌐</div>
-      <h2 class="modal-title" style="color: #00f0ff; text-shadow: 0 0 10px #00f0ff; letter-spacing: 2px;">接入量子网络</h2>
-      <p class="modal-message" style="margin-bottom: 20px;">创建量子房间，或通过朋友分享的 6 位密钥接入</p>
+      <button id="btn-language-toggle-lobby" class="btn-secondary" style="position:absolute; top:16px; right:16px; padding:5px 9px; min-height:0; font-size:12px;" data-i18n="language.toggle">EN</button>
+      <h2 class="modal-title" style="color: #00f0ff; text-shadow: 0 0 10px #00f0ff; letter-spacing: 2px;" data-i18n="lobby.title">接入量子网络</h2>
+      <p class="modal-message" style="margin-bottom: 20px;" data-i18n="lobby.subtitle">创建量子房间，或通过朋友分享的 6 位密钥接入</p>
       
       <div class="input-row" style="margin-bottom: 20px;">
-        <label for="input-nickname" style="display: block; text-align: left; margin-bottom: 10px; color: #a0c0ff;">玩家昵称 (必填):</label>
-        <input type="text" id="input-nickname" placeholder="例如：扫雷兵王" style="width: 100%; padding: 12px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(0, 240, 255, 0.3); color: #fff; font-size: 16px; border-radius: 8px;">
+        <label for="input-nickname" style="display: block; text-align: left; margin-bottom: 10px; color: #a0c0ff;" data-i18n="lobby.nickname">玩家昵称 (必填):</label>
+        <input type="text" id="input-nickname" value="银狼" placeholder="默认：银狼" data-i18n-placeholder="lobby.nicknamePlaceholder" style="width: 100%; padding: 12px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(0, 240, 255, 0.3); color: #fff; font-size: 16px; border-radius: 8px;">
       </div>
 
       <div class="input-row" style="margin-bottom: 30px;">
-        <label for="input-room" style="display: block; text-align: left; margin-bottom: 10px; color: #a0c0ff;">房间号 (必填):</label>
-        <input type="text" id="input-room" maxlength="6" autocomplete="off" placeholder="例如：ABC234" style="width: 100%; padding: 12px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(0, 240, 255, 0.3); color: #fff; font-size: 16px; border-radius: 8px; text-transform: uppercase;">
+        <label for="input-room" style="display: block; text-align: left; margin-bottom: 10px; color: #a0c0ff;" data-i18n="lobby.room">房间号 (必填):</label>
+        <input type="text" id="input-room" maxlength="6" autocomplete="off" placeholder="例如：ABC234" data-i18n-placeholder="lobby.roomPlaceholder" style="width: 100%; padding: 12px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(0, 240, 255, 0.3); color: #fff; font-size: 16px; border-radius: 8px; text-transform: uppercase;">
       </div>
 
       <div style="display:flex; gap:12px;">
-        <button id="btn-create-room" class="btn-secondary" style="flex:1; padding: 13px; font-size: 16px;">创建房间</button>
-        <button id="btn-join-room" class="btn-primary glow-cyan-box" style="flex:1; padding: 13px; font-size: 16px; font-weight: bold;">加入房间</button>
+        <button id="btn-create-room" class="btn-secondary" style="flex:1; padding: 13px; font-size: 16px;" data-i18n="lobby.create">创建房间</button>
+        <button id="btn-join-room" class="btn-primary glow-cyan-box" style="flex:1; padding: 13px; font-size: 16px; font-weight: bold;" data-i18n="lobby.join">加入房间</button>
       </div>
       <p id="lobby-status" style="min-height:20px; margin:14px 0 0; color:#a0c0ff; font-size:12px;"></p>
     </div>

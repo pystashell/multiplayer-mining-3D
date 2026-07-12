@@ -69,3 +69,14 @@ test('only the host can reconfigure a room', () => {
   engine.reserveMember({ playerId: 'guest', name: 'Guest', tokenHash: 'guest-hash', now: 2_000 });
   assert.throws(() => engine.apply('guest', { op: 'restart', config: {} }, { id: 'guest-command', sequence: 1, now: 2_001 }), /HOST_ONLY/);
 });
+
+test('stores semantic activity data so every client can localize it', () => {
+  const engine = createEngine();
+  engine.reserveMember({ playerId: 'guest', name: 'Guest', tokenHash: 'guest-hash', now: 2_000 });
+  assert.deepEqual(engine.state.activity.at(-1), {
+    id: engine.state.activity.at(-1).id,
+    key: 'joined',
+    params: { name: 'Guest' },
+    at: 2_000,
+  });
+});

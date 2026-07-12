@@ -68,7 +68,7 @@ async function enforceRateLimit(request, limiter, scope) {
     ?? "local-development";
   const key = await hash(`${scope}:${address}`);
   const { success } = await limiter.limit({ key });
-  return success ? null : json({ error: "请求太频繁，请稍后再试。" }, 429);
+  return success ? null : json({ error: "请求太频繁，请稍后再试。", code: "RATE_LIMITED" }, 429);
 }
 
 function errorMessage(code) {
@@ -115,7 +115,7 @@ export class GameRoom {
   }
 
   async reserve(request) {
-    if (!this.engine) return json({ error: "没有找到这个房间。" }, 404);
+    if (!this.engine) return json({ error: "没有找到这个房间。", code: "ROOM_NOT_FOUND" }, 404);
     const body = await readBody(request);
     try {
       const room = this.engine.reserveMember(body);
@@ -128,7 +128,7 @@ export class GameRoom {
   }
 
   async openSocket(request) {
-    if (!this.engine) return json({ error: "没有找到这个房间。" }, 404);
+    if (!this.engine) return json({ error: "没有找到这个房间。", code: "ROOM_NOT_FOUND" }, 404);
     if (request.headers.get("Upgrade")?.toLowerCase() !== "websocket") return json({ error: "需要 WebSocket。" }, 426);
     if (this.ctx.getWebSockets().length >= MAX_SOCKETS) return json({ error: "房间连接已满。" }, 429);
     const pair = new WebSocketPair();
@@ -298,7 +298,7 @@ export class GameRoom {
 async function createRoom(request, env) {
   const body = await readBody(request);
   const name = normalizeName(body?.name);
-  if (!name) return json({ error: "请输入昵称。" }, 400);
+  if (!name) return json({ error: "请输入昵称。", code: "INVALID_NAME" }, 400);
   const playerId = crypto.randomUUID();
   const sessionToken = token();
   const tokenHash = await hash(sessionToken);
@@ -321,7 +321,7 @@ async function createRoom(request, env) {
 async function joinRoom(request, env, code) {
   const body = await readBody(request);
   const name = normalizeName(body?.name);
-  if (!name) return json({ error: "请输入昵称。" }, 400);
+  if (!name) return json({ error: "请输入昵称。", code: "INVALID_NAME" }, 400);
   const playerId = crypto.randomUUID();
   const sessionToken = token();
   const tokenHash = await hash(sessionToken);

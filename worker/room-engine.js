@@ -126,7 +126,7 @@ export class RoomEngine {
     if (this.state.members.some((member) => member.name.toLowerCase() === name.toLowerCase())) throw new Error("NAME_TAKEN");
     this.state.members.push({ id: playerId, name, tokenHash, joinedAt: now, lastSequence: 0 });
     this.touch(now);
-    this.addActivity(`${name} 接入了量子网络`, now);
+    this.addActivity("joined", { name }, now);
     return this.snapshot(now);
   }
 
@@ -170,7 +170,7 @@ export class RoomEngine {
     this.state.pendingMine = null;
     this.state.reviveEndsAt = null;
     this.state.startedAt = null;
-    this.addActivity(`${member.name} 重新初始化了矩阵`, now);
+    this.addActivity("restarted", { name: member.name }, now);
     return "矩阵已重新初始化";
   }
 
@@ -190,7 +190,7 @@ export class RoomEngine {
       this.state.phase = "revive";
       this.state.pendingMine = index;
       this.state.reviveEndsAt = null;
-      this.addActivity(`🚨 ${member.name} 踩到了反物质地雷`, now);
+      this.addActivity("mineTriggered", { name: member.name }, now);
       return "触发地雷";
     }
     const queue = [index];
@@ -201,11 +201,11 @@ export class RoomEngine {
       this.state.revealed[current] = count;
       if (count === 0) queue.push(...neighbors(this.state.config, current));
     }
-    this.addActivity(`${member.name} 挖开了空间方块`, now);
+    this.addActivity("dug", { name: member.name }, now);
     const safeCells = this.state.config.width * this.state.config.height * this.state.config.depth - this.state.config.mineCount;
     if (Object.keys(this.state.revealed).length === safeCells) {
       this.state.phase = "won";
-      this.addActivity("🏆 空间矩阵净化完成", now);
+      this.addActivity("won", {}, now);
     }
     return "挖掘完成";
   }
@@ -218,7 +218,7 @@ export class RoomEngine {
     const position = this.state.flags.indexOf(index);
     if (position >= 0) this.state.flags.splice(position, 1);
     else this.state.flags.push(index);
-    this.addActivity(`${this.member(playerId).name} 切换了空间标记`, now);
+    this.addActivity("flagged", { name: this.member(playerId).name }, now);
     return position >= 0 ? "已取消标记" : "已插旗";
   }
 
@@ -233,7 +233,7 @@ export class RoomEngine {
   watchAd(playerId, now) {
     if (this.state.phase !== "revive" || this.state.reviveEndsAt !== null) throw new Error("WRONG_PHASE");
     this.state.reviveEndsAt = now + 10_000;
-    this.addActivity(`📺 ${this.member(playerId).name} 启动了量子回溯`, now);
+    this.addActivity("reviveStarted", { name: this.member(playerId).name }, now);
     return "量子回溯已启动";
   }
 
@@ -241,7 +241,7 @@ export class RoomEngine {
     if (this.state.phase !== "revive") throw new Error("WRONG_PHASE");
     this.state.phase = "lost";
     this.state.reviveEndsAt = null;
-    this.addActivity(`💥 ${this.member(playerId).name} 放弃了量子回溯`, now);
+    this.addActivity("gaveUp", { name: this.member(playerId).name }, now);
     return "矩阵已崩溃";
   }
 
@@ -250,7 +250,7 @@ export class RoomEngine {
       this.state.phase = "playing";
       this.state.pendingMine = null;
       this.state.reviveEndsAt = null;
-      this.addActivity("量子回溯完成，矩阵恢复运行", now);
+      this.addActivity("revived", {}, now);
       this.touch(now);
       return true;
     }
@@ -266,8 +266,8 @@ export class RoomEngine {
     this.state.expiresAt = now + ROOM_TTL_MS;
   }
 
-  addActivity(message, now) {
-    this.state.activity.push({ id: crypto.randomUUID(), message, at: now });
+  addActivity(key, params, now) {
+    this.state.activity.push({ id: crypto.randomUUID(), key, params, at: now });
     this.state.activity = this.state.activity.slice(-MAX_ACTIVITY);
   }
 

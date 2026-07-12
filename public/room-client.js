@@ -2,6 +2,14 @@ const PROTOCOL_VERSION = 1;
 const STORAGE_PREFIX = "holo-sweeper.room.v1";
 const RECONNECT_DELAYS = [500, 1000, 2000, 4000, 8000, 15000];
 
+export class RoomClientError extends Error {
+  constructor(code, message = '') {
+    super(message);
+    this.name = 'RoomClientError';
+    this.code = code;
+  }
+}
+
 function normalizeCode(value) {
   return String(value ?? "").toUpperCase().replace(/[^A-HJ-NP-Z2-9]/g, "").slice(0, 6);
 }
@@ -38,7 +46,7 @@ async function api(path, body) {
     body: JSON.stringify(body),
   });
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(payload.error ?? "房间服务请求失败。");
+  if (!response.ok) throw new RoomClientError(payload.code || 'REQUEST_FAILED', payload.error || 'Room request failed.');
   return payload;
 }
 
@@ -72,7 +80,7 @@ export class RoomClient {
 
   async join(code, name) {
     const normalized = normalizeCode(code);
-    if (normalized.length !== 6) throw new Error("房间码应为 6 位字母或数字。");
+    if (normalized.length !== 6) throw new RoomClientError('ROOM_CODE');
     const stored = readSession(normalized);
     if (stored) {
       this.useSession(stored);
@@ -146,9 +154,9 @@ export class RoomClient {
         const pending = message.id ? this.pending.get(message.id) : null;
         if (pending) {
           this.pending.delete(message.id);
-          pending.reject(new Error(message.message));
+          pending.reject(new RoomClientError(message.code || 'REQUEST_FAILED', message.message));
         }
-        this.onError?.(new Error(message.message));
+        this.onError?.(new RoomClientError(message.code || 'REQUEST_FAILED', message.message));
       }
     });
     socket.addEventListener("close", (event) => {
@@ -157,7 +165,7 @@ export class RoomClient {
       this.socket = null;
       if (this.intentionalClose || (event.code >= 4400 && event.code <= 4499)) {
         this.onStatus?.("disconnected");
-        if (!this.intentionalClose) this.onError?.(new Error(event.reason || "房间连接已关闭。"));
+        if (!this.intentionalClose) this.onError?.(new RoomClientError(event.code === 4404 ? 'ROOM_NOT_FOUND' : 'SOCKET_CLOSED', event.reason));
         return;
       }
       this.onStatus?.("reconnecting");
@@ -169,7 +177,7 @@ export class RoomClient {
   }
 
   send(command) {
-    if (!this.session) return Promise.reject(new Error("请先加入房间。"));
+    if (!this.session) return Promise.reject(new RoomClientError('NOT_JOINED'));
     this.sequence += 1;
     safeSet(sequenceKey(this.session), String(this.sequence));
     const message = {
