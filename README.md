@@ -4,7 +4,7 @@
 
 ## 在线试玩
 
-**[立即打开 Holo-Sweeper 3D](https://3d-multiplayer-mining.liuxingzhi99.workers.dev)**
+**[立即打开 Holo-Sweeper 3D](https://3d-multiplayer-mining.pystashell.workers.dev)**
 
 输入昵称后创建房间，点击“复制邀请”，把带有 `?room=房间码` 的链接发给朋友即可联机。
 
