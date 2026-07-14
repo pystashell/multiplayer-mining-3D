@@ -61,6 +61,9 @@ const synchronized = await bobSnapshot;
 assert.equal(synchronized.snapshot.mines.length, 0);
 assert.ok(synchronized.snapshot.revealed.length > 0);
 
+const chordAck = await command(alice.socket, 2, { op: 'chord', x: 1, y: 1, z: 1 });
+assert.equal(chordAck.ok, true);
+
 bob.socket.close(1000, 'reconnect test');
 const reconnected = await connect(joined.session);
 assert.equal(reconnected.welcome.identity.playerName, 'Bob');

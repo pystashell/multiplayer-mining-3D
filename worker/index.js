@@ -74,6 +74,7 @@ async function enforceRateLimit(request, limiter, scope) {
 function errorMessage(code) {
   const messages = {
     ROOM_FULL: `房间最多允许 ${MAX_PLAYERS} 位玩家。`,
+    SOLO_LOCKED: "任务模式不允许其他玩家加入。",
     NAME_TAKEN: "这个昵称已被使用。",
     HOST_ONLY: "只有房主可以重新初始化矩阵。",
     WRONG_PHASE: "当前游戏阶段不能执行这个操作。",
@@ -123,7 +124,7 @@ export class GameRoom {
       this.broadcast();
       return json({ room }, 201);
     } catch (error) {
-      return json({ error: errorMessage(error.message), code: error.message }, error.message === "ROOM_FULL" ? 409 : 400);
+      return json({ error: errorMessage(error.message), code: error.message }, ["ROOM_FULL", "SOLO_LOCKED"].includes(error.message) ? 409 : 400);
     }
   }
 
@@ -308,12 +309,12 @@ async function createRoom(request, env) {
     const response = await stub.fetch(new Request(new URL("/internal/init", request.url), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, hostId: playerId, hostName: name, tokenHash, now: Date.now() }),
+      body: JSON.stringify({ code, hostId: playerId, hostName: name, tokenHash, mode: body?.mode, now: Date.now() }),
     }));
     if (response.status === 409) continue;
     if (!response.ok) return json({ error: "无法创建房间。" }, response.status);
     const payload = await response.json();
-    return json({ roomCode: code, session: { code, playerId, playerName: name, token: sessionToken }, room: payload.room }, 201);
+    return json({ roomCode: code, session: { code, playerId, playerName: name, token: sessionToken, mode: payload.room.mode }, room: payload.room }, 201);
   }
   return json({ error: "暂时无法分配房间码。" }, 503);
 }

@@ -70,9 +70,9 @@ export class RoomClient {
     return normalizeCode(new URL(location.href).searchParams.get("room"));
   }
 
-  async create(name) {
+  async create(name, mode = "squad") {
     this.onStatus?.("creating");
-    const payload = await api("/api/rooms", { v: PROTOCOL_VERSION, name });
+    const payload = await api("/api/rooms", { v: PROTOCOL_VERSION, name, mode });
     this.useSession(payload.session);
     this.connect(false);
     return payload;

@@ -6,6 +6,17 @@ export const MAX_RECEIPTS = 256;
 
 const DEFAULT_CONFIG = Object.freeze({ width: 3, height: 3, depth: 3, mineCount: 3 });
 
+export const BEGINNER_TUTORIAL_START = Object.freeze({ x: 2, y: 0, z: 0 });
+export const BEGINNER_TUTORIAL_MINES = Object.freeze([
+  Object.freeze({ x: 0, y: 0, z: 0 }),
+  Object.freeze({ x: 0, y: 2, z: 1 }),
+  Object.freeze({ x: 2, y: 2, z: 2 }),
+]);
+
+function normalizeMode(value) {
+  return value === "solo" ? "solo" : "squad";
+}
+
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
@@ -21,6 +32,14 @@ export function normalizeConfig(value = {}) {
 
 function indexOf(config, x, y, z) {
   return (x * config.height + y) * config.depth + z;
+}
+
+function isBeginnerTutorialConfig(config) {
+  return config.width === 3 && config.height === 3 && config.depth === 3 && config.mineCount === 3;
+}
+
+function beginnerTutorialMineIndexes(config) {
+  return BEGINNER_TUTORIAL_MINES.map(({ x, y, z }) => indexOf(config, x, y, z));
 }
 
 function pointOf(config, index) {
@@ -87,10 +106,11 @@ export class RoomEngine {
     this.random = random;
   }
 
-  static create({ code, hostId, hostName, tokenHash, now = Date.now() }) {
+  static create({ code, hostId, hostName, tokenHash, mode = "squad", now = Date.now() }) {
     return new RoomEngine({
       version: 1,
       code,
+      mode: normalizeMode(mode),
       hostId,
       members: [{ id: hostId, name: hostName, tokenHash, joinedAt: now, lastSequence: 0 }],
       config: { ...DEFAULT_CONFIG },
@@ -100,6 +120,7 @@ export class RoomEngine {
       flags: [],
       pendingMine: null,
       reviveEndsAt: null,
+      reviveStartedBy: null,
       startedAt: null,
       revision: 1,
       chat: [],
@@ -110,7 +131,10 @@ export class RoomEngine {
   }
 
   static restore(state, random = Math.random) {
-    return new RoomEngine(structuredClone(state), random);
+    const restored = structuredClone(state);
+    restored.mode = normalizeMode(restored.mode);
+    restored.reviveStartedBy ??= null;
+    return new RoomEngine(restored, random);
   }
 
   serialize() {
@@ -122,6 +146,7 @@ export class RoomEngine {
   }
 
   reserveMember({ playerId, name, tokenHash, now = Date.now() }) {
+    if (this.state.mode === "solo") throw new Error("SOLO_LOCKED");
     if (this.state.members.length >= MAX_PLAYERS) throw new Error("ROOM_FULL");
     if (this.state.members.some((member) => member.name.toLowerCase() === name.toLowerCase())) throw new Error("NAME_TAKEN");
     this.state.members.push({ id: playerId, name, tokenHash, joinedAt: now, lastSequence: 0 });
@@ -145,8 +170,10 @@ export class RoomEngine {
     let message = "";
     if (command.op === "restart") message = this.restart(playerId, command.config, now);
     else if (command.op === "dig") message = this.dig(playerId, command, now);
+    else if (command.op === "chord") message = this.chord(playerId, command, now);
     else if (command.op === "flag") message = this.flag(playerId, command, now);
     else if (command.op === "chat") message = this.chat(playerId, command.content, now);
+    else if (command.op === "rewind") message = this.rewind(playerId, now);
     else if (command.op === "watch_ad") message = this.watchAd(playerId, now);
     else if (command.op === "end_game") message = this.endGame(playerId, now);
     else if (command.op === "sync") message = "同步完成";
@@ -169,9 +196,38 @@ export class RoomEngine {
     this.state.flags = [];
     this.state.pendingMine = null;
     this.state.reviveEndsAt = null;
+    this.state.reviveStartedBy = null;
     this.state.startedAt = null;
     this.addActivity("restarted", { name: member.name }, now);
     return "矩阵已重新初始化";
+  }
+
+  triggerMine(playerId, index, now) {
+    this.state.phase = "revive";
+    this.state.pendingMine = index;
+    this.state.reviveEndsAt = null;
+    this.state.reviveStartedBy = null;
+    this.addActivity("mineTriggered", { name: this.member(playerId).name }, now);
+    return "触发地雷";
+  }
+
+  revealSafeCells(startIndexes, mineSet) {
+    const queue = [...startIndexes];
+    while (queue.length) {
+      const current = queue.shift();
+      if (this.state.revealed[current] !== undefined || this.state.flags.includes(current) || mineSet.has(current)) continue;
+      const count = mineCountAround(this.state.config, mineSet, current);
+      this.state.revealed[current] = count;
+      if (count === 0) queue.push(...neighbors(this.state.config, current));
+    }
+  }
+
+  checkWin(now) {
+    const safeCells = this.state.config.width * this.state.config.height * this.state.config.depth - this.state.config.mineCount;
+    if (Object.keys(this.state.revealed).length !== safeCells) return false;
+    this.state.phase = "won";
+    this.addActivity("won", {}, now);
+    return true;
   }
 
   dig(playerId, point, now) {
@@ -180,34 +236,47 @@ export class RoomEngine {
     const index = indexOf(this.state.config, point.x, point.y, point.z);
     if (this.state.flags.includes(index) || this.state.revealed[index] !== undefined) return "方块没有变化";
     if (this.state.phase === "ready") {
-      this.state.mines = createMines(this.state.config, index, this.random);
+      const tutorialMines = this.state.mode === "solo" && isBeginnerTutorialConfig(this.state.config)
+        ? beginnerTutorialMineIndexes(this.state.config)
+        : null;
+      this.state.mines = tutorialMines && !tutorialMines.includes(index)
+        ? tutorialMines
+        : createMines(this.state.config, index, this.random);
       this.state.phase = "playing";
       this.state.startedAt = now;
     }
     const mineSet = new Set(this.state.mines);
     const member = this.member(playerId);
-    if (mineSet.has(index)) {
-      this.state.phase = "revive";
-      this.state.pendingMine = index;
-      this.state.reviveEndsAt = null;
-      this.addActivity("mineTriggered", { name: member.name }, now);
-      return "触发地雷";
-    }
-    const queue = [index];
-    while (queue.length) {
-      const current = queue.shift();
-      if (this.state.revealed[current] !== undefined || this.state.flags.includes(current) || mineSet.has(current)) continue;
-      const count = mineCountAround(this.state.config, mineSet, current);
-      this.state.revealed[current] = count;
-      if (count === 0) queue.push(...neighbors(this.state.config, current));
-    }
+    if (mineSet.has(index)) return this.triggerMine(playerId, index, now);
+    this.revealSafeCells([index], mineSet);
     this.addActivity("dug", { name: member.name }, now);
-    const safeCells = this.state.config.width * this.state.config.height * this.state.config.depth - this.state.config.mineCount;
-    if (Object.keys(this.state.revealed).length === safeCells) {
-      this.state.phase = "won";
-      this.addActivity("won", {}, now);
-    }
+    this.checkWin(now);
     return "挖掘完成";
+  }
+
+  chord(playerId, point, now) {
+    if (this.state.phase !== "playing") throw new Error("WRONG_PHASE");
+    if (!validPoint(this.state.config, point)) throw new Error("INVALID_CELL");
+    const index = indexOf(this.state.config, point.x, point.y, point.z);
+    const clue = this.state.revealed[index];
+    if (clue === undefined) return "数字没有展开";
+
+    const adjacent = neighbors(this.state.config, index);
+    const flagSet = new Set(this.state.flags);
+    const flaggedAround = adjacent.filter((neighbor) => flagSet.has(neighbor)).length;
+    if (flaggedAround !== clue) return "相邻标记数不匹配";
+
+    const candidates = adjacent.filter((neighbor) => !flagSet.has(neighbor) && this.state.revealed[neighbor] === undefined);
+    if (!candidates.length) return "周围没有可展开方块";
+
+    const mineSet = new Set(this.state.mines);
+    const triggeredMine = candidates.find((candidate) => mineSet.has(candidate));
+    if (triggeredMine !== undefined) return this.triggerMine(playerId, triggeredMine, now);
+
+    this.revealSafeCells(candidates, mineSet);
+    this.addActivity("chorded", { name: this.member(playerId).name }, now);
+    this.checkWin(now);
+    return "快速展开完成";
   }
 
   flag(playerId, point, now) {
@@ -230,17 +299,29 @@ export class RoomEngine {
     return "消息已发送";
   }
 
+  rewind(playerId, now) {
+    if (this.state.mode !== "solo" || this.state.phase !== "revive" || this.state.pendingMine === null) throw new Error("WRONG_PHASE");
+    this.state.phase = "playing";
+    this.state.pendingMine = null;
+    this.state.reviveEndsAt = null;
+    this.state.reviveStartedBy = null;
+    this.addActivity("rewound", { name: this.member(playerId).name }, now);
+    return "已回溯到踩雷前一步";
+  }
+
   watchAd(playerId, now) {
-    if (this.state.phase !== "revive" || this.state.reviveEndsAt !== null) throw new Error("WRONG_PHASE");
+    if (this.state.mode !== "squad" || this.state.phase !== "revive" || this.state.reviveEndsAt !== null) throw new Error("WRONG_PHASE");
     this.state.reviveEndsAt = now + 10_000;
+    this.state.reviveStartedBy = playerId;
     this.addActivity("reviveStarted", { name: this.member(playerId).name }, now);
     return "量子回溯已启动";
   }
 
   endGame(playerId, now) {
-    if (this.state.phase !== "revive") throw new Error("WRONG_PHASE");
+    if (this.state.mode !== "squad" || this.state.phase !== "revive") throw new Error("WRONG_PHASE");
     this.state.phase = "lost";
     this.state.reviveEndsAt = null;
+    this.state.reviveStartedBy = null;
     this.addActivity("gaveUp", { name: this.member(playerId).name }, now);
     return "矩阵已崩溃";
   }
@@ -250,6 +331,7 @@ export class RoomEngine {
       this.state.phase = "playing";
       this.state.pendingMine = null;
       this.state.reviveEndsAt = null;
+      this.state.reviveStartedBy = null;
       this.addActivity("revived", {}, now);
       this.touch(now);
       return true;
@@ -274,16 +356,25 @@ export class RoomEngine {
   snapshot(now = Date.now(), connectedIds = new Set()) {
     const config = this.state.config;
     const revealed = Object.entries(this.state.revealed).map(([index, count]) => publicCell(config, Number(index), count));
+    const reviveStarter = this.member(this.state.reviveStartedBy);
+    const isGuidedBeginner = this.state.mode === "solo" && isBeginnerTutorialConfig(config);
+    const tutorialMineIndexes = isGuidedBeginner
+      ? (this.state.mines.length ? this.state.mines : beginnerTutorialMineIndexes(config))
+      : [];
     return {
       code: this.state.code,
+      mode: this.state.mode,
       revision: this.state.revision,
       config: { ...config },
       phase: this.state.phase,
       revealed,
       flags: this.state.flags.map((index) => pointOf(config, index)),
       mines: this.state.phase === "lost" ? this.state.mines.map((index) => pointOf(config, index)) : [],
+      tutorialStart: isGuidedBeginner ? { ...BEGINNER_TUTORIAL_START } : null,
+      tutorialMines: tutorialMineIndexes.map((index) => pointOf(config, index)),
       pendingMine: this.state.pendingMine === null ? null : pointOf(config, this.state.pendingMine),
       reviveEndsAt: this.state.reviveEndsAt,
+      reviveStartedBy: reviveStarter ? { id: reviveStarter.id, name: reviveStarter.name } : null,
       startedAt: this.state.startedAt,
       players: this.state.members.map((member) => ({ id: member.id, name: member.name, isHost: member.id === this.state.hostId, connected: connectedIds.has(member.id) })),
       chat: structuredClone(this.state.chat),
