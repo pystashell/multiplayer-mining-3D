@@ -1,6 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { normalizeLanguage, randomNickname, translate } from '../public/i18n.js';
+
+const publicCopySource = [
+  readFileSync(new URL('../public/i18n.js', import.meta.url), 'utf8'),
+  readFileSync(new URL('../public/index.html', import.meta.url), 'utf8'),
+  readFileSync(new URL('../worker/room-engine.js', import.meta.url), 'utf8'),
+].join('\n');
+const internalProtocolSource = [
+  readFileSync(new URL('../public/app.js', import.meta.url), 'utf8'),
+  readFileSync(new URL('../worker/room-engine.js', import.meta.url), 'utf8'),
+].join('\n');
 
 test('selects Chinese only for Chinese browser language tags', () => {
   assert.equal(normalizeLanguage('zh-CN'), 'zh');
@@ -9,9 +20,82 @@ test('selects Chinese only for Chinese browser language tags', () => {
   assert.equal(normalizeLanguage('ja-JP'), 'en');
 });
 
-test('uses Zero Domain Protocol as the game title', () => {
-  assert.equal(translate('zh', 'document.title'), '零域协议 | 银狼先遣任务');
-  assert.equal(translate('en', 'document.title'), 'Zero Domain Protocol | Silver Wolf Pathfinder');
+test('uses the Sector Purge version title', () => {
+  assert.equal(translate('zh', 'document.title'), '零域协议：区块清除 | 银狼任务');
+  assert.equal(translate('en', 'document.title'), 'Zero Domain Protocol: Sector Purge | Silver Wolf');
+  assert.match(translate('zh', 'purge.tutorialMessage'), /实体孤岛.*正确标雷.*重算周围所有数字/);
+  assert.match(translate('zh', 'purge.tutorialFact'), /数字降到 0 时会隐藏.*自动向周围连锁展开安全格.*大于 0 就保留并更新/);
+  assert.match(translate('en', 'purge.tutorialMessage'), /solid island.*correctly flagged mine.*recalculate every affected clue/i);
+  assert.match(translate('en', 'purge.tutorialFact'), /drops to 0.*automatically cascades into surrounding safe cells.*above 0 stays visible/i);
+});
+
+test('explains the campaign, hidden Ultimate chapter, and independent Free Mode features', () => {
+  assert.equal(translate('zh', 'settings.mediumMeta'), '5x5x5 (10雷)');
+  assert.equal(translate('zh', 'settings.hardMeta'), '7x7x7 (30雷)');
+  assert.equal(translate('en', 'settings.mediumMeta'), '5x5x5 (10 mines)');
+  assert.equal(translate('en', 'settings.hardMeta'), '7x7x7 (30 mines)');
+  assert.match(translate('zh', 'task.hard.brief.1'), /三十个反制节点/);
+  assert.match(translate('en', 'task.hard.brief.1'), /thirty countermeasures/i);
+  assert.match(translate('zh', 'lobby.task.easyMeta'), /经典扫描/);
+  assert.match(translate('zh', 'lobby.task.mediumMeta'), /孤立区块清除/);
+  assert.match(translate('zh', 'lobby.task.hardMeta'), /熵域压缩/);
+  assert.match(translate('zh', 'reduction.tutorialMessage'), /未展开方块.*熵域压缩.*删除这颗雷.*原格.*周围相关数字.*剩余雷数/);
+  assert.match(translate('zh', 'reduction.tutorialFact'), /不需要先插旗.*数字.*自动开启.*未展开方块.*熵域压缩.*挖掘模式.*雷格.*新数字.*为 0.*向外扩展/);
+  assert.equal(translate('zh', 'lobby.task.freeplay'), '自由模式');
+  assert.equal(translate('en', 'lobby.task.freeplay'), 'Free Mode');
+  assert.equal(translate('zh', 'lobby.task.startFreeplay'), '进入自由模式');
+  assert.equal(translate('en', 'lobby.task.startFreeplay'), 'Enter Free Mode');
+  assert.equal(translate('zh', 'lobby.task.freeplayBadge'), 'FREE MODE');
+  assert.match(translate('zh', 'task.hard.complete.2'), /基础扫描.*区块清除.*熵域压缩.*权限表之外.*回声/);
+  assert.match(translate('en', 'task.hard.complete.2'), /Classic Scan.*Sector Purge.*Entropy-Field Compression.*echo.*permission table/i);
+  assert.match(translate('zh', 'task.ultimate.brief.fact'), /9×9×9.*729 节点.*60 雷.*无大厅入口/);
+  assert.match(translate('en', 'task.ultimate.brief.fact'), /9×9×9.*729 NODES.*60 MINES.*NO LOBBY ENTRY/i);
+  assert.match(translate('zh', 'task.ultimate.complete.2'), /战役.*真正结束.*成功路线.*自由模式.*终极骇客/);
+  assert.match(translate('en', 'task.ultimate.complete.2'), /campaign.*complete.*successful route.*Free Mode.*Ultimate Hack/i);
+  assert.match(translate('zh', 'lobby.task.freeplayBrief'), /选择矩阵规模.*经典扫描.*始终启用.*两个 Add-on.*默认全开.*游戏后.*调整/);
+  assert.match(translate('en', 'lobby.task.freeplayBrief'), /Choose a matrix size.*Classic Scan.*active.*both add-ons.*enabled.*adjust.*in-game/i);
+
+  const zhCompletion = translate('zh', 'freeplay.completeMessage');
+  const enCompletion = translate('en', 'freeplay.completeMessage');
+  assert.match(zhCompletion, /漂亮.*整个矩阵.*清空.*赢得很干净/);
+  assert.match(enCompletion, /Nice.*entire matrix.*clear.*clean run/i);
+  assert.doesNotMatch(zhCompletion, /Add-on|经典扫描|区块清除|熵域压缩/);
+  assert.doesNotMatch(enCompletion, /add-on|Classic Scan|Sector Purge|Entropy-Field Compression/i);
+  assert.ok(zhCompletion.length <= 40, 'Chinese Free Mode congratulations should stay brief');
+  assert.ok(enCompletion.length <= 80, 'English Free Mode congratulations should stay brief');
+
+  assert.equal(
+    translate('zh', 'tutorial.completionFact', { time: '01:23' }),
+    '攻略用时：01:23  //  解密进度：100%',
+  );
+  assert.equal(
+    translate('en', 'tutorial.completionFact', { time: '01:23' }),
+    'BREACH TIME: 01:23  //  DECRYPTION: 100%',
+  );
+  assert.match(translate('en', 'reduction.tutorialFact'), /No flag is required.*Numbers auto-open.*unopened cells apply Entropy-Field Compression.*Dig Mode.*removed mine cell.*new clue.*recursively opens/i);
+  assert.equal(translate('zh', 'settings.features'), '演算协议 Add-ons');
+  assert.equal(translate('en', 'settings.features'), 'Protocol Add-ons');
+  assert.equal(translate('zh', 'feature.autoPurge'), '区块清除');
+  assert.equal(translate('zh', 'feature.autoPurgeHint'), '自动消除完整标记的孤立雷区');
+  assert.equal(translate('en', 'feature.autoPurge'), 'Sector Purge');
+  assert.match(translate('en', 'feature.autoPurgeHint'), /Automatically clear.*isolated mine sectors/i);
+  assert.equal(translate('zh', 'feature.reduction'), '熵域压缩');
+  assert.match(translate('zh', 'feature.reductionHint'), /直接判断并消除.*未开启雷格/);
+  assert.equal(translate('en', 'feature.reduction'), 'Entropy-Field Compression');
+  assert.match(translate('en', 'feature.reductionHint'), /unopened cell deduced to be a mine/i);
+  assert.equal(translate('zh', 'tutorial.enterFreeplay'), '进入自由模式');
+  assert.equal(translate('en', 'tutorial.enterFreeplay'), 'Enter Free Mode');
+});
+
+test('uses the new public compression name everywhere while preserving internal protocol identifiers', () => {
+  assert.match(publicCopySource, /熵域压缩/);
+  assert.match(publicCopySource, /Entropy-Field Compression/);
+  assert.doesNotMatch(publicCopySource, /动态化简/);
+  assert.doesNotMatch(publicCopySource, /Dynamic Reduction/i);
+
+  assert.match(internalProtocolSource, /ruleset:\s*'reduction'/);
+  assert.match(internalProtocolSource, /reduction:\s*true/);
+  assert.match(internalProtocolSource, /op:\s*'reduce'/);
 });
 
 test('builds localized computer-themed nicknames from random parts', () => {
@@ -59,17 +143,32 @@ test('introduces right-click number inspection as Silver Wolf\'s medium mission 
   assert.match(translate('zh', 'tutorial.inspect'), /按住右键.*松开右键/);
   assert.match(translate('zh', 'tutorial.actionHint.inspect'), /按住右键/);
   assert.match(translate('en', 'tutorial.inspect'), /Hold right-click.*release/i);
-  assert.match(translate('zh', 'task.medium.brief.2'), /切片.*右键.*相邻区域/);
+  assert.match(translate('zh', 'task.medium.brief.2'), /右键.*相邻区域.*问我下一步.*外围.*推理/);
+  assert.match(translate('en', 'task.medium.brief.2'), /right-click.*neighborhood.*ask me.*edge-first deductions/i);
+  assert.doesNotMatch(translate('zh', 'task.medium.brief.2'), /切片/);
+  assert.doesNotMatch(translate('en', 'task.medium.brief.2'), /\bslices?\b/i);
   assert.doesNotMatch(translate('zh', 'task.medium.brief.2'), /十五|X、Y、Z/);
   assert.doesNotMatch(translate('zh', 'task.medium.brief.fact'), /15|反制节点/);
 });
 
-test('teaches slice visibility in intermediate but keeps it out of beginner copy', () => {
+test('keeps slice controls localized without any proactive slice tutorial copy', () => {
   assert.equal(translate('zh', 'mobile.slices'), '切片');
-  assert.match(translate('zh', 'tutorial.slice'), /5×5×5.*桌面.*顶部.*手机.*底部.*切片/);
-  assert.match(translate('zh', 'tutorial.sliceFact'), /缩小至少一层.*不改变雷阵/);
-  assert.match(translate('zh', 'tutorial.sliceReset'), /显示全部.*不会.*改变/);
-  assert.match(translate('en', 'tutorial.actionHint.slice'), /top slice panel.*bottom dock.*Narrow/i);
+  assert.equal(translate('zh', 'slice.title'), '切片分析');
+  assert.equal(translate('zh', 'slice.subtitle'), '只显示所选坐标范围');
+  assert.equal(translate('zh', 'slice.reset'), '显示全部');
+  assert.equal(translate('zh', 'slice.close'), '关闭切片');
+  assert.equal(translate('en', 'mobile.slices'), 'Slices');
+  assert.equal(translate('en', 'slice.title'), 'SLICE ANALYSIS');
+  assert.equal(translate('en', 'slice.reset'), 'Show All');
+  assert.equal(translate('en', 'slice.close'), 'Close slices');
+  for (const key of [
+    'tutorial.sliceTitle', 'tutorial.slice', 'tutorial.sliceFact', 'tutorial.trySlice',
+    'tutorial.sliceResetTitle', 'tutorial.sliceReset', 'tutorial.sliceResetFact', 'tutorial.trySliceReset',
+    'tutorial.actionHint.slice', 'tutorial.actionHint.sliceReset',
+  ]) {
+    assert.equal(translate('zh', key), key);
+    assert.equal(translate('en', key), key);
+  }
   for (const key of ['tutorial.intro', 'tutorial.neighbors', 'tutorial.guided', 'tutorial.guidedFact']) {
     assert.doesNotMatch(translate('zh', key), /切片/);
     assert.doesNotMatch(translate('en', key), /\bslices?\b/i);
@@ -97,13 +196,13 @@ test('teaches exact medium hint deductions and labels guesses honestly', () => {
 });
 
 test('provides mobile touch controls and long-press guidance', () => {
-  assert.match(translate('zh', 'mobile.touchHint'), /双击数字快速展开/);
+  assert.match(translate('zh', 'mobile.touchHint'), /双击数字自动开启.*挖掘模式双击未展开方块.*熵域压缩/);
   assert.match(translate('zh', 'mobile.touchHint'), /长按数字.*单指.*双指/);
   assert.match(translate('zh', 'tutorial.inspect'), /手机长按数字/);
   assert.match(translate('zh', 'tutorial.mark'), /手机.*标记模式.*轻触/);
-  assert.match(translate('zh', 'guide.chord'), /同时按左右键.*手机双击数字.*标错会踩雷/);
-  assert.match(translate('en', 'mobile.touchHint'), /Double-tap a number.*Long-press.*One finger.*Two fingers/i);
-  assert.match(translate('en', 'guide.chord'), /both mouse buttons.*double-tap the number.*wrong flags/i);
+  assert.match(translate('zh', 'guide.chord'), /数字.*同时按左右键.*手机双击.*开启熵域压缩.*未展开方块.*挖掘模式.*双击.*判断错误.*失败/);
+  assert.match(translate('en', 'mobile.touchHint'), /Double-tap a number.*Dig Mode.*double-tap an unopened cell.*Entropy-Field Compression.*Long-press.*One finger.*Two fingers/i);
+  assert.match(translate('en', 'guide.chord'), /Clue.*both mouse buttons.*Entropy-Field Compression.*enabled.*unopened cell.*Dig Mode.*wrong deduction fails/i);
   assert.match(translate('en', 'tutorial.inspect'), /long-press.*mobile/i);
 });
 

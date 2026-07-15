@@ -110,7 +110,7 @@ test('returns an explicit fixed-rule guess when exact enumeration exceeds its bu
 
 test('uses an easy-to-tap outer corner as the protected first medium-board hint', () => {
   const hint = solveMinesweeperHint({
-    width: 5, height: 5, depth: 5, mineCount: 15, phase: 'ready', revealed: [], flags: [],
+    width: 5, height: 5, depth: 5, mineCount: 10, phase: 'ready', revealed: [], flags: [],
   });
   assert.equal(hint.rule, 'first-move');
   assert.deepEqual(hint.target, { x: 4, y: 4, z: 4 });
@@ -118,9 +118,23 @@ test('uses an easy-to-tap outer corner as the protected first medium-board hint'
 
 test('supports the advanced 7x7x7 mission and starts from an outer corner', () => {
   const hint = solveMinesweeperHint({
-    width: 7, height: 7, depth: 7, mineCount: 45, phase: 'ready', revealed: [], flags: [],
+    width: 7, height: 7, depth: 7, mineCount: 30, phase: 'ready', revealed: [], flags: [],
   });
   assert.equal(hint.rule, 'first-move');
   assert.equal(hint.certainty, 'certain');
   assert.deepEqual(hint.target, { x: 6, y: 6, z: 6 });
+});
+
+test('never suggests a cell that has already been removed by sector purge', () => {
+  const hint = solveMinesweeperHint({
+    width: 2,
+    height: 2,
+    depth: 1,
+    mineCount: 1,
+    phase: 'playing',
+    revealed: [],
+    flags: [],
+    excluded: [{ x: 1, y: 1, z: 0 }],
+  });
+  assert.notDeepEqual(hint.target, { x: 1, y: 1, z: 0 });
 });

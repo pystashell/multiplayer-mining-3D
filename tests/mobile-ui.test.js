@@ -27,12 +27,18 @@ test('uses a five-button mobile dock with slices and an anchored guided-cell poi
   assert.match(appSource, /guidedCalloutSafeBounds\(board\)/);
 });
 
-test('supports desktop two-button chord and mobile clue double-tap', () => {
-  assert.match(appSource, /addEventListener\('mousedown',[\s\S]*\(e\.buttons & 3\) !== 3[\s\S]*this\.chordAtPointer\(e\)/);
+test('separates number auto-open from direct cell reduction on desktop and mobile', () => {
+  assert.match(appSource, /addEventListener\('mousedown',[\s\S]*\(e\.buttons & 3\) !== 3[\s\S]*this\.handleTwoButtonActionAtPointer\(e\)/);
   assert.match(appSource, /mobileDoubleTapMs = 450/);
   assert.match(appSource, /handleMobileNumberTap\(x, y, z\)[\s\S]*previous\.x === x[\s\S]*now - previous\.at <= this\.mobileDoubleTapMs[\s\S]*this\.chord\(x, y, z\)/);
   assert.match(appSource, /event\.pointerType === 'touch' && topObject\.userData\.type === 'number'[\s\S]*this\.handleMobileNumberTap\(x, y, z\)/);
+  assert.match(appSource, /mobileReductionDoubleTapMs = 320/);
+  assert.match(appSource, /handleMobileDigModeTap\(x, y, z\)[\s\S]*sameCell[\s\S]*this\.reduceCell\(x, y, z\)[\s\S]*this\.dig\(x, y, z\)/);
+  assert.match(appSource, /event\.pointerType === 'touch'[\s\S]*this\.activeMode === 'dig'[\s\S]*this\.reductionEnabled[\s\S]*this\.handleMobileDigModeTap\(x, y, z\)/);
+  assert.match(appSource, /handleTwoButtonActionAtPointer\(event\)[\s\S]*type === 'number'[\s\S]*this\.chord\(x, y, z\)[\s\S]*this\.reductionEnabled[\s\S]*!cell\.isRevealed[\s\S]*this\.reduceCell\(x, y, z\)/);
+  assert.doesNotMatch(appSource, /this\.ruleset === 'reduction'/);
   assert.match(appSource, /this\.roomClient\.send\(\{ op: 'chord', x, y, z \}\)/);
+  assert.match(appSource, /this\.roomClient\.send\(\{ op: 'reduce', x, y, z \}\)/);
 });
 
 test('stacks the tutorial action above the solver hint and mobile dock', () => {

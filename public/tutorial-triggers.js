@@ -25,6 +25,7 @@ export function findChordOpportunity(snapshot) {
 
   const revealedKeys = new Set(snapshot.revealed.map(pointKey));
   const flagKeys = new Set(snapshot.flags.map(pointKey));
+  const purgedKeys = new Set((snapshot.purged || []).map(pointKey));
 
   for (const clue of snapshot.revealed) {
     if (!Number.isInteger(clue.count) || clue.count <= 0) continue;
@@ -32,7 +33,7 @@ export function findChordOpportunity(snapshot) {
     const flaggedAround = neighbors.filter(point => flagKeys.has(pointKey(point))).length;
     const hiddenAround = neighbors.filter((point) => {
       const key = pointKey(point);
-      return !revealedKeys.has(key) && !flagKeys.has(key);
+      return !purgedKeys.has(key) && !revealedKeys.has(key) && !flagKeys.has(key);
     }).length;
     if (flaggedAround === clue.count && hiddenAround > 0) {
       return { x: clue.x, y: clue.y, z: clue.z, count: clue.count, hiddenAround };

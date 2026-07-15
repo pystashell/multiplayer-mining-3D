@@ -21,7 +21,70 @@ test('normalizes three-dimensional boards and enforces the 60 percent mine limit
     height: 2,
     depth: 4,
     mineCount: 72,
+    ruleset: 'classic',
+    autoPurge: false,
+    reduction: false,
+    campaign: false,
   });
+});
+
+test('normalizes Auto-Purge and Reduction independently while preserving legacy rulesets', () => {
+  const featureState = (value) => {
+    const normalized = normalizeConfig({
+      width: 3,
+      height: 3,
+      depth: 3,
+      mineCount: 3,
+      ...value,
+    });
+    return {
+      ruleset: normalized.ruleset,
+      autoPurge: normalized.autoPurge,
+      reduction: normalized.reduction,
+    };
+  };
+
+  assert.deepEqual(featureState({ ruleset: 'classic', autoPurge: false, reduction: false }), {
+    ruleset: 'classic', autoPurge: false, reduction: false,
+  });
+  assert.deepEqual(featureState({ ruleset: 'classic', autoPurge: true, reduction: false }), {
+    ruleset: 'sector', autoPurge: true, reduction: false,
+  });
+  assert.deepEqual(featureState({ ruleset: 'classic', autoPurge: false, reduction: true }), {
+    ruleset: 'reduction', autoPurge: false, reduction: true,
+  });
+  assert.deepEqual(featureState({ ruleset: 'classic', autoPurge: true, reduction: true }), {
+    ruleset: 'reduction', autoPurge: true, reduction: true,
+  });
+
+  assert.deepEqual(featureState({ ruleset: 'classic' }), {
+    ruleset: 'classic', autoPurge: false, reduction: false,
+  });
+  assert.deepEqual(featureState({ ruleset: 'sector' }), {
+    ruleset: 'sector', autoPurge: true, reduction: false,
+  });
+  assert.deepEqual(featureState({ ruleset: 'reduction' }), {
+    ruleset: 'reduction', autoPurge: true, reduction: true,
+  });
+});
+
+test('restores a legacy Reduction room with both advanced features enabled', () => {
+  const state = createEngine().serialize();
+  state.config = {
+    width: 7,
+    height: 7,
+    depth: 7,
+    mineCount: 30,
+    ruleset: 'reduction',
+    campaign: true,
+  };
+
+  const restored = RoomEngine.restore(state);
+  assert.equal(restored.state.config.ruleset, 'reduction');
+  assert.equal(restored.state.config.autoPurge, true);
+  assert.equal(restored.state.config.reduction, true);
+  assert.equal(restored.snapshot().sectorPurgeEnabled, true);
+  assert.equal(restored.snapshot().reductionEnabled, true);
 });
 
 test('keeps mines private, guarantees the first cell is safe, and reveals mines only after loss', () => {
@@ -44,6 +107,23 @@ test('keeps mines private, guarantees the first cell is safe, and reveals mines 
   assert.equal(engine.snapshot().mines.length, 3);
 });
 
+test('publishes recursive dig cells as ordered reveal waves', () => {
+  const engine = createEngine();
+  engine.state.config = { width: 3, height: 3, depth: 3, mineCount: 1, ruleset: 'classic', campaign: false };
+  engine.state.phase = 'playing';
+  engine.state.mines = [26];
+  engine.state.revealed = {};
+  engine.state.flags = [];
+  engine.state.startedAt = 900;
+
+  apply(engine, 1, { op: 'dig', x: 0, y: 0, z: 0 });
+
+  const reveal = engine.snapshot().lastReveal;
+  assert.equal(reveal.kind, 'dig');
+  assert.equal(reveal.opened.find((cell) => cell.x === 0 && cell.y === 0 && cell.z === 0)?.wave, 0);
+  assert.equal(reveal.opened.find((cell) => cell.x === 2 && cell.y === 2 && cell.z === 1)?.wave, 2);
+});
+
 test('chords every unflagged neighbor when the adjacent flag count matches the clue', () => {
   const engine = createEngine();
   engine.state.config = { width: 3, height: 3, depth: 3, mineCount: 1 };
@@ -55,10 +135,30 @@ test('chords every unflagged neighbor when the adjacent flag count matches the c
 
   apply(engine, 1, { op: 'chord', x: 1, y: 1, z: 1 });
 
+  const snapshot = engine.snapshot();
   assert.equal(engine.state.phase, 'won');
-  assert.equal(Object.keys(engine.state.revealed).length, 26);
+  assert.equal(snapshot.revealed.length + snapshot.purgedSafeCount, 26);
   assert.equal(engine.state.pendingMine, null);
   assert.equal(engine.state.activity.some((entry) => entry.key === 'chorded'), true);
+  assert.equal(engine.state.activity.some((entry) => entry.key === 'sectorPurged'), false);
+  assert.deepEqual(snapshot.flags, [{ x: 0, y: 0, z: 0 }]);
+});
+
+test('publishes chord candidates as one fast first wave before recursive expansion', () => {
+  const engine = createEngine();
+  engine.state.config = { width: 5, height: 5, depth: 5, mineCount: 1, ruleset: 'classic', campaign: false };
+  engine.state.phase = 'playing';
+  engine.state.mines = [31];
+  engine.state.revealed = { 62: 1 };
+  engine.state.flags = [31];
+  engine.state.startedAt = 900;
+
+  apply(engine, 1, { op: 'chord', x: 2, y: 2, z: 2 });
+
+  const reveal = engine.snapshot().lastReveal;
+  assert.equal(reveal.kind, 'chord');
+  assert.equal(reveal.opened.find((cell) => cell.x === 3 && cell.y === 3 && cell.z === 3)?.wave, 0);
+  assert.equal(reveal.opened.find((cell) => cell.x === 4 && cell.y === 4 && cell.z === 4)?.wave, 1);
 });
 
 test('does nothing when a chord clue does not have the same number of adjacent flags', () => {
@@ -90,6 +190,7 @@ test('triggers a mine without revealing safe neighbors when chord flags are wron
 
   assert.equal(engine.state.phase, 'revive');
   assert.equal(engine.state.pendingMine, 0);
+  assert.equal(engine.state.pendingFailureKind, 'mine');
   assert.deepEqual(engine.state.revealed, { 13: 1 });
   assert.deepEqual(engine.state.flags, [1]);
 });
@@ -120,6 +221,7 @@ test('persists an ad revival deadline and advances it authoritatively', () => {
   assert.equal(restored.advance(12_200), true);
   assert.equal(restored.state.phase, 'playing');
   assert.equal(restored.state.pendingMine, null);
+  assert.equal(restored.state.pendingFailureKind, null);
   assert.equal(restored.snapshot().reviveStartedBy, null);
 });
 
@@ -128,7 +230,7 @@ test('task rewind only undoes the mine hit and preserves the current minefield',
     code: 'SOLO24', hostId: 'host', hostName: 'Host', tokenHash: 'hash', mode: 'solo', now: 1_000,
   });
   engine.random = () => 0;
-  apply(engine, 1, { op: 'restart', config: { width: 3, height: 3, depth: 3, mineCount: 3 } });
+  apply(engine, 1, { op: 'restart', config: { width: 3, height: 3, depth: 3, mineCount: 3, ruleset: 'classic', campaign: true } });
   apply(engine, 2, { op: 'dig', x: 1, y: 1, z: 1 });
   const mine = engine.state.mines[0];
   const point = { x: Math.floor(mine / 9), y: Math.floor((mine % 9) / 3), z: mine % 3 };
@@ -148,11 +250,12 @@ test('task rewind only undoes the mine hit and preserves the current minefield',
   apply(engine, 7, { op: 'rewind' });
   assert.equal(engine.state.phase, 'playing');
   assert.equal(engine.state.pendingMine, null);
+  assert.equal(engine.state.pendingFailureKind, null);
   assert.deepEqual(engine.state.mines, minesBefore);
   assert.deepEqual(engine.state.revealed, revealedBefore);
   assert.deepEqual(engine.state.flags, flagsBefore);
 
-  apply(engine, 8, { op: 'restart', config: { width: 3, height: 3, depth: 3, mineCount: 3 } });
+  apply(engine, 8, { op: 'restart', config: { width: 3, height: 3, depth: 3, mineCount: 3, ruleset: 'classic', campaign: true } });
   assert.equal(engine.state.phase, 'ready');
   assert.deepEqual(engine.state.mines, []);
   assert.deepEqual(engine.state.revealed, {});
@@ -195,10 +298,11 @@ test('uses a fixed solution only for the guided beginner mission', () => {
   const solo = RoomEngine.create({
     code: 'SOLO24', hostId: 'host', hostName: 'Host', tokenHash: 'hash', mode: 'solo', now: 1_000,
   });
+  apply(solo, 1, { op: 'restart', config: { width: 3, height: 3, depth: 3, mineCount: 3, ruleset: 'classic', campaign: true } });
   assert.deepEqual(solo.snapshot().tutorialStart, BEGINNER_TUTORIAL_START);
   assert.deepEqual(solo.snapshot().tutorialMines, BEGINNER_TUTORIAL_MINES);
 
-  apply(solo, 1, { op: 'dig', ...BEGINNER_TUTORIAL_START });
+  apply(solo, 2, { op: 'dig', ...BEGINNER_TUTORIAL_START });
   assert.deepEqual(solo.snapshot().tutorialMines, BEGINNER_TUTORIAL_MINES);
   const startIndex = (BEGINNER_TUTORIAL_START.x * 3 + BEGINNER_TUTORIAL_START.y) * 3 + BEGINNER_TUTORIAL_START.z;
   assert.equal(solo.state.mines.includes(startIndex), false);
@@ -218,7 +322,7 @@ test('uses a fixed solution only for the guided beginner mission', () => {
   assert.equal(squad.snapshot().tutorialStart, null);
   assert.deepEqual(squad.snapshot().tutorialMines, []);
 
-  apply(solo, 2, { op: 'restart', config: { width: 5, height: 5, depth: 5, mineCount: 15 } });
+  apply(solo, 3, { op: 'restart', config: { width: 5, height: 5, depth: 5, mineCount: 10, ruleset: 'sector', campaign: true } });
   assert.equal(solo.snapshot().tutorialStart, null);
   assert.deepEqual(solo.snapshot().tutorialMines, []);
 });
@@ -227,6 +331,7 @@ test('the fixed beginner route safely guides the player through the full board',
   const solo = RoomEngine.create({
     code: 'SOLO24', hostId: 'host', hostName: 'Host', tokenHash: 'hash', mode: 'solo', now: 1_000,
   });
+  apply(solo, 1, { op: 'restart', config: { width: 3, height: 3, depth: 3, mineCount: 3, ruleset: 'classic', campaign: true } });
   const guidedCommands = [
     { op: 'dig', ...BEGINNER_TUTORIAL_START },
     { op: 'flag', x: 0, y: 0, z: 0 },
@@ -238,7 +343,7 @@ test('the fixed beginner route safely guides the player through the full board',
     { op: 'dig', x: 1, y: 2, z: 2 },
   ];
   guidedCommands.forEach((command, index) => {
-    apply(solo, index + 1, command);
+    apply(solo, index + 2, command);
     assert.notEqual(solo.state.phase, 'revive');
   });
 

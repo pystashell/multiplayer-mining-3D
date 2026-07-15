@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>零域协议 | Silver Wolf Pathfinder</title>
-  <meta name="description" content="跟随银狼进入量子之海，为星核猎手建立安全航道的多人 3D 探索任务。">
+  <title>Zero Domain Protocol: Sector Purge | Silver Wolf</title>
+  <meta name="description" content="在银狼的骇客矩阵中隔离雷区孤岛，确认反制节点后消除整个封闭区块。">
   <link rel="stylesheet" href="style.css">
   <!-- 引入 Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -63,7 +63,7 @@
     <aside class="panel left-panel glass" id="control-panel">
       <header class="panel-header">
         <div class="header-title-row">
-          <h1 class="logo">QUANTUM//HACK <span>SW</span></h1>
+          <h1 class="logo">ZERO//DOMAIN <span>PURGE</span></h1>
           <button id="btn-language-toggle" class="btn-secondary" style="padding:4px 7px; min-height:0; font-size:11px; flex:none;" data-i18n="language.toggle">EN</button>
         </div>
         <p class="subtitle" data-i18n="subtitle">银狼 · 量子之海先遣终端</p>
@@ -98,11 +98,37 @@
           <button id="btn-preset-easy" class="btn-preset active" data-w="3" data-h="3" data-d="3" data-m="3">
             <span data-i18n="settings.easy">初级</span><small data-i18n="settings.easyMeta">3x3x3 (3雷)</small>
           </button>
-          <button id="btn-preset-medium" class="btn-preset" data-w="5" data-h="5" data-d="5" data-m="15">
-            <span data-i18n="settings.medium">中级</span><small data-i18n="settings.mediumMeta">5x5x5 (15雷)</small>
+          <button id="btn-preset-medium" class="btn-preset" data-w="5" data-h="5" data-d="5" data-m="10">
+            <span data-i18n="settings.medium">中级</span><small data-i18n="settings.mediumMeta">5x5x5 (10雷)</small>
           </button>
-          <button id="btn-preset-hard" class="btn-preset" data-w="7" data-h="7" data-d="7" data-m="45">
-            <span data-i18n="settings.hard">高级</span><small data-i18n="settings.hardMeta">7x7x7 (45雷)</small>
+          <button id="btn-preset-hard" class="btn-preset" data-w="7" data-h="7" data-d="7" data-m="30">
+            <span data-i18n="settings.hard">高级</span><small data-i18n="settings.hardMeta">7x7x7 (30雷)</small>
+          </button>
+        </div>
+
+        <div id="ruleset-picker" class="ruleset-picker">
+          <span class="ruleset-picker-label" data-i18n="settings.features">演算协议 Add-ons</span>
+          <div class="ruleset-buttons" role="group" aria-label="演算协议 Add-ons" data-i18n-aria-label="settings.features">
+            <button class="btn-ruleset feature-toggle" data-feature="autoPurge" role="switch" aria-checked="false">
+              <span class="feature-toggle-check" aria-hidden="true"></span>
+              <span class="feature-toggle-copy"><strong data-i18n="feature.autoPurge">区块清除</strong><small data-i18n="feature.autoPurgeHint">自动消除完整标记的孤立雷区</small></span>
+            </button>
+            <button class="btn-ruleset feature-toggle" data-feature="reduction" role="switch" aria-checked="false">
+              <span class="feature-toggle-check" aria-hidden="true"></span>
+              <span class="feature-toggle-copy"><strong data-i18n="feature.reduction">熵域压缩</strong><small data-i18n="feature.reductionHint">直接判断并消除任意未开启雷格</small></span>
+            </button>
+          </div>
+        </div>
+
+        <div id="ultimate-hack-launch" class="ultimate-hack-launch hidden">
+          <div class="ultimate-hack-launch-copy">
+            <span data-i18n="ultimateHack.launchKicker">SILVER WOLF // 固定超级木马</span>
+            <strong data-i18n="ultimateHack.launchTitle">终极骇客</strong>
+            <small data-i18n="ultimateHack.launchHint">让银狼接管当前矩阵，连续执行每一步确定推理。</small>
+          </div>
+          <button id="btn-ultimate-hack-start" class="btn-ultimate-hack-start" type="button">
+            <span aria-hidden="true">⌁</span>
+            <strong id="btn-ultimate-hack-start-label" data-i18n="ultimateHack.launch">植入终极骇客</strong>
           </button>
         </div>
 
@@ -126,7 +152,7 @@
           </div>
           <div class="input-row">
             <label for="input-m" data-i18n="settings.mineCount">地雷数量:</label>
-            <input type="number" id="input-m" min="1" max="200" value="15">
+            <input type="number" id="input-m" min="1" max="200" value="10">
           </div>
         </div>
       </section>
@@ -219,7 +245,7 @@
           <li data-i18n="guide.click">左键点击: 挖掘 / 插旗</li>
           <li data-i18n="guide.flag">右键点击: 快捷插旗/取消标记</li>
           <li id="guide-inspect" data-i18n="guide.inspect">右键按住数字: 高亮全部相邻格</li>
-          <li data-i18n="guide.chord">数字周围标记数匹配时，电脑同时按左右键 / 手机双击数字: 快速展开周围</li>
+          <li data-i18n="guide.chord">数字：电脑同时按左右键 / 手机双击可自动开启；开启熵域压缩时，未展开方块可用相同电脑操作，或在手机挖掘模式下双击执行压缩</li>
           <li data-i18n="guide.keys">[D] / [F] 键: 模式切换</li>
         </ul>
       </section>
@@ -275,7 +301,7 @@
   <div id="mobile-panel-backdrop" class="mobile-only mobile-panel-backdrop"></div>
 
   <nav id="mobile-control-dock" class="mobile-only mobile-control-dock" aria-label="手机操作" data-i18n-aria-label="mobile.controlsLabel">
-    <div class="mobile-touch-hint" data-i18n="mobile.touchHint">双击数字快速展开 · 长按数字查看周围 · 单指旋转 · 双指平移缩放</div>
+    <div class="mobile-touch-hint" data-i18n="mobile.touchHint">双击数字自动开启 · 高级区挖掘模式双击未展开方块执行熵域压缩 · 长按数字查看周围 · 单指旋转 · 双指平移缩放</div>
     <div class="mobile-dock-buttons">
       <button id="btn-mobile-controls" type="button" data-mobile-panel="control-panel" data-i18n-aria-label="mobile.controls">
         <span aria-hidden="true">☰</span><small data-i18n="mobile.controls">控制</small>
@@ -314,6 +340,7 @@
       </div>
 
       <div class="modal-buttons" style="display: flex; gap: 15px; width: 100%;">
+        <button id="btn-modal-replay" class="btn-secondary replay-entry-button hidden" style="flex: 1;" data-i18n="replay.button">▶ 成功回放</button>
         <button id="btn-modal-close" class="btn-secondary" style="flex: 1;" data-i18n="result.inspect">查看战场</button>
         <button id="btn-modal-restart" class="btn-primary glow-red-box" style="flex: 1;" data-i18n="result.restart">重新初始化雷区</button>
       </div>
@@ -363,17 +390,38 @@
       </div>
 
       <div id="lobby-task-panel" class="lobby-mode-panel">
-        <div class="task-brief"><span id="task-brief-badge" data-i18n="lobby.task.easyBadge">MISSION 01</span><p id="task-brief-text" data-i18n="lobby.task.easyBrief">跟随银狼潜入量子节点，从基础扫描开始学习三维解密。</p></div>
-        <div class="task-mission-picker" role="radiogroup" aria-label="任务章节" data-i18n-aria-label="lobby.task.chapterLabel">
-          <button class="task-mission-option active" data-mission="easy" role="radio" aria-checked="true">
-            <span>01</span><div><strong data-i18n="lobby.task.easyTitle">初级 · 幻影端口</strong><small data-i18n="lobby.task.easyMeta">3×3×3 · 银狼完整教学</small></div>
-          </button>
-          <button class="task-mission-option" data-mission="medium" role="radio" aria-checked="false">
-            <span>02</span><div><strong data-i18n="lobby.task.mediumTitle">中级 · 握手迷宫</strong><small data-i18n="lobby.task.mediumMeta">5×5×5 · 追踪管理员密钥</small></div>
-          </button>
-          <button class="task-mission-option" data-mission="hard" role="radio" aria-checked="false">
-            <span>03</span><div><strong data-i18n="lobby.task.hardTitle">高级 · 终末协议</strong><small data-i18n="lobby.task.hardMeta">7×7×7 · 攻破最终防火墙</small></div>
-          </button>
+        <div class="task-flow-switch" role="tablist" aria-label="任务流程" data-i18n-aria-label="lobby.task.flowLabel">
+          <button id="btn-task-campaign" class="active" role="tab" aria-selected="true" data-i18n="lobby.task.campaign">剧情战役</button>
+          <button id="btn-task-freeplay" role="tab" aria-selected="false" data-i18n="lobby.task.freeplay">自由模式</button>
+        </div>
+        <div id="lobby-campaign-panel">
+          <div class="task-brief"><span id="task-brief-badge" data-i18n="lobby.task.easyBadge">MISSION 01</span><p id="task-brief-text" data-i18n="lobby.task.easyBrief">跟随银狼潜入量子节点，从基础扫描开始学习三维解密。</p></div>
+          <div class="task-mission-picker" role="radiogroup" aria-label="任务章节" data-i18n-aria-label="lobby.task.chapterLabel">
+            <button class="task-mission-option active" data-mission="easy" role="radio" aria-checked="true">
+              <span>01</span><div><strong data-i18n="lobby.task.easyTitle">初级 · 幻影端口</strong><small data-i18n="lobby.task.easyMeta">3×3×3 · 经典扫描教学</small></div>
+            </button>
+            <button class="task-mission-option" data-mission="medium" role="radio" aria-checked="false">
+              <span>02</span><div><strong data-i18n="lobby.task.mediumTitle">中级 · 握手迷宫</strong><small data-i18n="lobby.task.mediumMeta">5×5×5 · 孤立区块清除</small></div>
+            </button>
+            <button class="task-mission-option" data-mission="hard" role="radio" aria-checked="false">
+              <span>03</span><div><strong data-i18n="lobby.task.hardTitle">高级 · 终末协议</strong><small data-i18n="lobby.task.hardMeta">7×7×7 · 孤岛清除 + 熵域压缩</small></div>
+            </button>
+          </div>
+        </div>
+        <div id="lobby-freeplay-panel" class="hidden">
+          <div class="task-brief"><span data-i18n="lobby.task.freeplayBadge">FREE MODE</span><p data-i18n="lobby.task.freeplayBrief">选择矩阵规模后直接开始；经典扫描始终启用，两个 Add-on 默认全开，进入游戏后仍可自由调整。</p></div>
+          <div class="freeplay-level-label" data-i18n="lobby.task.freeplayDifficultyLabel">选择自由模式难度</div>
+          <div class="task-mission-picker freeplay-mission-picker" role="radiogroup" aria-label="自由模式难度" data-i18n-aria-label="lobby.task.freeplayDifficultyLabel">
+            <button class="task-mission-option active" data-mission="easy" role="radio" aria-checked="true">
+              <span>3³</span><div><strong data-i18n="lobby.task.freeplayEasyTitle">初级矩阵</strong><small data-i18n="lobby.task.freeplayEasyMeta">3×3×3 · 3 雷</small></div>
+            </button>
+            <button class="task-mission-option" data-mission="medium" role="radio" aria-checked="false">
+              <span>5³</span><div><strong data-i18n="lobby.task.freeplayMediumTitle">中级矩阵</strong><small data-i18n="lobby.task.freeplayMediumMeta">5×5×5 · 10 雷</small></div>
+            </button>
+            <button class="task-mission-option" data-mission="hard" role="radio" aria-checked="false">
+              <span>7³</span><div><strong data-i18n="lobby.task.freeplayHardTitle">高级矩阵</strong><small data-i18n="lobby.task.freeplayHardMeta">7×7×7 · 30 雷</small></div>
+            </button>
+          </div>
         </div>
         <button id="btn-start-task" class="btn-primary glow-cyan-box lobby-main-action" data-i18n="lobby.task.start">接受任务</button>
       </div>
@@ -405,14 +453,44 @@
         <h2 id="tutorial-title">银狼</h2>
         <p id="tutorial-message"></p>
         <div id="tutorial-fact" class="tutorial-fact hidden"></div>
-        <div class="tutorial-dismiss-hint" data-i18n="tutorial.dismissHint">点击对话框外也可继续</div>
+        <div id="tutorial-dismiss-hint" class="tutorial-dismiss-hint" data-i18n="tutorial.dismissHint">点击对话框外也可继续</div>
         <div class="tutorial-actions">
           <button id="btn-skip-tutorial" class="btn-secondary tutorial-skip-button" data-i18n="tutorial.skip">⏭ 跳过初级关</button>
+          <button id="btn-tutorial-replay" class="btn-secondary replay-entry-button hidden" data-i18n="replay.button">▶ 成功回放</button>
           <button id="btn-tutorial-next" class="btn-primary glow-cyan-box" data-i18n="tutorial.next">继续</button>
         </div>
       </div>
     </div>
   </div>
+
+  <section id="replay-hud" class="replay-hud hidden" aria-label="成功路线回放控制" data-i18n-aria-label="replay.hudLabel">
+    <div class="replay-hud-copy">
+      <span data-i18n="replay.kicker">SILVER WOLF // SUCCESS ROUTE</span>
+      <strong data-i18n="replay.title">成功路线回放</strong>
+    </div>
+    <div class="replay-hud-progress" role="status" aria-live="polite">
+      <strong id="replay-hud-progress">步骤 0 / 0</strong>
+    </div>
+    <div class="replay-hud-actions">
+      <button id="btn-replay-pause" class="replay-control-button" type="button" aria-pressed="false" aria-label="暂停回放" data-i18n-aria-label="replay.pause">
+        <span id="replay-toggle-icon" aria-hidden="true">Ⅱ</span>
+        <strong id="replay-toggle-label" data-i18n="replay.pause">暂停</strong>
+      </button>
+      <button id="btn-replay-exit" class="replay-control-button replay-exit-button" type="button" data-i18n="replay.exit">退出</button>
+    </div>
+  </section>
+
+  <section id="ultimate-hack-hud" class="ultimate-hack-hud hidden" aria-label="终极骇客自动解谜控制" data-i18n-aria-label="ultimateHack.hudLabel">
+    <div class="ultimate-hack-hud-copy">
+      <span data-i18n="ultimateHack.kicker">SILVER WOLF // ULTIMATE HACK</span>
+      <strong id="ultimate-hack-stage">熵域压缩路线</strong>
+    </div>
+    <div class="ultimate-hack-hud-metrics" role="status" aria-live="polite">
+      <span><small data-i18n="ultimateHack.stepLabel">步骤</small><strong id="ultimate-hack-step">0</strong></span>
+      <span><small data-i18n="ultimateHack.progressLabel">净化率</small><strong id="ultimate-hack-progress">0%</strong></span>
+    </div>
+    <button id="btn-ultimate-hack-cancel" class="ultimate-hack-cancel" type="button" data-i18n="ultimateHack.cancel">中止接管</button>
+  </section>
 
   <div class="floating-assist-stack">
     <div id="tutorial-action-hint" class="tutorial-action-hint hidden" role="status" aria-live="polite">
@@ -436,6 +514,12 @@
         <small id="solver-hint-action"></small>
       </div>
     </section>
+  </div>
+
+  <div id="sector-purge-banner" class="sector-purge-banner hidden" role="status" aria-live="assertive">
+    <span data-i18n="purge.bannerKicker">SILVER WOLF // SECTOR PURGE</span>
+    <strong id="sector-purge-banner-title" data-i18n="purge.bannerTitle">封闭子网已消除</strong>
+    <small id="sector-purge-banner-detail"></small>
   </div>
 
   <div id="guided-cell-leader" class="guided-cell-leader hidden" aria-hidden="true"></div>

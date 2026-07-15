@@ -7,21 +7,21 @@ const indexSource = readFileSync(new URL('../public/index.html', import.meta.url
 const i18nSource = readFileSync(new URL('../public/i18n.js', import.meta.url), 'utf8');
 const styleSource = readFileSync(new URL('../public/style.css', import.meta.url), 'utf8');
 
-test('keeps slice controls in every board and teaches them only in the intermediate mission', () => {
+test('keeps slice controls available without proactively teaching or highlighting them', () => {
   assert.match(indexSource, /id="slicing-panel"/);
   assert.match(indexSource, /id="btn-mobile-slices"/);
   assert.equal((indexSource.match(/type="range"/g) || []).length, 6);
   assert.match(appSource, /handleSliceChange\(axis, type\)/);
   assert.match(appSource, /updateGridVisibility\(\)/);
   assert.match(appSource, /resetSlices\(userInitiated = false\)/);
-  assert.match(appSource, /titleKey: 'tutorial\.sliceTitle'.*action: 'slice'/s);
-  assert.match(appSource, /titleKey: 'tutorial\.sliceResetTitle'.*action: 'sliceReset'/s);
-  const beginnerTutorial = appSource.match(/startSilverWolfTutorial\(\) \{[\s\S]*?\n  \}\n\n  showSilverWolfDialogue/)?.[0] || '';
-  assert.doesNotMatch(beginnerTutorial, /slice/i);
+  assert.doesNotMatch(appSource, /tutorial\.slice|action:\s*'slice(?:Reset)?'|hasUsedSlices|hasResetSlices|focusSliceTutorial/);
+  assert.doesNotMatch(appSource, /(?:slicing-panel|btn-mobile-slices|btn-reset-slices)[^\n]*tutorial-target/);
   assert.match(i18nSource, /切片分析/);
-  assert.match(i18nSource, /bottom dock on mobile/i);
+  assert.match(i18nSource, /3D slice analysis/i);
+  assert.doesNotMatch(i18nSource, /'tutorial\.(?:slice|sliceReset)|'tutorial\.actionHint\.slice/);
   assert.match(styleSource, /\.slicing-panel/);
   assert.match(styleSource, /input\[type="range"\]/);
+  assert.doesNotMatch(styleSource, /(?:slicing-panel|btn-mobile-slices|btn-reset-slices)\.tutorial-target/);
 });
 
 test('locks beginner interactions to Silver Wolf’s current highlighted target', () => {
@@ -39,7 +39,7 @@ test('locks beginner interactions to Silver Wolf’s current highlighted target'
 });
 
 test('keeps Silver Wolf dialogue centered and moves the guided callout outside the board', () => {
-  assert.match(appSource, /showSilverWolfDialogue\(steps, \{ allowSkip = false, onComplete = null \} = \{\}\)/);
+  assert.match(appSource, /showSilverWolfDialogue\(steps, \{ allowSkip = false, allowReplay = false, onComplete = null \} = \{\}\)/);
   assert.doesNotMatch(appSource, /avoidBoard|board-clear/);
   assert.doesNotMatch(styleSource, /board-clear/);
   assert.match(indexSource, /id="guided-cell-leader"/);

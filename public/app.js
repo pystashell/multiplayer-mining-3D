@@ -5,17 +5,37 @@ import { initialLanguage, randomNickname, translate } from './i18n.js';
 import { solveMinesweeperHint } from './minesweeper-solver.js';
 import { findChordOpportunity } from './tutorial-triggers.js';
 import { chooseFloatingAxisPlacement, chooseGuidedCalloutPlacement } from './guided-callout.js';
+import { BOARD_ANIMATION_TIMING, revealAnimationTiming } from './reveal-animation.js';
 
 const TASK_MISSIONS = Object.freeze({
-  easy: Object.freeze({ width: 3, height: 3, depth: 3, mineCount: 3 }),
-  medium: Object.freeze({ width: 5, height: 5, depth: 5, mineCount: 15 }),
-  hard: Object.freeze({ width: 7, height: 7, depth: 7, mineCount: 45 }),
+  easy: Object.freeze({ width: 3, height: 3, depth: 3, mineCount: 3, ruleset: 'classic', autoPurge: false, reduction: false, campaign: true }),
+  medium: Object.freeze({ width: 5, height: 5, depth: 5, mineCount: 10, ruleset: 'sector', autoPurge: true, reduction: false, campaign: true }),
+  hard: Object.freeze({ width: 7, height: 7, depth: 7, mineCount: 30, ruleset: 'reduction', autoPurge: true, reduction: true, campaign: true }),
+  ultimate: Object.freeze({ width: 9, height: 9, depth: 9, mineCount: 60, ruleset: 'reduction', autoPurge: true, reduction: true, campaign: true }),
 });
+
+const FREEPLAY_DEFAULT_ADDONS = Object.freeze({
+  ruleset: 'reduction',
+  autoPurge: true,
+  reduction: true,
+  campaign: false,
+});
+
+const CONFIG_KEYS = Object.freeze([
+  'width', 'height', 'depth', 'mineCount', 'ruleset', 'autoPurge', 'reduction', 'campaign',
+]);
+
+function rulesetForFeatures(autoPurge, reduction) {
+  if (reduction) return 'reduction';
+  if (autoPurge) return 'sector';
+  return 'classic';
+}
 
 const STORY_ART = Object.freeze({
   easy: 'assets/silver-wolf-quantum-pathfinder.png',
   medium: 'assets/silver-wolf-neighbor-hack.png',
   hard: 'assets/silver-wolf-final-protocol.png',
+  ultimate: 'assets/silver-wolf-final-protocol.png',
   squad: 'assets/silver-wolf-squad-link.png',
 });
 
@@ -35,6 +55,9 @@ const DIALOGUE_ART = Object.freeze({
   }),
   hard: Object.freeze({
     main: STORY_ART.hard,
+  }),
+  ultimate: Object.freeze({
+    main: STORY_ART.ultimate,
   }),
 });
 
@@ -214,6 +237,21 @@ class ParticleSystem {
   constructor(scene) {
     this.scene = scene;
     this.particles = [];
+    this.texture = this.createParticleTexture();
+  }
+
+  createParticleTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 16;
+    canvas.height = 16;
+    const ctx = canvas.getContext('2d');
+    const grad = ctx.createRadialGradient(8, 8, 0, 8, 8, 8);
+    grad.addColorStop(0, 'rgba(255,255,255,1)');
+    grad.addColorStop(0.3, 'rgba(255,255,255,0.8)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 16, 16);
+    return new THREE.CanvasTexture(canvas);
   }
 
   createExplosion(position, color = 0xff3366, count = 60) {
@@ -248,23 +286,9 @@ class ParticleSystem {
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     
-    // 生成粒子发光材质纹理
-    const canvas = document.createElement('canvas');
-    canvas.width = 16;
-    canvas.height = 16;
-    const ctx = canvas.getContext('2d');
-    const grad = ctx.createRadialGradient(8, 8, 0, 8, 8, 8);
-    grad.addColorStop(0, 'rgba(255,255,255,1)');
-    grad.addColorStop(0.3, 'rgba(255,255,255,0.8)');
-    grad.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 16, 16);
-    
-    const texture = new THREE.CanvasTexture(canvas);
-    
     const material = new THREE.PointsMaterial({
       size: 0.25,
-      map: texture,
+      map: this.texture,
       transparent: true,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
@@ -284,9 +308,11 @@ class ParticleSystem {
   }
 
   update(deltaTime) {
+    const frameScale = Math.min(3, deltaTime * 60);
+    const drag = Math.pow(0.96, frameScale);
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
-      p.life -= p.decay;
+      p.life -= p.decay * frameScale;
       
       if (p.life <= 0) {
         this.scene.remove(p.points);
@@ -312,9 +338,9 @@ class ParticleSystem {
         // 重力微调
         p.velocities[j * 3 + 1] -= 2.0 * deltaTime;
         // 空气阻力
-        p.velocities[j * 3] *= 0.96;
-        p.velocities[j * 3 + 1] *= 0.96;
-        p.velocities[j * 3 + 2] *= 0.96;
+        p.velocities[j * 3] *= drag;
+        p.velocities[j * 3 + 1] *= drag;
+        p.velocities[j * 3 + 2] *= drag;
         
         posAttr.setXYZ(j, x, y, z);
       }
@@ -337,7 +363,9 @@ class HoloSweeperGame {
     this.hasObservedMatrix = false;
     this.hasInspectedNeighbors = false;
     this.taskMission = 'easy';
+    this.taskFlow = 'campaign';
     this.pendingTaskMission = null;
+    this.pendingTaskConfig = null;
     this.taskExperienceStarted = false;
     this.dialogueState = null;
     this.waitingTutorialAction = null;
@@ -347,12 +375,26 @@ class HoloSweeperGame {
     this.guidedEvidenceMarkers = [];
     this.guidedFlagModeExplained = false;
     this.mediumChordTipShown = false;
+    this.hardReductionTipShown = false;
     this.guidedCorrectionTimer = null;
     this.solverHint = null;
     this.solverHintMarker = null;
     this.solverHintEvidenceMarkers = [];
     this.reasoningCoordinateAxes = null;
     this.lastReasoningAxesLayoutAt = 0;
+    this.sectorPurgeAnimations = [];
+    this.cellRevealAnimations = [];
+    this.boardAnimationGeneration = 0;
+    this.revealAnimationEndsAt = 0;
+    this.successReplay = null;
+    this.successReplayTimer = null;
+    this.pendingReplaySnapshot = null;
+    this.ultimateHackClient = null;
+    this.ultimateHackStepTimer = null;
+    this.ultimateHackStartPending = false;
+    this.automatedFlagKeys = new Set();
+    this.lastSectorPurgeId = null;
+    this.sectorPurgeBannerTimer = null;
     this.roomClient = new RoomClient({
       onSnapshot: (snapshot, initial) => this.applyRoomSnapshot(snapshot, initial),
       onWelcome: (message) => this.handleRoomWelcome(message),
@@ -379,6 +421,9 @@ class HoloSweeperGame {
     this.height = 3;
     this.depth = 3;
     this.mineCount = 3;
+    this.ruleset = 'classic';
+    this.autoPurgeEnabled = false;
+    this.reductionEnabled = false;
     this.grid = []; // 3维数组存储方块
     
     this.isFirstClick = true;
@@ -395,15 +440,16 @@ class HoloSweeperGame {
 
     // 本地视图切片只影响可见层，不改变服务端雷阵
     this.slice = { xMin: 0, xMax: 2, yMin: 0, yMax: 2, zMin: 0, zMax: 2 };
-    this.hasUsedSlices = false;
-    this.hasResetSlices = false;
     
     // 鼠标点击判定辅助
     this.mouseDownPos = { x: 0, y: 0 };
     this.mouseDownTime = 0;
     this.mouseChordTriggered = false;
     this.lastMobileNumberTap = null;
+    this.lastMobileReductionTap = null;
+    this.automatedFlagKeys = new Set();
     this.mobileDoubleTapMs = 450;
+    this.mobileReductionDoubleTapMs = 320;
     this.touchHoldTimer = null;
     this.touchHoldTriggered = false;
     this.touchInspectionActive = false;
@@ -444,9 +490,17 @@ class HoloSweeperGame {
     document.querySelectorAll('.task-mission-option').forEach((button) => {
       button.addEventListener('click', () => this.selectTaskMission(button.dataset.mission));
     });
+    document.getElementById('btn-task-campaign').addEventListener('click', () => this.selectTaskFlow('campaign'));
+    document.getElementById('btn-task-freeplay').addEventListener('click', () => this.selectTaskFlow('freeplay'));
     document.getElementById('btn-random-nickname').addEventListener('click', () => this.rollNickname());
     document.getElementById('btn-tutorial-next').addEventListener('click', () => this.advanceSilverWolfDialogue());
     document.getElementById('btn-skip-tutorial').addEventListener('click', () => this.skipTutorial());
+    document.getElementById('btn-tutorial-replay').addEventListener('click', () => this.startSuccessReplay());
+    document.getElementById('btn-modal-replay').addEventListener('click', () => this.startSuccessReplay());
+    document.getElementById('btn-replay-pause').addEventListener('click', () => this.toggleSuccessReplayPause());
+    document.getElementById('btn-replay-exit').addEventListener('click', () => this.stopSuccessReplay());
+    document.getElementById('btn-ultimate-hack-start').addEventListener('click', () => this.startUltimateHack());
+    document.getElementById('btn-ultimate-hack-cancel').addEventListener('click', () => this.cancelUltimateHack());
     const guidedPointer = document.getElementById('guided-cell-pointer');
     guidedPointer.addEventListener('click', () => this.activateGuidedTarget('primary'));
     guidedPointer.addEventListener('contextmenu', (event) => {
@@ -460,7 +514,9 @@ class HoloSweeperGame {
       if (!event.target.closest('input, textarea')) event.preventDefault();
     }, { capture: true });
     tutorialOverlay.addEventListener('click', (event) => {
-      if (event.target === tutorialOverlay) this.advanceSilverWolfDialogue();
+      if (event.target === tutorialOverlay && !this.currentDialogueRequiresExplicitAction()) {
+        this.advanceSilverWolfDialogue();
+      }
     });
 
     document.getElementById('btn-start-task').addEventListener('click', async () => {
@@ -471,9 +527,15 @@ class HoloSweeperGame {
       }
       persistNickname(nickname);
       this.gameMode = 'solo';
+      const mission = TASK_MISSIONS[this.taskMission] ?? TASK_MISSIONS.easy;
+      const desired = this.taskFlow === 'campaign'
+        ? mission
+        : { ...mission, ...FREEPLAY_DEFAULT_ADDONS };
       this.pendingTaskMission = this.taskMission;
+      this.pendingTaskConfig = { ...desired };
       this.taskExperienceStarted = false;
       this.mediumChordTipShown = false;
+      this.hardReductionTipShown = false;
       try { await this.roomClient.create(nickname, 'solo'); } catch (error) { this.handleRoomError(error); }
     });
 
@@ -542,6 +604,9 @@ class HoloSweeperGame {
     document.getElementById('btn-preset-easy').addEventListener('click', (e) => this.selectPreset(e.currentTarget));
     document.getElementById('btn-preset-medium').addEventListener('click', (e) => this.selectPreset(e.currentTarget));
     document.getElementById('btn-preset-hard').addEventListener('click', (e) => this.selectPreset(e.currentTarget));
+    document.querySelectorAll('[data-feature]').forEach((button) => {
+      button.addEventListener('click', () => this.toggleGameFeature(button.dataset.feature));
+    });
 
     // 自定义面板展开/折叠
     const customToggle = document.getElementById('custom-toggle');
@@ -627,6 +692,35 @@ class HoloSweeperGame {
     this.setLobbyStatus('');
   }
 
+  updateCampaignUI() {
+    document.body.dataset.taskFlow = this.taskFlow;
+    document.querySelectorAll('.task-mission-option').forEach((button) => {
+      button.classList.remove('locked');
+      button.disabled = false;
+      button.setAttribute('aria-disabled', 'false');
+    });
+    const freeplayButton = document.getElementById('btn-task-freeplay');
+    freeplayButton.classList.remove('locked');
+    freeplayButton.disabled = false;
+    freeplayButton.setAttribute('aria-disabled', 'false');
+    document.getElementById('btn-start-task').textContent = this.t(
+      this.taskFlow === 'freeplay' ? 'lobby.task.startFreeplay' : 'lobby.task.start',
+    );
+  }
+
+  selectTaskFlow(flow) {
+    this.taskFlow = flow === 'freeplay' ? 'freeplay' : 'campaign';
+    const campaign = this.taskFlow === 'campaign';
+    document.getElementById('btn-task-campaign').classList.toggle('active', campaign);
+    document.getElementById('btn-task-campaign').setAttribute('aria-selected', String(campaign));
+    document.getElementById('btn-task-freeplay').classList.toggle('active', !campaign);
+    document.getElementById('btn-task-freeplay').setAttribute('aria-selected', String(!campaign));
+    document.getElementById('lobby-campaign-panel').classList.toggle('hidden', !campaign);
+    document.getElementById('lobby-freeplay-panel').classList.toggle('hidden', campaign);
+    this.applyStoryArt('solo', this.taskMission);
+    this.updateCampaignUI();
+  }
+
   selectTaskMission(mission) {
     if (!TASK_MISSIONS[mission]) return;
     this.taskMission = mission;
@@ -663,25 +757,53 @@ class HoloSweeperGame {
 
   // 难度预设选择
   selectPreset(element) {
+    if (this.successReplay || this.ultimateHackRunning()) return;
+    const me = this.roomSnapshot?.players?.find((player) => player.id === this.currentPlayerId);
+    if (me && !me.isHost) return;
     document.querySelectorAll('.btn-preset').forEach(btn => btn.classList.remove('active'));
     element.classList.add('active');
-    
-    this.width = parseInt(element.dataset.w);
-    this.height = parseInt(element.dataset.h);
-    this.depth = parseInt(element.dataset.d);
-    this.mineCount = parseInt(element.dataset.m);
-    
-    // 同步到自定义输入框
-    document.getElementById('input-w').value = this.width;
-    document.getElementById('input-h').value = this.height;
-    document.getElementById('input-d').value = this.depth;
-    document.getElementById('input-m').value = this.mineCount;
+
+    const preset = {
+      width: Number.parseInt(element.dataset.w, 10),
+      height: Number.parseInt(element.dataset.h, 10),
+      depth: Number.parseInt(element.dataset.d, 10),
+      mineCount: Number.parseInt(element.dataset.m, 10),
+    };
+    document.getElementById('input-w').value = preset.width;
+    document.getElementById('input-h').value = preset.height;
+    document.getElementById('input-d').value = preset.depth;
+    document.getElementById('input-m').value = preset.mineCount;
+    document.getElementById('custom-toggle').classList.remove('active');
+    document.getElementById('custom-inputs').classList.add('hidden');
     
     this.startNewGame();
   }
 
+  toggleGameFeature(feature) {
+    if (this.successReplay || this.ultimateHackRunning()) return;
+    const me = this.roomSnapshot?.players?.find((player) => player.id === this.currentPlayerId);
+    if (me && !me.isHost) return;
+    if (feature === 'autoPurge') this.autoPurgeEnabled = !this.autoPurgeEnabled;
+    else if (feature === 'reduction') this.reductionEnabled = !this.reductionEnabled;
+    else return;
+    this.ruleset = rulesetForFeatures(this.autoPurgeEnabled, this.reductionEnabled);
+    this.syncFeatureButtons();
+    this.startNewGame();
+  }
+
+  syncFeatureButtons() {
+    document.querySelectorAll('[data-feature]').forEach((button) => {
+      const active = button.dataset.feature === 'autoPurge'
+        ? this.autoPurgeEnabled
+        : this.reductionEnabled;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-checked', String(active));
+    });
+  }
+
   // 设置操作模式 (挖矿/插旗)
   setMode(mode) {
+    if (this.ultimateHackRunning()) return;
     this.activeMode = mode;
     document.getElementById('btn-mode-dig').classList.toggle('active', mode === 'dig');
     document.getElementById('btn-mode-flag').classList.toggle('active', mode === 'flag');
@@ -794,12 +916,19 @@ class HoloSweeperGame {
       }
     }
     this.selectTaskMission(this.taskMission);
+    this.selectTaskFlow(this.taskFlow);
     this.updateMissionGuide();
     if (this.dialogueState && !this.waitingTutorialAction) this.renderSilverWolfDialogue();
     if (this.waitingTutorialAction) this.setTutorialActionHint(this.waitingTutorialAction);
     if (this.guidedTutorialActive) this.updateGuidedTutorial(this.roomSnapshot);
     if (this.solverHint) this.renderSolverHint(this.solverHint);
     this.updateSolverHintVisibility(this.roomSnapshot);
+    if (this.successReplay) {
+      this.updateSuccessReplayControls();
+      this.updateSuccessReplayProgress();
+    }
+    if (this.ultimateHackRunning()) this.updateUltimateHackHUD(this.roomSnapshot);
+    this.updateUltimateHackLaunchAvailability(this.roomSnapshot);
   }
 
   // -------------------------------------------------------------
@@ -820,10 +949,14 @@ class HoloSweeperGame {
     document.getElementById('room-code-display').innerText = this.t('players.roomCode', { code: message.snapshot.code });
     document.getElementById('btn-copy-invite').style.display = this.gameMode === 'squad' ? '' : 'none';
     if (this.gameMode === 'solo') {
-      if (!this.pendingTaskMission) this.taskMission = this.missionFromConfig(message.snapshot.config);
-      const desired = TASK_MISSIONS[this.taskMission] ?? TASK_MISSIONS.easy;
-      const differs = ['width', 'height', 'depth', 'mineCount'].some(key => message.snapshot.config[key] !== desired[key]);
-      if (this.pendingTaskMission && differs) {
+      if (!this.pendingTaskConfig) {
+        this.taskMission = this.missionFromConfig(message.snapshot.config);
+        this.taskFlow = message.snapshot.config.campaign ? 'campaign' : 'freeplay';
+      }
+      const desired = this.pendingTaskConfig;
+      const differs = desired && CONFIG_KEYS
+        .some(key => message.snapshot.config[key] !== desired[key]);
+      if (desired && differs) {
         this.roomClient.send({ op: 'restart', config: desired }).catch(error => this.handleRoomError(error));
       }
     }
@@ -839,18 +972,40 @@ class HoloSweeperGame {
 
   applyRoomSnapshot(snapshot, initial = false) {
     if (!snapshot) return;
+    if (this.successReplay) {
+      const replayState = this.successReplay;
+      const minimumRevision = this.pendingReplaySnapshot?.revision
+        ?? replayState.finalSnapshot.revision;
+      if (snapshot.revision < minimumRevision) return;
+      this.pendingReplaySnapshot = snapshot;
+      const configChanged = CONFIG_KEYS.some(
+        (key) => snapshot.config?.[key] !== replayState.replay.config?.[key],
+      );
+      if (snapshot.phase !== 'won' || snapshot.replay?.runId !== replayState.replay.runId || configChanged) {
+        this.stopSuccessReplay();
+      }
+      return;
+    }
     const previous = this.roomSnapshot;
     if (previous && snapshot.revision < previous.revision) return;
     this.gameMode = snapshot.mode === 'solo' ? 'solo' : 'squad';
     if (this.gameMode === 'solo') {
       const snapshotMission = this.missionFromConfig(snapshot.config);
-      if (!this.pendingTaskMission || this.pendingTaskMission === snapshotMission) {
+      const pendingMatches = this.pendingTaskConfig
+        && CONFIG_KEYS
+          .every(key => snapshot.config[key] === this.pendingTaskConfig[key]);
+      if (pendingMatches) {
         this.taskMission = this.pendingTaskMission ?? snapshotMission;
-        if (this.pendingTaskMission === snapshotMission) this.pendingTaskMission = null;
+        this.pendingTaskMission = null;
+        this.pendingTaskConfig = null;
+      } else if (!this.pendingTaskConfig) {
+        this.taskMission = snapshotMission;
+        this.taskFlow = snapshot.config.campaign ? 'campaign' : 'freeplay';
       }
     }
     this.syncGameModeUI();
-    const configChanged = !previous || ['width', 'height', 'depth', 'mineCount'].some(key => previous.config[key] !== snapshot.config[key]);
+    const configChanged = !previous || CONFIG_KEYS
+      .some(key => previous.config[key] !== snapshot.config[key]);
     const restarted = previous && snapshot.phase === 'ready' && previous.phase !== 'ready';
     if (configChanged || restarted || !this.grid.length) {
       this.applyConfig(snapshot.config);
@@ -860,22 +1015,117 @@ class HoloSweeperGame {
 
     this.renderPlayers(snapshot.players);
     this.renderRoomMessages(snapshot);
+    this.syncPurgedCells(snapshot, initial);
 
     const desiredFlags = new Set((snapshot.flags || []).map(point => `${point.x}:${point.y}:${point.z}`));
+    const previousFlags = new Set((previous?.flags || []).map(point => `${point.x}:${point.y}:${point.z}`));
+    const automatedScanActive = snapshot.ultimateHack?.status === 'running'
+      && (snapshot.ultimateHack?.strategy === 'scan' || snapshot.config?.reduction === false);
     for (let x = 0; x < this.width; x++) for (let y = 0; y < this.height; y++) for (let z = 0; z < this.depth; z++) {
-      const shouldFlag = desiredFlags.has(`${x}:${y}:${z}`);
-      if (this.grid[x][y][z].isFlagged !== shouldFlag) this.setFlagLocal(x, y, z, shouldFlag, !initial);
+      if (this.grid[x][y][z].isPurged) continue;
+      const key = `${x}:${y}:${z}`;
+      const shouldFlag = desiredFlags.has(key);
+      if (automatedScanActive && shouldFlag && (!previous || !previousFlags.has(key))) {
+        this.automatedFlagKeys.add(key);
+      } else if (!shouldFlag) {
+        this.automatedFlagKeys.delete(key);
+      }
+      if (this.grid[x][y][z].isFlagged !== shouldFlag) {
+        this.setFlagLocal(x, y, z, shouldFlag, !initial, {
+          automated: this.automatedFlagKeys.has(key),
+        });
+      }
     }
-    for (const cell of snapshot.revealed || []) this.revealServerCell(cell, !initial);
+    const isNewRevealEvent = Boolean(snapshot.lastReveal?.id && snapshot.lastReveal.id !== previous?.lastReveal?.id);
+    const revealWaves = new Map(
+      isNewRevealEvent
+        ? (snapshot.lastReveal.opened || []).map((point) => [
+          this.pointKey(point),
+          Math.max(0, Number(point.wave) || 0),
+        ])
+        : [],
+    );
+    const isNewPurgeEvent = Boolean(snapshot.lastPurge?.id && snapshot.lastPurge.id !== previous?.lastPurge?.id);
+    const reductionTargetKeys = new Set(
+      isNewPurgeEvent
+        ? (snapshot.lastPurge?.reductionMines || (
+          snapshot.lastPurge?.kind === 'reduction' ? snapshot.lastPurge.mines : []
+        )).map((point) => this.pointKey(point))
+        : [],
+    );
+    const revealWaveEffects = new Map();
+    let latestRevealAnimationEnd = 0;
+    for (const cell of snapshot.revealed || []) {
+      const key = this.pointKey(cell);
+      const isReductionTarget = reductionTargetKeys.has(key);
+      const actionWave = revealWaves.get(key);
+      const isActionReveal = Number.isFinite(actionWave);
+      const timing = revealAnimationTiming(isActionReveal ? actionWave : null);
+      this.revealServerCell(cell, !initial, {
+        durationMs: timing.durationMs,
+        delayMs: timing.delayMs,
+        wave: timing.isCascade,
+        playSound: !isActionReveal,
+      });
+      if (isActionReveal && !initial) {
+        latestRevealAnimationEnd = Math.max(
+          latestRevealAnimationEnd,
+          timing.delayMs + timing.durationMs,
+        );
+      }
+      if (isReductionTarget && !initial) {
+        const world = new THREE.Vector3();
+        this.grid[cell.x]?.[cell.y]?.[cell.z]?.group.getWorldPosition(world);
+        this.particles?.createExplosion(world, 0x29e7ff, 24);
+      }
+      if (isActionReveal && !initial) {
+        const effect = revealWaveEffects.get(timing.delayMs) ?? { points: [], isCascade: false };
+        const world = new THREE.Vector3();
+        this.grid[cell.x]?.[cell.y]?.[cell.z]?.group.getWorldPosition(world);
+        effect.points.push(world);
+        effect.isCascade ||= timing.isCascade;
+        revealWaveEffects.set(timing.delayMs, effect);
+      }
+    }
+    if (!initial && revealWaveEffects.size) {
+      const animationGeneration = this.boardAnimationGeneration;
+      for (const [delayMs, effect] of revealWaveEffects) {
+        const sampleCount = Math.min(effect.isCascade ? 4 : 2, effect.points.length);
+        const wavePoints = Array.from({ length: sampleCount }, (_, index) => (
+          effect.points[Math.floor((index * effect.points.length) / sampleCount)]
+        ));
+        window.setTimeout(() => {
+          if (this.boardAnimationGeneration !== animationGeneration) return;
+          sfx.playDig();
+          const particleCount = effect.isCascade ? 6 : 4;
+          for (const wavePoint of wavePoints) this.particles?.createExplosion(wavePoint, 0x29e7ff, particleCount);
+        }, delayMs);
+      }
+    }
+    if (latestRevealAnimationEnd > 0) {
+      this.revealAnimationEndsAt = Math.max(
+        this.revealAnimationEndsAt,
+        performance.now() + latestRevealAnimationEnd,
+      );
+    }
 
     this.isFirstClick = snapshot.phase === 'ready';
     this.isGameOver = snapshot.phase === 'lost' || (this.gameMode === 'solo' && snapshot.phase === 'revive');
     this.isGameWon = snapshot.phase === 'won';
-    this.isInteractionLocked = ['revive', 'lost', 'won'].includes(snapshot.phase);
-    this.syncServerTimer(snapshot.startedAt, snapshot.serverTime, ['playing', 'revive'].includes(snapshot.phase));
+    this.isInteractionLocked = this.ultimateHackRunning(snapshot)
+      || ['revive', 'lost', 'won'].includes(snapshot.phase);
+    this.syncServerTimer(
+      snapshot.startedAt,
+      snapshot.phase === 'won' ? (snapshot.replay?.completedAt ?? snapshot.serverTime) : snapshot.serverTime,
+      ['playing', 'revive'].includes(snapshot.phase),
+    );
 
     if (snapshot.phase === 'revive') {
-      if (previous?.phase !== 'revive' && snapshot.pendingMine) this.triggerMineLocal(snapshot.pendingMine.x, snapshot.pendingMine.y, snapshot.pendingMine.z);
+      if (previous?.phase !== 'revive' && snapshot.pendingMine) {
+        this.triggerMineLocal(snapshot.pendingMine.x, snapshot.pendingMine.y, snapshot.pendingMine.z, {
+          showMine: snapshot.pendingFailureKind !== 'reduction_miss',
+        });
+      }
       if (this.gameMode === 'squad') this.syncRevival(snapshot);
     } else if (previous?.phase === 'revive' && previous.pendingMine) {
       this.restorePendingMineVisual(previous.pendingMine);
@@ -891,36 +1141,55 @@ class HoloSweeperGame {
       const explosion = snapshot.pendingMine || previous?.pendingMine || snapshot.mines?.[0];
       if (explosion) this.triggerGameOver(explosion.x, explosion.y, explosion.z);
     }
-    if (snapshot.phase === 'won' && previous?.phase !== 'won') this.checkVictory();
+    if (snapshot.phase === 'won' && previous?.phase !== 'won') this.checkVictory(snapshot);
 
     const me = snapshot.players.find(player => player.id === this.currentPlayerId);
     const restart = document.getElementById('btn-restart');
     restart.disabled = Boolean(me && !me.isHost);
     restart.title = me && !me.isHost ? this.t('error.HOST_ONLY') : '';
+    document.querySelectorAll('[data-feature]').forEach((button) => {
+      button.disabled = Boolean(me && !me.isHost);
+      button.title = me && !me.isHost ? this.t('error.HOST_ONLY') : '';
+    });
     if (previous?.revision !== snapshot.revision && this.isSolverHintCompleted(snapshot)) this.clearSolverHint();
     this.roomSnapshot = snapshot;
+    this.syncSuccessReplayAvailability(snapshot);
     this.updateStats();
+    this.syncUltimateHack(snapshot, previous);
     this.updateSolverHintVisibility(snapshot);
     if (this.guidedTutorialActive) this.updateGuidedTutorial(snapshot);
     if (this.gameMode === 'solo') {
       this.maybeStartTaskExperience(snapshot);
       this.maybeShowMediumChordTip(snapshot, previous);
+      this.maybeShowHardReductionTip(snapshot, previous);
     }
   }
 
   missionFromConfig(config) {
-    if (config?.width >= 7 || config?.mineCount >= 45) return 'hard';
-    if (config?.width >= 5 || config?.mineCount >= 15) return 'medium';
+    if (
+      config?.campaign === true
+      && config?.width === 9
+      && config?.height === 9
+      && config?.depth === 9
+      && config?.mineCount === 60
+    ) return 'ultimate';
+    if (config?.width >= 7 || config?.mineCount >= 30) return 'hard';
+    if (config?.width >= 5 || config?.mineCount >= 10) return 'medium';
     return 'easy';
   }
 
   configMatchesMission(config, mission = this.taskMission) {
     const desired = TASK_MISSIONS[mission] ?? TASK_MISSIONS.easy;
-    return ['width', 'height', 'depth', 'mineCount'].every(key => config?.[key] === desired[key]);
+    return CONFIG_KEYS.every(key => config?.[key] === desired[key]);
   }
 
   maybeStartTaskExperience(snapshot) {
-    if (this.taskExperienceStarted || !this.configMatchesMission(snapshot.config)) return;
+    if (
+      this.taskFlow !== 'campaign'
+      || this.taskExperienceStarted
+      || !['ready', 'playing'].includes(snapshot.phase)
+      || !this.configMatchesMission(snapshot.config)
+    ) return;
     this.taskExperienceStarted = true;
     if (this.taskMission === 'easy') {
       this.startSilverWolfTutorial();
@@ -929,17 +1198,45 @@ class HoloSweeperGame {
     if (this.taskMission === 'medium') {
       this.showSilverWolfDialogue([
         { artKey: 'main', titleKey: 'task.medium.chapterTitle', messageKey: 'task.medium.brief.1', buttonKey: 'tutorial.next' },
+        { artKey: 'tip', titleKey: 'purge.tutorialTitle', messageKey: 'purge.tutorialMessage', factKey: 'purge.tutorialFact', buttonKey: 'tutorial.next' },
         { artKey: 'tip', titleKey: 'task.medium.upgradeTitle', messageKey: 'task.medium.upgrade.1', factKey: 'task.medium.upgrade.fact', buttonKey: 'tutorial.next' },
         { artKey: 'scan', titleKey: 'task.medium.upgradeTitle', messageKey: 'task.medium.upgrade.scan', factKey: 'tutorial.scanFact', buttonKey: 'tutorial.tryScan', action: 'scan' },
         { artKey: 'inspect', titleKey: 'tutorial.inspectTitle', messageKey: 'tutorial.inspect', factKey: 'tutorial.inspectFact', buttonKey: 'tutorial.tryInspect', action: 'inspect' },
-        { artKey: 'tip', titleKey: 'tutorial.sliceTitle', messageKey: 'tutorial.slice', factKey: 'tutorial.sliceFact', buttonKey: 'tutorial.trySlice', action: 'slice' },
-        { artKey: 'ready', titleKey: 'tutorial.sliceResetTitle', messageKey: 'tutorial.sliceReset', factKey: 'tutorial.sliceResetFact', buttonKey: 'tutorial.trySliceReset', action: 'sliceReset' },
         { artKey: 'ready', titleKey: 'task.medium.chapterTitle', messageKey: 'task.medium.brief.2', factKey: 'task.medium.brief.fact', buttonKey: 'tutorial.startMission' },
       ]);
       return;
     }
+    if (this.taskMission === 'ultimate') {
+      if (snapshot.ultimateHack?.status === 'running') return;
+      this.showSilverWolfDialogue([
+        {
+          artKey: 'main',
+          titleKey: 'task.ultimate.chapterTitle',
+          messageKey: 'task.ultimate.brief.1',
+          factKey: 'task.ultimate.brief.fact',
+          buttonKey: 'tutorial.next',
+        },
+        {
+          artKey: 'main',
+          titleKey: 'task.ultimate.trojanTitle',
+          messageKey: 'task.ultimate.brief.2',
+          factKey: 'task.ultimate.trojanFact',
+          buttonKey: 'tutorial.next',
+        },
+        {
+          artKey: 'main',
+          titleKey: 'task.ultimate.installTitle',
+          messageKey: 'task.ultimate.installMessage',
+          factKey: 'task.ultimate.installFact',
+          buttonKey: 'task.ultimate.installButton',
+          requiresExplicit: true,
+        },
+      ], { onComplete: () => this.startUltimateHack() });
+      return;
+    }
     this.showSilverWolfDialogue([
       { artKey: 'main', titleKey: `task.${this.taskMission}.chapterTitle`, messageKey: `task.${this.taskMission}.brief.1`, buttonKey: 'tutorial.next' },
+      { artKey: 'main', titleKey: 'reduction.tutorialTitle', messageKey: 'reduction.tutorialMessage', factKey: 'reduction.tutorialFact', buttonKey: 'tutorial.next' },
       { artKey: 'main', titleKey: `task.${this.taskMission}.chapterTitle`, messageKey: `task.${this.taskMission}.brief.2`, factKey: `task.${this.taskMission}.brief.fact`, buttonKey: 'tutorial.startMission' },
     ]);
   }
@@ -976,6 +1273,29 @@ class HoloSweeperGame {
     ]);
   }
 
+  maybeShowHardReductionTip(snapshot, previous) {
+    if (
+      this.hardReductionTipShown
+      || this.gameMode !== 'solo'
+      || this.taskFlow !== 'campaign'
+      || this.taskMission !== 'hard'
+      || !this.taskExperienceStarted
+      || this.dialogueState
+      || snapshot.phase !== 'playing'
+      || !previous
+      || previous.phase !== 'ready'
+    ) return;
+
+    this.hardReductionTipShown = true;
+    this.showSilverWolfDialogue([{
+      artKey: 'main',
+      titleKey: 'reduction.readyTitle',
+      messageKey: 'reduction.readyMessage',
+      factKey: 'reduction.readyFact',
+      buttonKey: 'tutorial.understood',
+    }]);
+  }
+
   startSilverWolfTutorial() {
     this.showSilverWolfDialogue([
       { artKey: 'main', titleKey: 'tutorial.speaker', messageKey: 'tutorial.intro', buttonKey: 'tutorial.next' },
@@ -984,8 +1304,8 @@ class HoloSweeperGame {
     ], { allowSkip: true, onComplete: () => this.beginGuidedTutorial() });
   }
 
-  showSilverWolfDialogue(steps, { allowSkip = false, onComplete = null } = {}) {
-    this.dialogueState = { steps, index: 0, allowSkip, onComplete };
+  showSilverWolfDialogue(steps, { allowSkip = false, allowReplay = false, onComplete = null } = {}) {
+    this.dialogueState = { steps, index: 0, allowSkip, allowReplay, onComplete };
     this.waitingTutorialAction = null;
     this.setTutorialActionHint();
     this.renderSilverWolfDialogue();
@@ -1009,8 +1329,18 @@ class HoloSweeperGame {
     fact.textContent = factText;
     fact.classList.toggle('hidden', !factText);
     document.getElementById('btn-tutorial-next').textContent = this.t(step.buttonKey ?? 'tutorial.next');
+    document.getElementById('tutorial-dismiss-hint')?.classList.toggle('hidden', Boolean(step.requiresExplicit));
     document.getElementById('btn-skip-tutorial').style.display = state.allowSkip ? '' : 'none';
+    document.getElementById('btn-tutorial-replay').classList.toggle(
+      'hidden',
+      !state.allowReplay || !this.hasSuccessReplay(),
+    );
     document.getElementById('tutorial-overlay').classList.remove('hidden');
+  }
+
+  currentDialogueRequiresExplicitAction() {
+    const state = this.dialogueState;
+    return Boolean(state?.steps?.[state.index]?.requiresExplicit);
   }
 
   advanceSilverWolfDialogue() {
@@ -1021,7 +1351,6 @@ class HoloSweeperGame {
       this.waitingTutorialAction = step.action;
       document.getElementById('tutorial-overlay').classList.add('hidden');
       this.setTutorialActionHint(step.action);
-      if (step.action === 'slice' || step.action === 'sliceReset') this.focusSliceTutorial(step.action);
       if (this.isTutorialActionComplete(step.action)) this.completeTutorialAction(step.action);
       return;
     }
@@ -1047,7 +1376,9 @@ class HoloSweeperGame {
     this.waitingTutorialAction = null;
     this.setTutorialArt('main');
     this.setTutorialActionHint();
-    if (this.gameMode === 'solo' && this.taskMission === 'easy') this.advanceTaskMission('medium');
+    if (this.gameMode === 'solo' && this.taskMission === 'easy') {
+      this.advanceTaskMission('medium');
+    }
   }
 
   isTutorialActionComplete(action) {
@@ -1055,8 +1386,6 @@ class HoloSweeperGame {
     if (action === 'scan') return this.revealedCount > 0;
     if (action === 'inspect') return this.hasInspectedNeighbors;
     if (action === 'mark') return this.flaggedCount > 0;
-    if (action === 'slice') return this.hasUsedSlices && !this.isSliceFull();
-    if (action === 'sliceReset') return this.hasResetSlices && this.isSliceFull();
     return false;
   }
 
@@ -1064,7 +1393,6 @@ class HoloSweeperGame {
     if (this.gameMode !== 'solo' || this.waitingTutorialAction !== action || !this.dialogueState) return;
     this.waitingTutorialAction = null;
     this.setTutorialActionHint();
-    if (action === 'sliceReset') this.closeMobilePanels();
     this.dialogueState.index += 1;
     setTimeout(() => this.renderSilverWolfDialogue(), 240);
   }
@@ -1075,21 +1403,6 @@ class HoloSweeperGame {
     if (!hint || !text) return;
     hint.classList.toggle('hidden', !action);
     if (action) text.textContent = this.t(`tutorial.actionHint.${action}`);
-    const sliceAction = action === 'slice' || action === 'sliceReset';
-    document.getElementById('slicing-panel')?.classList.toggle('tutorial-target', sliceAction);
-    document.getElementById('btn-mobile-slices')?.classList.toggle('tutorial-target', sliceAction);
-    document.getElementById('btn-reset-slices')?.classList.toggle('tutorial-target', action === 'sliceReset');
-  }
-
-  focusSliceTutorial(action) {
-    if (window.innerWidth <= 900) {
-      const panel = document.getElementById('slicing-panel');
-      if (panel && !panel.classList.contains('mobile-open')) this.toggleMobilePanel('slicing-panel');
-    }
-    const target = action === 'sliceReset'
-      ? document.getElementById('btn-reset-slices')
-      : document.getElementById('slice-z-max');
-    target?.focus({ preventScroll: true });
   }
 
   beginGuidedTutorial() {
@@ -1640,7 +1953,8 @@ class HoloSweeperGame {
     const visible = this.gameMode === 'solo'
       && ['medium', 'hard'].includes(this.taskMission)
       && snapshot
-      && ['ready', 'playing'].includes(snapshot.phase);
+      && ['ready', 'playing'].includes(snapshot.phase)
+      && !this.ultimateHackRunning(snapshot);
     panel.classList.toggle('hidden', !visible);
     if (!visible) this.clearSolverHint();
   }
@@ -1674,7 +1988,10 @@ class HoloSweeperGame {
 
   isSolverHintCompleted(snapshot, hint = this.solverHint) {
     if (!hint?.target || !snapshot) return false;
-    const completedCells = hint.action === 'flag' ? snapshot.flags : snapshot.revealed;
+    const completedCells = [
+      ...(hint.action === 'flag' ? snapshot.flags : snapshot.revealed),
+      ...(snapshot.purged || []),
+    ];
     return (completedCells || []).some((point) => this.pointKey(point) === this.pointKey(hint.target));
   }
 
@@ -1692,10 +2009,11 @@ class HoloSweeperGame {
         width: config.width,
         height: config.height,
         depth: config.depth,
-        mineCount: config.mineCount,
+        mineCount: this.roomSnapshot.remainingMineCount ?? config.mineCount,
         phase: this.roomSnapshot.phase,
         revealed: this.roomSnapshot.revealed || [],
         flags: this.roomSnapshot.flags || [],
+        excluded: this.roomSnapshot.purged || [],
       });
       this.renderSolverHint(this.solverHint);
       this.createSolverHintMarkers(this.solverHint);
@@ -1786,8 +2104,255 @@ class HoloSweeperGame {
     }
   }
 
+  ultimateHackRunning(snapshot = this.roomSnapshot) {
+    return snapshot?.ultimateHack?.status === 'running';
+  }
+
+  ultimateHackStrategy(snapshot = this.roomSnapshot) {
+    if (snapshot?.ultimateHack?.strategy === 'scan') return 'scan';
+    return snapshot?.config?.reduction === false ? 'scan' : 'entropy';
+  }
+
+  startUltimateHack() {
+    const snapshot = this.roomSnapshot;
+    const allowedSurface = this.gameMode === 'solo' && (
+      this.taskFlow === 'freeplay'
+      || (this.taskFlow === 'campaign' && this.taskMission === 'ultimate')
+    );
+    if (
+      !allowedSurface
+      || !snapshot
+      || !['ready', 'playing'].includes(snapshot.phase)
+      || this.ultimateHackRunning(snapshot)
+      || this.ultimateHackStartPending
+      || this.successReplay
+    ) return;
+
+    this.ultimateHackStartPending = true;
+    this.clearSolverHint();
+    this.closeMobilePanels();
+    this.updateUltimateHackLaunchAvailability(snapshot);
+    this.roomClient.send({ op: 'ultimate_hack_start' }).catch((error) => {
+      this.ultimateHackStartPending = false;
+      this.updateUltimateHackLaunchAvailability(this.roomSnapshot);
+      this.handleRoomError(error);
+    });
+  }
+
+  cancelUltimateHack() {
+    const hack = this.roomSnapshot?.ultimateHack;
+    const client = this.ultimateHackClient;
+    if (hack?.status !== 'running' || !hack.runId || client?.cancelPending) return;
+    client.cancelPending = true;
+    clearTimeout(this.ultimateHackStepTimer);
+    this.ultimateHackStepTimer = null;
+    client.scheduledStepKey = null;
+    this.updateUltimateHackHUD(this.roomSnapshot);
+    this.roomClient.send({ op: 'ultimate_hack_cancel', runId: hack.runId }).catch((error) => {
+      if (this.ultimateHackClient?.runId === hack.runId) {
+        this.ultimateHackClient.cancelPending = false;
+        this.scheduleUltimateHackStep(this.roomSnapshot);
+        this.updateUltimateHackHUD(this.roomSnapshot);
+      }
+      this.handleRoomError(error);
+    });
+  }
+
+  beginUltimateHackClient(hack, snapshot) {
+    clearTimeout(this.ultimateHackStepTimer);
+    this.ultimateHackStepTimer = null;
+    this.ultimateHackStartPending = false;
+    this.ultimateHackClient = {
+      runId: hack.runId,
+      lastRequestedStepKey: null,
+      scheduledStepKey: null,
+      cancelPending: false,
+      previousAutoRotate: Boolean(this.controls?.autoRotate),
+      previousAutoRotateSpeed: this.controls?.autoRotateSpeed,
+    };
+    document.body.classList.add('ultimate-hack-active');
+    document.body.dataset.ultimateHackStrategy = this.ultimateHackStrategy(snapshot);
+    document.getElementById('ultimate-hack-hud')?.classList.remove('hidden');
+    document.getElementById('tutorial-overlay')?.classList.add('hidden');
+    this.closeMobilePanels();
+    this.clearSolverHint();
+    this.resetSlices();
+    this.isInteractionLocked = true;
+    if (this.controls) {
+      this.controls.autoRotate = true;
+      this.controls.autoRotateSpeed = 0.42;
+    }
+  }
+
+  endUltimateHackClient(snapshot = this.roomSnapshot) {
+    const client = this.ultimateHackClient;
+    clearTimeout(this.ultimateHackStepTimer);
+    this.ultimateHackStepTimer = null;
+    this.ultimateHackStartPending = false;
+    this.ultimateHackClient = null;
+    document.body.classList.remove('ultimate-hack-active');
+    delete document.body.dataset.ultimateHackStrategy;
+    document.getElementById('ultimate-hack-hud')?.classList.add('hidden');
+    if (client && this.controls) {
+      this.controls.autoRotate = client.previousAutoRotate;
+      if (Number.isFinite(client.previousAutoRotateSpeed)) {
+        this.controls.autoRotateSpeed = client.previousAutoRotateSpeed;
+      }
+    }
+    this.isInteractionLocked = ['revive', 'lost', 'won'].includes(snapshot?.phase);
+  }
+
+  syncUltimateHack(snapshot, previous = null) {
+    const hack = snapshot?.ultimateHack;
+    const running = hack?.status === 'running' && Boolean(hack.runId);
+    if (!running) {
+      if (this.ultimateHackClient) this.endUltimateHackClient(snapshot);
+      this.updateUltimateHackLaunchAvailability(snapshot);
+      return;
+    }
+
+    if (this.ultimateHackClient?.runId !== hack.runId) {
+      if (this.ultimateHackClient) this.endUltimateHackClient(snapshot);
+      this.beginUltimateHackClient(hack, snapshot);
+    }
+    this.isInteractionLocked = true;
+    document.body.dataset.ultimateHackStrategy = this.ultimateHackStrategy(snapshot);
+    this.updateUltimateHackHUD(snapshot);
+    this.updateUltimateHackLaunchAvailability(snapshot);
+
+    const previousHack = previous?.ultimateHack;
+    const stepChanged = previousHack?.runId !== hack.runId || previousHack?.step !== hack.step;
+    if (stepChanged || !this.ultimateHackClient.lastRequestedStepKey) {
+      this.scheduleUltimateHackStep(snapshot);
+    }
+  }
+
+  updateUltimateHackLaunchAvailability(snapshot = this.roomSnapshot) {
+    const launch = document.getElementById('ultimate-hack-launch');
+    const button = document.getElementById('btn-ultimate-hack-start');
+    const label = document.getElementById('btn-ultimate-hack-start-label');
+    if (!launch || !button) return;
+    const visible = this.gameMode === 'solo' && this.taskFlow === 'freeplay';
+    const enabled = visible
+      && snapshot
+      && ['ready', 'playing'].includes(snapshot.phase)
+      && !this.ultimateHackRunning(snapshot)
+      && !this.ultimateHackStartPending
+      && !this.successReplay;
+    launch.classList.toggle('hidden', !visible);
+    button.disabled = !enabled;
+    if (label) label.textContent = this.t(this.ultimateHackStartPending ? 'ultimateHack.launchPending' : 'ultimateHack.launch');
+  }
+
+  updateUltimateHackHUD(snapshot = this.roomSnapshot) {
+    const hack = snapshot?.ultimateHack;
+    if (!hack || hack.status !== 'running') return;
+    const strategy = this.ultimateHackStrategy(snapshot);
+    const numericStep = Number(hack.step);
+    const step = Number.isFinite(numericStep) ? Math.max(0, numericStep) : 0;
+    const progress = this.currentBoardProgress(snapshot).percent;
+    document.getElementById('ultimate-hack-stage').textContent = this.t(`ultimateHack.stage.${strategy}`);
+    document.getElementById('ultimate-hack-step').textContent = this.t('ultimateHack.step', { step });
+    document.getElementById('ultimate-hack-progress').textContent = this.t('ultimateHack.progress', { progress });
+    const cancel = document.getElementById('btn-ultimate-hack-cancel');
+    if (cancel) {
+      cancel.disabled = Boolean(this.ultimateHackClient?.cancelPending);
+      cancel.textContent = this.t(cancel.disabled ? 'ultimateHack.cancelPending' : 'ultimateHack.cancel');
+    }
+  }
+
+  scheduleUltimateHackStep(snapshot = this.roomSnapshot) {
+    const hack = snapshot?.ultimateHack;
+    const client = this.ultimateHackClient;
+    if (
+      !client
+      || client.cancelPending
+      || hack?.status !== 'running'
+      || hack.runId !== client.runId
+      || !['ready', 'playing'].includes(snapshot.phase)
+    ) return;
+    const stepKey = `${hack.runId}:${String(hack.step ?? 0)}`;
+    if (client.lastRequestedStepKey === stepKey || client.scheduledStepKey === stepKey) return;
+    clearTimeout(this.ultimateHackStepTimer);
+    client.scheduledStepKey = stepKey;
+
+    const sendWhenSettled = () => {
+      const liveHack = this.roomSnapshot?.ultimateHack;
+      const liveClient = this.ultimateHackClient;
+      if (
+        !liveClient
+        || liveClient.cancelPending
+        || liveClient.runId !== hack.runId
+        || liveHack?.status !== 'running'
+        || liveHack.runId !== hack.runId
+        || `${liveHack.runId}:${String(liveHack.step ?? 0)}` !== stepKey
+      ) {
+        if (liveClient?.scheduledStepKey === stepKey) liveClient.scheduledStepKey = null;
+        return;
+      }
+
+      const revealStillRunning = this.cellRevealAnimations.length > 0
+        || performance.now() < this.revealAnimationEndsAt;
+      if (revealStillRunning || this.sectorPurgeAnimations.length > 0) {
+        this.ultimateHackStepTimer = window.setTimeout(sendWhenSettled, 80);
+        return;
+      }
+
+      liveClient.scheduledStepKey = null;
+      liveClient.lastRequestedStepKey = stepKey;
+      this.ultimateHackStepTimer = null;
+      this.roomClient.send({
+        op: 'ultimate_hack_step',
+        runId: hack.runId,
+        expectedStep: Number(hack.step),
+      }).catch((error) => {
+        if (this.ultimateHackClient?.runId === hack.runId) {
+          this.ultimateHackClient.lastRequestedStepKey = null;
+          this.ultimateHackStepTimer = window.setTimeout(
+            () => this.scheduleUltimateHackStep(this.roomSnapshot),
+            650,
+          );
+        }
+        this.handleRoomError(error);
+      });
+    };
+
+    const revealWait = Math.max(0, Math.ceil(this.revealAnimationEndsAt - performance.now()));
+    this.ultimateHackStepTimer = window.setTimeout(sendWhenSettled, Math.max(120, revealWait));
+  }
+
   showTaskCompletion() {
+    if (this.taskFlow === 'freeplay') {
+      this.showSilverWolfDialogue([{
+        artKey: 'main',
+        titleKey: 'freeplay.completeTitle',
+        messageKey: 'freeplay.completeMessage',
+        factText: this.t('tutorial.completionFact', { time: this.formatTime(this.timer) }),
+        buttonKey: 'tutorial.continue',
+      }], { allowReplay: true });
+      return;
+    }
     const mission = this.taskMission;
+    if (mission === 'ultimate') {
+      this.showSilverWolfDialogue([
+        {
+          artKey: 'main',
+          titleKey: 'task.ultimate.completeTitle',
+          messageKey: 'task.ultimate.complete.1',
+          factText: this.t('tutorial.completionFact', { time: this.formatTime(this.timer) }),
+          buttonKey: 'tutorial.next',
+        },
+        {
+          artKey: 'main',
+          titleKey: 'task.ultimate.finalTitle',
+          messageKey: 'task.ultimate.complete.2',
+          factKey: 'task.ultimate.complete.fact',
+          buttonKey: 'tutorial.enterFreeplay',
+          requiresExplicit: true,
+        },
+      ], { allowReplay: true, onComplete: () => this.enterFreeModeAfterCampaign() });
+      return;
+    }
     const completionArt = {
       easy: ['finish', 'main'],
       medium: ['ready', 'tip'],
@@ -1798,12 +2363,36 @@ class HoloSweeperGame {
       { artKey: completionArt[1], titleKey: `task.${mission}.completeTitle`, messageKey: `task.${mission}.complete.2`, buttonKey: mission === 'easy' ? 'tutorial.enterMedium' : (mission === 'medium' ? 'tutorial.enterHard' : 'tutorial.next') },
     ];
     if (mission === 'hard') {
-      steps.push({ artKey: completionArt[2], titleKey: 'task.hard.finalTitle', messageKey: 'task.hard.complete.3', factKey: 'task.hard.complete.fact', buttonKey: 'tutorial.continue' });
+      steps.push({ artKey: completionArt[2], titleKey: 'task.hard.finalTitle', messageKey: 'task.hard.complete.3', factKey: 'task.hard.complete.fact', buttonKey: 'tutorial.enterUltimate' });
     }
-    const nextMission = mission === 'easy' ? 'medium' : (mission === 'medium' ? 'hard' : null);
+    const nextMission = mission === 'easy'
+      ? 'medium'
+      : (mission === 'medium' ? 'hard' : (mission === 'hard' ? 'ultimate' : null));
     this.showSilverWolfDialogue(steps, {
+      allowReplay: true,
       onComplete: nextMission ? () => this.advanceTaskMission(nextMission) : null,
     });
+  }
+
+  enterFreeModeAfterCampaign() {
+    const completedConfig = this.taskMission === 'ultimate'
+      ? TASK_MISSIONS.hard
+      : (this.roomSnapshot?.config ?? TASK_MISSIONS.hard);
+    const config = {
+      ...completedConfig,
+      campaign: false,
+    };
+    this.stopGuidedTutorial();
+    this.taskFlow = 'freeplay';
+    this.pendingTaskMission = this.missionFromConfig(config);
+    this.taskMission = this.pendingTaskMission;
+    this.pendingTaskConfig = { ...config };
+    this.taskExperienceStarted = false;
+    this.mediumChordTipShown = false;
+    this.hardReductionTipShown = false;
+    this.selectTaskFlow('freeplay');
+    this.syncGameModeUI();
+    this.roomClient.send({ op: 'restart', config }).catch(error => this.handleRoomError(error));
   }
 
   advanceTaskMission(mission) {
@@ -1812,8 +2401,10 @@ class HoloSweeperGame {
     this.stopGuidedTutorial();
     this.taskMission = mission;
     this.pendingTaskMission = mission;
+    this.pendingTaskConfig = { ...config };
     this.taskExperienceStarted = false;
     if (mission === 'medium') this.mediumChordTipShown = false;
+    if (mission === 'hard') this.hardReductionTipShown = false;
     this.applyStoryArt('solo', mission);
     document.querySelectorAll('.btn-preset').forEach((button) => {
       button.classList.toggle('active', Number(button.dataset.w) === config.width);
@@ -1827,8 +2418,9 @@ class HoloSweeperGame {
 
   syncGameModeUI() {
     const solo = this.gameMode === 'solo';
-    const showTutorialChecklist = solo && this.taskMission === 'easy';
+    const showTutorialChecklist = solo && this.taskFlow === 'campaign' && this.taskMission === 'easy';
     document.body.dataset.gameMode = solo ? 'task' : 'multiplayer';
+    document.body.dataset.taskFlow = this.taskFlow;
     document.getElementById('solo-guide-section').classList.toggle('hidden', !showTutorialChecklist);
     document.getElementById('player-list-section').classList.toggle('hidden', solo);
     document.getElementById('chat-section').classList.toggle('hidden', solo);
@@ -1836,6 +2428,7 @@ class HoloSweeperGame {
     this.applyStoryArt(this.gameMode, this.taskMission);
     this.updateSoloGuide();
     this.updateMissionGuide();
+    this.updateUltimateHackLaunchAvailability(this.roomSnapshot);
   }
 
   renderPlayers(players) {
@@ -1870,7 +2463,13 @@ class HoloSweeperGame {
         this.appendChatMessage({ system: false, playerName: entry.value.playerName, message: entry.value.message });
       } else {
         const activity = entry.value;
-        const localized = activity.key ? this.t(`activity.${activity.key}`, activity.params || {}) : activity.message;
+        const params = activity.key === 'sectorPurged'
+          ? { ...activity.params, updated: activity.params?.updated ?? activity.params?.cells ?? 0 }
+          : (activity.params || {});
+        const activityKey = activity.key === 'sectorPurged' && params.kind === 'reduction'
+          ? 'reductionApplied'
+          : activity.key;
+        const localized = activityKey ? this.t(`activity.${activityKey}`, params) : activity.message;
         this.appendChatMessage({ system: true, message: this.systemText(localized || '') });
       }
     }
@@ -1895,42 +2494,175 @@ class HoloSweeperGame {
     container.scrollTop = container.scrollHeight;
   }
 
-  revealServerCell(data, animate = true) {
+  revealServerCell(data, animate = true, {
+    durationMs = BOARD_ANIMATION_TIMING.cellRevealDurationMs,
+    delayMs = 0,
+    wave = false,
+    playSound = true,
+  } = {}) {
     const cell = this.grid[data.x]?.[data.y]?.[data.z];
-    if (!cell || cell.isRevealed) return;
+    if (!cell || cell.isPurged) return;
+    if (cell.isRevealed) {
+      if (cell.neighborMines !== data.count) {
+        cell.neighborMines = data.count;
+        this.refreshNumberSprite(cell);
+      }
+      return;
+    }
     if (cell.isFlagged) this.setFlagLocal(data.x, data.y, data.z, false, false);
     cell.neighborMines = data.count;
     cell.isRevealed = true;
     this.revealedCount++;
+    const revealNumber = cell.neighborMines > 0
+      ? () => {
+        if (cell.isRevealed && !cell.spriteInstance) this.createNumberSprite(cell);
+      }
+      : null;
     if (animate) {
-      sfx.playDig();
-      this.animateCellReveal(cell);
+      if (playSound) sfx.playDig();
+      this.animateCellReveal(cell, { durationMs, delayMs, wave, onStart: revealNumber });
     } else {
       cell.mesh.visible = false;
       cell.outline.visible = false;
+      revealNumber?.();
     }
-    if (cell.neighborMines > 0 && !cell.spriteInstance) this.createNumberSprite(cell);
   }
 
-  setFlagLocal(x, y, z, flagged, playSound = true) {
+  removeNumberSprite(cell) {
+    const sprite = cell?.spriteInstance;
+    if (!sprite) return;
+    cell.group.remove(sprite);
+    sprite.material?.map?.dispose();
+    sprite.material?.dispose();
+    cell.spriteInstance = null;
+  }
+
+  refreshNumberSprite(cell) {
+    this.removeNumberSprite(cell);
+    if (cell.isRevealed && cell.neighborMines > 0) this.createNumberSprite(cell);
+  }
+
+  flagMaterialForCell(cell, hovered = false) {
+    if (cell?.isAutomatedFlag) {
+      return hovered ? this.materials.cellAutomatedFlaggedHovered : this.materials.cellAutomatedFlagged;
+    }
+    return hovered ? this.materials.cellFlaggedHovered : this.materials.cellFlagged;
+  }
+
+  setFlagLocal(x, y, z, flagged, playSound = true, { automated = false } = {}) {
     const cell = this.grid[x]?.[y]?.[z];
-    if (!cell || cell.isRevealed || cell.isFlagged === flagged) return;
+    if (!cell || cell.isPurged || cell.isRevealed || cell.isFlagged === flagged) return;
     if (playSound) sfx.playFlag();
     cell.isFlagged = flagged;
+    cell.isAutomatedFlag = flagged && automated;
     this.flaggedCount += flagged ? 1 : -1;
     if (flagged) {
-      const flag = this.geometries.flag.clone();
+      const flag = (automated ? this.geometries.automatedFlag : this.geometries.flag).clone();
       flag.scale.set(0.9, 0.9, 0.9);
       cell.group.add(flag);
       cell.flagInstance = flag;
-      cell.mesh.material = this.materials.cellFlagged;
+      cell.mesh.material = this.flagMaterialForCell(cell);
+      if (automated && playSound) {
+        const world = new THREE.Vector3();
+        cell.group.getWorldPosition(world);
+        this.particles?.createExplosion(world, 0xff174d, 18);
+      }
     } else {
       if (cell.flagInstance) {
         cell.group.remove(cell.flagInstance);
         cell.flagInstance = null;
       }
+      cell.isAutomatedFlag = false;
       cell.mesh.material = this.materials.cellUnrevealed;
     }
+  }
+
+  syncPurgedCells(snapshot, initial = false) {
+    const desired = new Set((snapshot.purged || []).map((point) => this.pointKey(point)));
+    const newlyPurged = [];
+    for (let x = 0; x < this.width; x++) for (let y = 0; y < this.height; y++) for (let z = 0; z < this.depth; z++) {
+      const cell = this.grid[x]?.[y]?.[z];
+      if (!cell || cell.isPurged || !desired.has(this.pointKey(cell))) continue;
+      cell.isPurged = true;
+      if (cell.isRevealed) this.revealedCount = Math.max(0, this.revealedCount - 1);
+      if (cell.isFlagged) this.flaggedCount = Math.max(0, this.flaggedCount - 1);
+      cell.isRevealed = false;
+      cell.isFlagged = false;
+      cell.isAutomatedFlag = false;
+      this.automatedFlagKeys.delete(this.pointKey(cell));
+      newlyPurged.push(cell);
+    }
+
+    const event = snapshot.lastPurge;
+    const unseenEvent = event?.id && event.id !== this.lastSectorPurgeId;
+    if (newlyPurged.length && !initial) this.animateSectorPurge(newlyPurged, event);
+    else for (const cell of newlyPurged) this.finalizePurgedCell(cell);
+    if (unseenEvent && !initial) this.showSectorPurgeBanner(event);
+    if (event?.id) this.lastSectorPurgeId = event.id;
+    else if (snapshot.phase === 'ready') this.lastSectorPurgeId = null;
+  }
+
+  animateSectorPurge(cells, event = null) {
+    const purgedMines = event?.purgedMines || (event?.kind === 'reduction' ? [] : event?.mines) || [];
+    const mineKeys = new Set(purgedMines.map((point) => this.pointKey(point)));
+    const ordered = [...cells].sort((left, right) => Number(mineKeys.has(this.pointKey(right))) - Number(mineKeys.has(this.pointKey(left))));
+    const startedAt = performance.now();
+    this.sectorPurgeAnimations.push(...ordered.map((cell, index) => ({
+      cell,
+      start: startedAt + Math.min(index, 18) * BOARD_ANIMATION_TIMING.sectorPurgeStaggerMs,
+      duration: BOARD_ANIMATION_TIMING.sectorPurgeCellDurationMs,
+      mine: mineKeys.has(this.pointKey(cell)),
+      burst: false,
+    })));
+  }
+
+  updateSectorPurgeAnimations(now = performance.now()) {
+    for (let index = this.sectorPurgeAnimations.length - 1; index >= 0; index -= 1) {
+      const animation = this.sectorPurgeAnimations[index];
+      if (now < animation.start) continue;
+      if (!animation.burst && animation.mine) {
+        animation.burst = true;
+        const world = new THREE.Vector3();
+        animation.cell.group.getWorldPosition(world);
+        this.particles?.createExplosion(world, 0x29e7ff, 24);
+      }
+      const progress = Math.min(1, (now - animation.start) / animation.duration);
+      const eased = progress * progress * (3 - 2 * progress);
+      animation.cell.group.scale.setScalar(Math.max(0.02, 1 - eased));
+      animation.cell.group.rotation.y += 0.06;
+      animation.cell.group.rotation.x += 0.025;
+      if (progress < 1) continue;
+      this.finalizePurgedCell(animation.cell);
+      this.sectorPurgeAnimations.splice(index, 1);
+    }
+  }
+
+  finalizePurgedCell(cell) {
+    cell.group.visible = false;
+    cell.group.scale.setScalar(1);
+  }
+
+  showSectorPurgeBanner(event) {
+    const banner = document.getElementById('sector-purge-banner');
+    const kicker = banner?.querySelector('span');
+    const title = document.getElementById('sector-purge-banner-title');
+    const detail = document.getElementById('sector-purge-banner-detail');
+    if (!banner || !event) return;
+    const prefix = event.kind === 'combined' ? 'combined' : (event.kind === 'reduction' ? 'reduction' : 'purge');
+    if (kicker) kicker.textContent = this.t(`${prefix}.bannerKicker`);
+    if (title) title.textContent = this.t(`${prefix}.bannerTitle`);
+    if (detail) detail.textContent = this.t(`${prefix}.bannerDetail`, {
+      sectors: event.sectorCount ?? 1,
+      mines: event.mines?.length ?? 0,
+      reduced: event.reductionMines?.length ?? (event.kind === 'reduction' ? event.mines?.length : 0) ?? 0,
+      purged: event.purgedMines?.length ?? (event.kind === 'reduction' ? 0 : event.mines?.length) ?? 0,
+      cells: event.cells?.length ?? 0,
+      updated: event.updatedClues?.length ?? event.clues?.length ?? 0,
+      opened: event.opened?.length ?? 0,
+    });
+    banner.classList.remove('hidden');
+    clearTimeout(this.sectorPurgeBannerTimer);
+    this.sectorPurgeBannerTimer = setTimeout(() => banner.classList.add('hidden'), 2800);
   }
 
   syncServerTimer(startedAt, serverTime, running) {
@@ -2016,6 +2748,15 @@ class HoloSweeperGame {
     this.height = config.height;
     this.depth = config.depth;
     this.mineCount = config.mineCount;
+    const legacyRuleset = ['classic', 'sector', 'reduction'].includes(config.ruleset) ? config.ruleset : 'classic';
+    this.autoPurgeEnabled = typeof config.autoPurge === 'boolean'
+      ? config.autoPurge
+      : legacyRuleset !== 'classic';
+    this.reductionEnabled = typeof config.reduction === 'boolean'
+      ? config.reduction
+      : legacyRuleset === 'reduction';
+    this.ruleset = rulesetForFeatures(this.autoPurgeEnabled, this.reductionEnabled);
+    this.syncFeatureButtons();
     document.getElementById('input-w').value = this.width;
     document.getElementById('input-h').value = this.height;
     document.getElementById('input-d').value = this.depth;
@@ -2030,6 +2771,345 @@ class HoloSweeperGame {
   }
 
   
+  hasSuccessReplay(snapshot = this.roomSnapshot) {
+    return snapshot?.phase === 'won'
+      && Array.isArray(snapshot.replay?.steps)
+      && snapshot.replay.steps.length > 0;
+  }
+
+  syncSuccessReplayAvailability(snapshot = this.roomSnapshot) {
+    const available = this.hasSuccessReplay(snapshot);
+    document.getElementById('btn-modal-replay')?.classList.toggle(
+      'hidden',
+      !available || snapshot?.mode === 'solo',
+    );
+    document.getElementById('btn-tutorial-replay')?.classList.toggle(
+      'hidden',
+      !available || !this.dialogueState?.allowReplay,
+    );
+  }
+
+  startSuccessReplay() {
+    const snapshot = this.roomSnapshot;
+    if (this.successReplay || !this.hasSuccessReplay(snapshot)) return;
+    const replay = snapshot.replay;
+    const tutorialOverlay = document.getElementById('tutorial-overlay');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const returnSurface = !tutorialOverlay.classList.contains('hidden')
+      ? 'dialogue'
+      : (!modalOverlay.classList.contains('hidden') ? 'modal' : 'board');
+    const finalSnapshot = typeof structuredClone === 'function'
+      ? structuredClone(snapshot)
+      : JSON.parse(JSON.stringify(snapshot));
+
+    this.successReplay = {
+      replay,
+      finalSnapshot,
+      returnSurface,
+      index: 0,
+      paused: false,
+      finished: false,
+      nextDueAt: null,
+      pauseRemainingMs: null,
+      generation: 0,
+      purged: [],
+      remainingMineCount: replay.config?.mineCount ?? snapshot.config.mineCount,
+      previousAutoRotate: Boolean(this.controls?.autoRotate),
+      previousAutoRotateSpeed: this.controls?.autoRotateSpeed,
+    };
+    this.pendingReplaySnapshot = null;
+    clearTimeout(this.successReplayTimer);
+    this.successReplayTimer = null;
+    tutorialOverlay.classList.add('hidden');
+    modalOverlay.classList.add('hidden');
+    document.getElementById('ad-modal-overlay').classList.add('hidden');
+    this.closeMobilePanels();
+    document.body.classList.add('replay-active');
+
+    this.applyConfig(replay.config ?? snapshot.config);
+    this.buildGridLocal();
+    this.successReplay.generation = this.boardAnimationGeneration;
+    this.isInteractionLocked = true;
+    this.isGameWon = false;
+    this.resetSlices();
+    if (this.controls) {
+      this.controls.autoRotate = true;
+      this.controls.autoRotateSpeed = 0.55;
+    }
+
+    document.getElementById('replay-hud').classList.remove('hidden');
+    const pauseButton = document.getElementById('btn-replay-pause');
+    pauseButton.disabled = false;
+    pauseButton.setAttribute('aria-pressed', 'false');
+    this.updateSuccessReplayControls();
+    this.updateSuccessReplayProgress();
+    this.successReplay.nextDueAt = performance.now() + 320;
+    this.successReplayTimer = window.setTimeout(() => this.playNextSuccessReplayStep(), 320);
+  }
+
+  playNextSuccessReplayStep() {
+    const state = this.successReplay;
+    if (!state || state.paused) return;
+    if (state.generation !== this.boardAnimationGeneration) {
+      this.stopSuccessReplay();
+      return;
+    }
+    state.nextDueAt = null;
+    if (state.index >= state.replay.steps.length) {
+      this.finishSuccessReplayWhenSettled();
+      return;
+    }
+    const step = state.replay.steps[state.index];
+    state.index += 1;
+    const timing = this.applySuccessReplayStep(step, state);
+    this.updateSuccessReplayProgress();
+    const isLast = state.index >= state.replay.steps.length;
+    const delayMs = isLast ? timing.settleMs : timing.cadenceMs;
+    state.nextDueAt = performance.now() + delayMs;
+    state.pauseRemainingMs = null;
+    this.successReplayTimer = window.setTimeout(
+      () => this.playNextSuccessReplayStep(),
+      delayMs,
+    );
+  }
+
+  applySuccessReplayStep(step, state = this.successReplay) {
+    if (!state || state.generation !== this.boardAnimationGeneration) {
+      return { cadenceMs: 0, settleMs: 0 };
+    }
+    const flags = step.flags || [];
+    const opened = step.opened || [];
+    const updatedClues = step.updatedClues || [];
+    const reductionMines = step.reductionMines || [];
+    const purgedMines = step.purgedMines || [];
+    const hasElimination = reductionMines.length > 0 || purgedMines.length > 0;
+    for (const point of flags) this.setFlagLocal(point.x, point.y, point.z, true, false);
+    if (flags.length) sfx.playFlag();
+
+    const leadMs = flags.length && (opened.length || hasElimination) ? 180 : 0;
+    let maximumRevealDelay = 0;
+    let maximumRevealEnd = 0;
+    for (const point of opened) {
+      const timing = revealAnimationTiming(Math.max(0, Number(point.wave) || 0));
+      maximumRevealDelay = Math.max(maximumRevealDelay, timing.delayMs);
+      maximumRevealEnd = Math.max(maximumRevealEnd, timing.delayMs + timing.durationMs);
+    }
+    const sectorEnd = purgedMines.length
+      ? BOARD_ANIMATION_TIMING.sectorPurgeCellDurationMs
+        + Math.min(Math.max(0, purgedMines.length - 1), 18) * BOARD_ANIMATION_TIMING.sectorPurgeStaggerMs
+      : 0;
+    const generation = state.generation;
+    const beginStep = () => {
+      if (!this.successReplay || generation !== this.boardAnimationGeneration) return;
+      if (hasElimination) {
+        const purgedByKey = new Map(state.purged.map((point) => [this.pointKey(point), point]));
+        for (const point of purgedMines) purgedByKey.set(this.pointKey(point), point);
+        state.purged = [...purgedByKey.values()];
+        const event = {
+          id: `replay:${state.replay.runId}:${step.id}`,
+          kind: step.kind,
+          mines: [...reductionMines, ...purgedMines],
+          reductionMines,
+          purgedMines,
+          clues: updatedClues,
+          updatedClues,
+          opened,
+          cells: step.cells || purgedMines,
+          sectorCount: step.sectorCount ?? (purgedMines.length ? 1 : 0),
+          at: step.at,
+        };
+        this.syncPurgedCells({ purged: state.purged, lastPurge: event }, false);
+      }
+
+      for (const clue of updatedClues) {
+        const cell = this.grid[clue.x]?.[clue.y]?.[clue.z];
+        if (cell?.isRevealed) this.revealServerCell(clue, false);
+      }
+
+      const effects = new Map();
+      for (const point of opened) {
+        const timing = revealAnimationTiming(Math.max(0, Number(point.wave) || 0));
+        this.revealServerCell(point, true, {
+          durationMs: timing.durationMs,
+          delayMs: timing.delayMs,
+          wave: timing.isCascade,
+          playSound: false,
+        });
+        const effect = effects.get(timing.delayMs) ?? { points: [], cascade: false };
+        const cell = this.grid[point.x]?.[point.y]?.[point.z];
+        if (cell) {
+          const world = new THREE.Vector3();
+          cell.group.getWorldPosition(world);
+          effect.points.push(world);
+          effect.cascade ||= timing.isCascade;
+          effects.set(timing.delayMs, effect);
+        }
+      }
+      for (const [delayMs, effect] of effects) {
+        window.setTimeout(() => {
+          if (!this.successReplay || generation !== this.boardAnimationGeneration) return;
+          sfx.playDig();
+          const sampleCount = Math.min(effect.cascade ? 4 : 2, effect.points.length);
+          for (let index = 0; index < sampleCount; index += 1) {
+            const point = effect.points[Math.floor((index * effect.points.length) / sampleCount)];
+            this.particles?.createExplosion(point, 0x29e7ff, effect.cascade ? 6 : 4);
+          }
+        }, delayMs);
+      }
+      if (step.target && !opened.some((point) => this.pointKey(point) === this.pointKey(step.target))) {
+        const target = this.grid[step.target.x]?.[step.target.y]?.[step.target.z];
+        if (target) {
+          const world = new THREE.Vector3();
+          target.group.getWorldPosition(world);
+          this.particles?.createExplosion(world, flags.length ? 0xff4fd8 : 0x29e7ff, 8);
+        }
+      }
+      if (maximumRevealEnd > 0) {
+        this.revealAnimationEndsAt = Math.max(
+          this.revealAnimationEndsAt,
+          performance.now() + maximumRevealEnd,
+        );
+      }
+      state.remainingMineCount = Number.isFinite(Number(step.remainingMineCount))
+        ? Number(step.remainingMineCount)
+        : state.remainingMineCount;
+      this.updateSuccessReplayProgress();
+    };
+    if (leadMs) window.setTimeout(beginStep, leadMs);
+    else beginStep();
+
+    const cadenceMs = leadMs + Math.min(1200, Math.max(
+      opened.length ? 360 : 250,
+      maximumRevealDelay + 240,
+      hasElimination ? 720 : 0,
+    ));
+    const settleMs = leadMs + Math.max(420, maximumRevealEnd + 180, sectorEnd + 180);
+    return { cadenceMs, settleMs };
+  }
+
+  updateSuccessReplayProgress() {
+    const state = this.successReplay;
+    if (!state) return;
+    const current = Math.min(state.index, state.replay.steps.length);
+    const total = state.replay.steps.length;
+    document.getElementById('replay-hud-progress').textContent = state.finished
+      ? this.t('replay.complete')
+      : this.t('replay.progress', { current, total });
+
+    const totalCells = this.width * this.height * this.depth;
+    const safeCells = Math.max(0, totalCells - state.purged.length - state.remainingMineCount);
+    const percent = safeCells > 0
+      ? Math.min(100, Math.round((this.revealedCount / safeCells) * 100))
+      : 100;
+    const mineStatus = `${this.flaggedCount} / ${state.remainingMineCount}`;
+    document.getElementById('stat-mines').innerText = mineStatus;
+    document.getElementById('mobile-stat-mines').innerText = mineStatus;
+    document.getElementById('stat-progress-percent').innerText = `${percent}%`;
+    document.getElementById('stat-progress').style.width = `${percent}%`;
+    document.getElementById('mobile-stat-progress').innerText = `${percent}%`;
+  }
+
+  updateSuccessReplayControls() {
+    const state = this.successReplay;
+    if (!state) return;
+    const pauseButton = document.getElementById('btn-replay-pause');
+    const key = state.paused ? 'replay.resume' : 'replay.pause';
+    pauseButton.setAttribute('aria-pressed', String(state.paused));
+    pauseButton.setAttribute('aria-label', this.t(key));
+    document.getElementById('replay-toggle-label').textContent = this.t(key);
+    document.getElementById('replay-toggle-icon').textContent = state.paused ? '▶' : 'Ⅱ';
+  }
+
+  toggleSuccessReplayPause() {
+    const state = this.successReplay;
+    if (!state || state.finished) return;
+    if (!state.paused) {
+      state.paused = true;
+      state.pauseRemainingMs = Math.max(
+        0,
+        (state.nextDueAt ?? performance.now()) - performance.now(),
+      );
+      clearTimeout(this.successReplayTimer);
+      this.successReplayTimer = null;
+    } else {
+      state.paused = false;
+      const delayMs = Math.max(50, state.pauseRemainingMs ?? 100);
+      state.nextDueAt = performance.now() + delayMs;
+      state.pauseRemainingMs = null;
+      this.successReplayTimer = window.setTimeout(() => this.playNextSuccessReplayStep(), delayMs);
+    }
+    this.updateSuccessReplayControls();
+  }
+
+  finishSuccessReplayWhenSettled() {
+    const state = this.successReplay;
+    if (!state || state.paused) return;
+    if (state.generation !== this.boardAnimationGeneration) {
+      this.stopSuccessReplay();
+      return;
+    }
+    if (this.cellRevealAnimations.length || this.sectorPurgeAnimations.length) {
+      state.nextDueAt = performance.now() + 50;
+      this.successReplayTimer = window.setTimeout(() => this.finishSuccessReplayWhenSettled(), 50);
+      return;
+    }
+    state.nextDueAt = null;
+    this.finishSuccessReplay();
+  }
+
+  finishSuccessReplay() {
+    const state = this.successReplay;
+    if (!state || state.finished) return;
+    state.finished = true;
+    document.getElementById('btn-replay-pause').disabled = true;
+    this.updateSuccessReplayProgress();
+    sfx.playWin();
+    const center = new THREE.Vector3(0, 0, 0);
+    this.particles?.createExplosion(center, 0x39ff14, 90);
+    window.setTimeout(() => {
+      if (this.successReplay === state) this.particles?.createExplosion(center, 0x29e7ff, 90);
+    }, 180);
+    window.setTimeout(() => {
+      if (this.successReplay === state) this.particles?.createExplosion(center, 0xff4fd8, 90);
+    }, 360);
+    this.successReplayTimer = window.setTimeout(() => this.stopSuccessReplay(), 1200);
+  }
+
+  stopSuccessReplay() {
+    const state = this.successReplay;
+    if (!state) return;
+    clearTimeout(this.successReplayTimer);
+    this.successReplayTimer = null;
+    const snapshot = this.pendingReplaySnapshot ?? state.finalSnapshot;
+    const returnSurface = state.returnSurface;
+    this.successReplay = null;
+    this.pendingReplaySnapshot = null;
+    document.body.classList.remove('replay-active');
+    document.getElementById('replay-hud').classList.add('hidden');
+    document.getElementById('btn-replay-pause').disabled = false;
+    if (this.controls) {
+      this.controls.autoRotate = state.previousAutoRotate;
+      if (Number.isFinite(state.previousAutoRotateSpeed)) {
+        this.controls.autoRotateSpeed = state.previousAutoRotateSpeed;
+      }
+    }
+
+    const snapshotWillRebuild = CONFIG_KEYS.some(
+      (key) => snapshot.config?.[key] !== this.roomSnapshot?.config?.[key],
+    ) || (snapshot.phase === 'ready' && this.roomSnapshot?.phase !== 'ready');
+    if (!snapshotWillRebuild) {
+      this.applyConfig(snapshot.config);
+      this.buildGridLocal();
+    }
+    this.applyRoomSnapshot(snapshot, true);
+    if (snapshot.phase !== 'won' && this.dialogueState?.allowReplay) this.dialogueState = null;
+    if (snapshot.phase === 'won' && returnSurface === 'dialogue' && this.dialogueState) {
+      this.renderSilverWolfDialogue();
+    } else if (snapshot.phase === 'won' && returnSurface === 'modal') {
+      document.getElementById('modal-overlay').classList.remove('hidden');
+    }
+  }
+
   handleNetworkAction(action) {
     // Generate accident log
     const name = action.playerName || '未知玩家';
@@ -2197,6 +3277,14 @@ class HoloSweeperGame {
     const banner = new THREE.Mesh(bannerGeo, new THREE.MeshBasicMaterial({ color: 0xff8800, side: THREE.DoubleSide }));
     flagGroup.add(banner);
     this.geometries.flag = flagGroup;
+    const automatedFlagGroup = flagGroup.clone(true);
+    automatedFlagGroup.children[0].material = new THREE.MeshBasicMaterial({ color: 0xffd2df });
+    automatedFlagGroup.children[1].material = new THREE.MeshBasicMaterial({
+      color: 0xff174d,
+      side: THREE.DoubleSide,
+    });
+    automatedFlagGroup.userData.ultimateHackAutomated = true;
+    this.geometries.automatedFlag = automatedFlagGroup;
 
     // 初始化重用材质
     this.materials.cellUnrevealed = new THREE.MeshPhysicalMaterial({
@@ -2234,6 +3322,24 @@ class HoloSweeperGame {
       transparent: false
     });
 
+    this.materials.cellAutomatedFlagged = new THREE.MeshStandardMaterial({
+      color: 0xff174d,
+      emissive: 0x8f001f,
+      emissiveIntensity: 0.88,
+      roughness: 0.18,
+      metalness: 0.72,
+      transparent: false,
+    });
+
+    this.materials.cellAutomatedFlaggedHovered = new THREE.MeshStandardMaterial({
+      color: 0xff5478,
+      emissive: 0xb5002c,
+      emissiveIntensity: 1.05,
+      roughness: 0.12,
+      metalness: 0.78,
+      transparent: false,
+    });
+
     this.materials.wireframe = new THREE.LineBasicMaterial({
       color: 0x00aaff,
       transparent: true,
@@ -2257,7 +3363,7 @@ class HoloSweeperGame {
       e.stopImmediatePropagation();
       this.mouseChordTriggered = true;
       this.clearPointerHighlights();
-      this.chordAtPointer(e);
+      this.handleTwoButtonActionAtPointer(e);
     }, { capture: true });
     dom.addEventListener('pointerdown', (e) => {
       this.mouseDownPos.x = e.clientX;
@@ -2375,33 +3481,76 @@ class HoloSweeperGame {
   // 5. 游戏引擎：扫雷核心算法
   // -------------------------------------------------------------
   startNewGame() {
+    if (this.successReplay || this.ultimateHackRunning()) return;
+    // Invalidate every delayed reveal / victory callback as soon as restart is
+    // requested. Waiting for the authoritative snapshot leaves a network-sized
+    // window where effects from the previous board could enter the new game.
+    this.boardAnimationGeneration += 1;
+    this.sectorPurgeAnimations = [];
+    this.cellRevealAnimations = [];
+    this.revealAnimationEndsAt = 0;
+
+    const me = this.roomSnapshot?.players?.find((player) => player.id === this.currentPlayerId);
+    if (me && !me.isHost) return;
+
+    if (this.gameMode === 'solo' && this.taskFlow === 'campaign') {
+      const config = TASK_MISSIONS[this.taskMission] ?? TASK_MISSIONS.easy;
+      this.roomClient.send({ op: 'restart', config }).catch(error => this.handleRoomError(error));
+      return;
+    }
     // 读取自定义设置，如果有的话
     const isCustomActive = document.getElementById('custom-toggle').classList.contains('active');
+    let width;
+    let height;
+    let depth;
+    let mineCount;
     if (isCustomActive) {
       const customW = parseInt(document.getElementById('input-w').value) || 5;
       const customH = parseInt(document.getElementById('input-h').value) || 5;
       const customD = parseInt(document.getElementById('input-d').value) || 5;
-      const customM = parseInt(document.getElementById('input-m').value) || 15;
-      
-      this.width = Math.min(15, Math.max(2, customW));
-      this.height = Math.min(15, Math.max(2, customH));
-      this.depth = Math.min(15, Math.max(2, customD));
-      
-      const maxMines = Math.floor(this.width * this.height * this.depth * 0.6); // 最大地雷数量限制为 60%
-      this.mineCount = Math.min(maxMines, Math.max(1, customM));
+      const customM = parseInt(document.getElementById('input-m').value) || 10;
+
+      width = Math.min(15, Math.max(2, customW));
+      height = Math.min(15, Math.max(2, customH));
+      depth = Math.min(15, Math.max(2, customD));
+
+      const maxMines = Math.floor(width * height * depth * 0.6); // 最大地雷数量限制为 60%
+      mineCount = Math.min(maxMines, Math.max(1, customM));
     } else {
       const activeBtn = document.querySelector('.btn-preset.active');
       if (activeBtn) {
-        this.width = parseInt(activeBtn.dataset.w);
-        this.height = parseInt(activeBtn.dataset.h);
-        this.depth = parseInt(activeBtn.dataset.d);
-        this.mineCount = parseInt(activeBtn.dataset.m);
+        width = Number.parseInt(activeBtn.dataset.w, 10);
+        height = Number.parseInt(activeBtn.dataset.h, 10);
+        depth = Number.parseInt(activeBtn.dataset.d, 10);
+        mineCount = Number.parseInt(activeBtn.dataset.m, 10);
       }
     }
-    
+
+    const config = {
+      width: width ?? this.width,
+      height: height ?? this.height,
+      depth: depth ?? this.depth,
+      mineCount: mineCount ?? this.mineCount,
+      ruleset: this.ruleset,
+      autoPurge: this.autoPurgeEnabled,
+      reduction: this.reductionEnabled,
+      campaign: false,
+    };
+    if (this.gameMode === 'solo') {
+      this.pendingTaskMission = this.missionFromConfig(config);
+      this.pendingTaskConfig = { ...config };
+    }
+    this.isInteractionLocked = true;
+
     // 房主向 Durable Object 请求初始化，服务端验证参数并重置权威棋盘
-    this.roomClient.send({ op: 'restart', config: { width: this.width, height: this.height, depth: this.depth, mineCount: this.mineCount } })
-      .catch(error => this.handleRoomError(error));
+    this.roomClient.send({
+      op: 'restart',
+      config,
+    })
+      .catch(error => {
+        this.isInteractionLocked = ['revive', 'lost', 'won'].includes(this.roomSnapshot?.phase);
+        this.handleRoomError(error);
+      });
   }
 
   buildGridLocal() {
@@ -2416,12 +3565,19 @@ class HoloSweeperGame {
     this.isInteractionLocked = false;
     this.revealedCount = 0;
     this.flaggedCount = 0;
+    this.sectorPurgeAnimations = [];
+    this.cellRevealAnimations = [];
+    this.boardAnimationGeneration += 1;
+    this.revealAnimationEndsAt = 0;
+    this.lastSectorPurgeId = null;
+    clearTimeout(this.sectorPurgeBannerTimer);
+    clearTimeout(this.lastMobileReductionTap?.timer);
+    this.lastMobileReductionTap = null;
+    document.getElementById('sector-purge-banner')?.classList.add('hidden');
     this.hoveredCell = null;
     this.activeHighlightCenter = null;
     this.hasObservedMatrix = false;
     this.hasInspectedNeighbors = false;
-    this.hasUsedSlices = false;
-    this.hasResetSlices = false;
     this.slice.xMin = 0; this.slice.xMax = this.width - 1;
     this.slice.yMin = 0; this.slice.yMax = this.height - 1;
     this.slice.zMin = 0; this.slice.zMax = this.depth - 1;
@@ -2495,6 +3651,8 @@ class HoloSweeperGame {
             neighborMines: 0,
             isRevealed: false,
             isFlagged: false,
+            isAutomatedFlag: false,
+            isPurged: false,
             group: group,
             mesh: blockMesh,
             outline: lineSegments,
@@ -2607,7 +3765,33 @@ class HoloSweeperGame {
     this.chord(x, y, z);
   }
 
-  chordAtPointer(event) {
+  handleMobileDigModeTap(x, y, z) {
+    const now = performance.now();
+    const previous = this.lastMobileReductionTap;
+    const sameCell = previous
+      && previous.x === x
+      && previous.y === y
+      && previous.z === z
+      && now - previous.at <= this.mobileReductionDoubleTapMs;
+    if (sameCell) {
+      clearTimeout(previous.timer);
+      this.lastMobileReductionTap = null;
+      navigator.vibrate?.(18);
+      this.reduceCell(x, y, z);
+      return;
+    }
+
+    const cell = this.grid[x]?.[y]?.[z];
+    if (!cell || cell.isPurged || cell.isRevealed) return;
+    const tap = { x, y, z, at: now, timer: null };
+    this.lastMobileReductionTap = tap;
+    tap.timer = window.setTimeout(() => {
+      this.dig(x, y, z);
+      if (this.lastMobileReductionTap === tap) this.lastMobileReductionTap = null;
+    }, this.mobileReductionDoubleTapMs);
+  }
+
+  handleTwoButtonActionAtPointer(event) {
     if (this.isInteractionLocked || this.isGameOver || this.isGameWon) return;
     this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -2626,9 +3810,14 @@ class HoloSweeperGame {
     }
 
     const target = this.raycaster.intersectObjects(targets)[0]?.object;
-    if (target?.userData.type !== 'number') return;
-    const { x, y, z } = target.userData;
-    this.chord(x, y, z);
+    if (!target) return;
+    const { x, y, z, type } = target.userData;
+    if (type === 'number') {
+      this.chord(x, y, z);
+      return;
+    }
+    const cell = this.grid[x]?.[y]?.[z];
+    if (this.reductionEnabled && cell && !cell.isRevealed && !cell.isPurged) this.reduceCell(x, y, z);
   }
 
   handleCanvasClick(event) {
@@ -2664,6 +3853,17 @@ class HoloSweeperGame {
       if (event.pointerType === 'touch' && topObject.userData.type === 'number') {
         const { x, y, z } = topObject.userData;
         this.handleMobileNumberTap(x, y, z);
+        return;
+      }
+      if (
+        event.pointerType === 'touch'
+        && this.activeMode === 'dig'
+        && this.reductionEnabled
+        && topObject.userData.type === 'cell'
+      ) {
+        const { x, y, z } = topObject.userData;
+        this.lastMobileNumberTap = null;
+        this.handleMobileDigModeTap(x, y, z);
         return;
       }
       if (event.pointerType === 'touch') this.lastMobileNumberTap = null;
@@ -2719,7 +3919,7 @@ class HoloSweeperGame {
     if (target?.userData.type !== 'number') return;
     const { x, y, z } = target.userData;
     if (this.hoveredCell && !this.hoveredCell.isRevealed) {
-      this.hoveredCell.mesh.material = this.hoveredCell.isFlagged ? this.materials.cellFlagged : this.materials.cellUnrevealed;
+      this.hoveredCell.mesh.material = this.hoveredCell.isFlagged ? this.flagMaterialForCell(this.hoveredCell) : this.materials.cellUnrevealed;
       this.hoveredCell.outline.material = this.materials.wireframe;
     }
     this.hoveredCell = null;
@@ -2738,7 +3938,7 @@ class HoloSweeperGame {
     neighbors.forEach(n => {
       const cell = this.grid[n.x][n.y][n.z];
       if (!cell.isRevealed) {
-        cell.mesh.material = cell.isFlagged ? this.materials.cellFlaggedHovered : this.materials.cellHovered;
+        cell.mesh.material = cell.isFlagged ? this.flagMaterialForCell(cell, true) : this.materials.cellHovered;
         cell.outline.material = this.materials.wireframeHovered;
       }
     });
@@ -2752,10 +3952,10 @@ class HoloSweeperGame {
       if (!cell.isRevealed) {
         // 如果正好被鼠标悬浮着，不强行恢复为普通材质
         if (this.hoveredCell === cell) {
-          cell.mesh.material = cell.isFlagged ? this.materials.cellFlaggedHovered : this.materials.cellHovered;
+          cell.mesh.material = cell.isFlagged ? this.flagMaterialForCell(cell, true) : this.materials.cellHovered;
           cell.outline.material = this.materials.wireframeHovered;
         } else {
-          cell.mesh.material = cell.isFlagged ? this.materials.cellFlagged : this.materials.cellUnrevealed;
+          cell.mesh.material = cell.isFlagged ? this.flagMaterialForCell(cell) : this.materials.cellUnrevealed;
           cell.outline.material = this.materials.wireframe;
         }
       }
@@ -2769,7 +3969,7 @@ class HoloSweeperGame {
       this.activeHighlightCenter = null;
     }
     if (this.hoveredCell && !this.hoveredCell.isRevealed) {
-      this.hoveredCell.mesh.material = this.hoveredCell.isFlagged ? this.materials.cellFlagged : this.materials.cellUnrevealed;
+      this.hoveredCell.mesh.material = this.hoveredCell.isFlagged ? this.flagMaterialForCell(this.hoveredCell) : this.materials.cellUnrevealed;
       this.hoveredCell.outline.material = this.materials.wireframe;
     }
     this.hoveredCell = null;
@@ -2781,7 +3981,7 @@ class HoloSweeperGame {
 
     if (this.activeHighlightCenter) {
       if (this.hoveredCell && !this.hoveredCell.isRevealed) {
-        this.hoveredCell.mesh.material = this.hoveredCell.isFlagged ? this.materials.cellFlagged : this.materials.cellUnrevealed;
+        this.hoveredCell.mesh.material = this.hoveredCell.isFlagged ? this.flagMaterialForCell(this.hoveredCell) : this.materials.cellUnrevealed;
         this.hoveredCell.outline.material = this.materials.wireframe;
       }
       this.hoveredCell = null;
@@ -2814,11 +4014,11 @@ class HoloSweeperGame {
       if (this.hoveredCell !== cell) {
         // 恢复上一个 Hover 方块的材质
         if (this.hoveredCell && !this.hoveredCell.isRevealed) {
-          this.hoveredCell.mesh.material = this.hoveredCell.isFlagged ? this.materials.cellFlagged : this.materials.cellUnrevealed;
+          this.hoveredCell.mesh.material = this.hoveredCell.isFlagged ? this.flagMaterialForCell(this.hoveredCell) : this.materials.cellUnrevealed;
           this.hoveredCell.outline.material = this.materials.wireframe;
         }
         // 赋予当前 Hover 方块亮丽的霓虹光泽材质（区分是否插旗）
-        cell.mesh.material = cell.isFlagged ? this.materials.cellFlaggedHovered : this.materials.cellHovered;
+        cell.mesh.material = cell.isFlagged ? this.flagMaterialForCell(cell, true) : this.materials.cellHovered;
         cell.outline.material = this.materials.wireframeHovered;
         
         // 播放极轻微的微鸣音效
@@ -2829,7 +4029,7 @@ class HoloSweeperGame {
     } else {
       if (this.hoveredCell) {
         if (!this.hoveredCell.isRevealed) {
-          this.hoveredCell.mesh.material = this.hoveredCell.isFlagged ? this.materials.cellFlagged : this.materials.cellUnrevealed;
+          this.hoveredCell.mesh.material = this.hoveredCell.isFlagged ? this.flagMaterialForCell(this.hoveredCell) : this.materials.cellUnrevealed;
           this.hoveredCell.outline.material = this.materials.wireframe;
         }
         this.hoveredCell = null;
@@ -2845,7 +4045,7 @@ class HoloSweeperGame {
     if (this.isInteractionLocked) return;
     if (!this.isGuidedActionAllowed('dig', x, y, z)) return;
     const cell = this.grid[x][y][z];
-    if (cell.isRevealed || cell.isFlagged) return;
+    if (cell.isPurged || cell.isRevealed || cell.isFlagged) return;
     this.roomClient.send({ op: 'dig', x, y, z }).catch(error => this.handleRoomError(error));
   }
 
@@ -2853,7 +4053,7 @@ class HoloSweeperGame {
     if (this.isInteractionLocked) return;
     if (!this.isGuidedActionAllowed('chord', x, y, z)) return;
     const cell = this.grid[x]?.[y]?.[z];
-    if (!cell?.isRevealed || cell.neighborMines <= 0) return;
+    if (!cell?.isRevealed || cell.isPurged || cell.neighborMines <= 0) return;
     const flaggedAround = this.getNeighbors(x, y, z)
       .filter((point) => this.grid[point.x][point.y][point.z].isFlagged)
       .length;
@@ -2861,16 +4061,30 @@ class HoloSweeperGame {
     this.roomClient.send({ op: 'chord', x, y, z }).catch(error => this.handleRoomError(error));
   }
 
-  triggerMineLocal(x, y, z) {
+  reduceCell(x, y, z) {
+    if (this.isInteractionLocked || !this.reductionEnabled) return;
+    const cell = this.grid[x]?.[y]?.[z];
+    if (!cell || cell.isPurged || cell.isRevealed) return;
+    this.roomClient.send({ op: 'reduce', x, y, z }).catch(error => this.handleRoomError(error));
+  }
+
+  triggerMineLocal(x, y, z, { showMine = true } = {}) {
     const cell = this.grid[x][y][z];
-    cell.isRevealed = true;
     clearInterval(this.timerInterval);
     
     sfx.playExplosion();
-    this.animateCellReveal(cell);
-    const mineMesh = this.geometries.mine.clone();
-    cell.group.add(mineMesh);
-    cell.mineInstance = mineMesh;
+    if (showMine) {
+      cell.isRevealed = true;
+      this.animateCellReveal(cell);
+      const mineMesh = this.geometries.mine.clone();
+      cell.group.add(mineMesh);
+      cell.mineInstance = mineMesh;
+    } else {
+      cell.isRevealed = false;
+      cell.mesh.visible = true;
+      cell.outline.visible = true;
+      cell.mesh.material = cell.isFlagged ? this.flagMaterialForCell(cell) : this.materials.cellUnrevealed;
+    }
     
     const worldPos = new THREE.Vector3();
     cell.group.getWorldPosition(worldPos);
@@ -2911,9 +4125,7 @@ class HoloSweeperGame {
     closeButton.style.display = 'none';
     restartButton.innerText = this.t('task.result.rewind');
     document.getElementById('modal-stat-time').innerText = this.formatTime(this.timer);
-    const totalSafeCells = this.width * this.height * this.depth - this.mineCount;
-    const progress = Math.round((this.revealedCount / totalSafeCells) * 100);
-    document.getElementById('modal-stat-progress').innerText = `${progress}%`;
+    document.getElementById('modal-stat-progress').innerText = `${this.currentBoardProgress().percent}%`;
     modal.classList.remove('hidden');
   }
 
@@ -2965,31 +4177,67 @@ class HoloSweeperGame {
   }
 
   // 翻开时的 3D 微缩退场动画
-  animateCellReveal(cell) {
+  animateCellReveal(cell, {
+    durationMs = BOARD_ANIMATION_TIMING.cellRevealDurationMs,
+    delayMs = 0,
+    wave = false,
+    onStart = null,
+  } = {}) {
     const mesh = cell.mesh;
     const outline = cell.outline;
     const animationId = (cell.revealAnimationId ?? 0) + 1;
     cell.revealAnimationId = animationId;
-    
-    let scale = 1.0;
-    const shrink = () => {
-      if (cell.revealAnimationId !== animationId) return;
-      scale -= 0.12;
-      if (scale <= 0.05) {
-        mesh.visible = false;
-        outline.visible = false;
-      } else {
-        mesh.scale.set(scale, scale, scale);
-        outline.scale.set(scale, scale, scale);
-        requestAnimationFrame(shrink);
+
+    mesh.visible = true;
+    outline.visible = true;
+    mesh.scale.setScalar(1);
+    outline.scale.setScalar(1);
+    this.cellRevealAnimations.push({
+      cell,
+      mesh,
+      outline,
+      animationId,
+      startedAt: performance.now() + delayMs,
+      durationMs,
+      wave,
+      onStart,
+      started: false,
+    });
+  }
+
+  updateCellRevealAnimations(now = performance.now()) {
+    for (let index = this.cellRevealAnimations.length - 1; index >= 0; index -= 1) {
+      const animation = this.cellRevealAnimations[index];
+      if (animation.cell.revealAnimationId !== animation.animationId) {
+        this.cellRevealAnimations.splice(index, 1);
+        continue;
       }
-    };
-    shrink();
+      if (now < animation.startedAt) continue;
+      if (!animation.started) {
+        animation.started = true;
+        animation.onStart?.();
+      }
+      const progress = Math.min(1, (now - animation.startedAt) / animation.durationMs);
+      const eased = progress * progress * (3 - 2 * progress);
+      const wavePulse = animation.wave && progress < 0.42
+        ? Math.sin((progress / 0.42) * Math.PI) * 0.18
+        : 0;
+      const scale = Math.max(0.02, 1 - eased + wavePulse);
+      if (progress >= 1) {
+        animation.mesh.visible = false;
+        animation.outline.visible = false;
+        this.cellRevealAnimations.splice(index, 1);
+      } else {
+        animation.mesh.scale.setScalar(scale);
+        animation.outline.scale.setScalar(scale);
+      }
+    }
   }
 
   // 创建酷炫的 3D 浮空数字贴图
   createNumberSprite(cell) {
     const num = cell.neighborMines;
+    if (cell.spriteInstance) this.removeNumberSprite(cell);
     
     const canvas = document.createElement('canvas');
     canvas.width = 128;
@@ -3040,7 +4288,7 @@ class HoloSweeperGame {
     // 伴随微小的漂浮浮动动画，增强灵动感
     let t = 0;
     const floatAnim = () => {
-      if (!cell.isRevealed || this.isFirstClick) return;
+      if (!cell.isRevealed || cell.spriteInstance !== sprite || this.isFirstClick) return;
       t += 0.04;
       sprite.position.y = Math.sin(t) * 0.04;
       requestAnimationFrame(floatAnim);
@@ -3115,7 +4363,7 @@ class HoloSweeperGame {
     if (this.isInteractionLocked) return;
     if (!this.isGuidedActionAllowed('flag', x, y, z)) return;
     const cell = this.grid[x][y][z];
-    if (cell.isRevealed) return;
+    if (cell.isPurged || cell.isRevealed) return;
     this.roomClient.send({ op: 'flag', x, y, z }).catch(error => this.handleRoomError(error));
   }
 
@@ -3130,6 +4378,8 @@ class HoloSweeperGame {
     if (cell.isFlagged) {
       // 取消标记
       cell.isFlagged = false;
+      cell.isAutomatedFlag = false;
+      this.automatedFlagKeys.delete(this.pointKey(cell));
       this.flaggedCount--;
       
       // 移除旗帜模型
@@ -3147,6 +4397,7 @@ class HoloSweeperGame {
     } else {
       // 插上旗帜
       cell.isFlagged = true;
+      cell.isAutomatedFlag = false;
       this.flaggedCount++;
 
       const flag = this.geometries.flag.clone();
@@ -3155,7 +4406,7 @@ class HoloSweeperGame {
       cell.flagInstance = flag;
 
       // 让插了旗的方块呈实体状，方便识别
-      cell.mesh.material = this.materials.cellFlagged;
+      cell.mesh.material = this.flagMaterialForCell(cell);
     }
 
     this.updateStats();
@@ -3223,37 +4474,44 @@ class HoloSweeperGame {
       restartButton.innerText = this.t('result.restart');
       
       document.getElementById('modal-stat-time').innerText = this.formatTime(this.timer);
-      const totalCells = this.width * this.height * this.depth;
-      const progress = Math.round((this.revealedCount / (totalCells - this.mineCount)) * 100);
-      document.getElementById('modal-stat-progress').innerText = `${progress}%`;
+      document.getElementById('modal-stat-progress').innerText = `${this.currentBoardProgress().percent}%`;
       
       modal.classList.remove('hidden');
     }, 1200);
   }
 
-  checkVictory() {
-    const totalCells = this.width * this.height * this.depth;
-    const safeCells = totalCells - this.mineCount;
+  checkVictory(snapshot = this.roomSnapshot) {
+    const { safeCells, revealedCells } = this.currentBoardProgress(snapshot);
     
-    if (this.revealedCount === safeCells) {
+    if (snapshot?.phase === 'won' || revealedCells >= safeCells) {
       this.isGameWon = true;
       clearInterval(this.timerInterval);
-      
-      // 播放清脆的获胜和弦声
-      sfx.playWin();
 
-      // 在网格中心爆破多重彩色礼花粒子
-      const centerPos = new THREE.Vector3(0, 0, 0);
-      this.particles.createExplosion(centerPos, 0x39ff14, 100);
-      setTimeout(() => this.particles.createExplosion(centerPos, 0x29e7ff, 100), 200);
-      setTimeout(() => this.particles.createExplosion(centerPos, 0xff4fd8, 100), 400);
+      const waveAnimationWait = Math.max(0, Math.ceil(this.revealAnimationEndsAt - performance.now()));
+      const animationGeneration = this.boardAnimationGeneration;
+      window.setTimeout(() => {
+        if (this.boardAnimationGeneration !== animationGeneration) return;
+        // 先完整播放递归波浪，再接获胜和弦与礼花。
+        sfx.playWin();
+        const centerPos = new THREE.Vector3(0, 0, 0);
+        this.particles.createExplosion(centerPos, 0x39ff14, 100);
+        setTimeout(() => {
+          if (this.boardAnimationGeneration === animationGeneration) this.particles.createExplosion(centerPos, 0x29e7ff, 100);
+        }, 200);
+        setTimeout(() => {
+          if (this.boardAnimationGeneration === animationGeneration) this.particles.createExplosion(centerPos, 0xff4fd8, 100);
+        }, 400);
+      }, waveAnimationWait);
 
       // 任务模式由银狼亲自给出章节结算；多人模式保留战绩弹窗
       if (this.gameMode === 'solo') {
-        setTimeout(() => this.showTaskCompletion(), 1200);
+        setTimeout(() => {
+          if (this.boardAnimationGeneration === animationGeneration) this.showTaskCompletion();
+        }, waveAnimationWait + 1200);
         return;
       }
       setTimeout(() => {
+        if (this.boardAnimationGeneration !== animationGeneration) return;
         const modal = document.getElementById('modal-overlay');
         const title = document.getElementById('modal-title');
         const msg = document.getElementById('modal-message');
@@ -3271,20 +4529,15 @@ class HoloSweeperGame {
         document.getElementById('modal-stat-progress').innerText = "100%";
         
         modal.classList.remove('hidden');
-      }, 1500);
+      }, Math.max(1500, waveAnimationWait + 1200));
     }
   }
 
   // -------------------------------------------------------------
   // 10. 本地切片视图
   // -------------------------------------------------------------
-  isSliceFull() {
-    return this.slice.xMin === 0 && this.slice.xMax === this.width - 1
-      && this.slice.yMin === 0 && this.slice.yMax === this.height - 1
-      && this.slice.zMin === 0 && this.slice.zMax === this.depth - 1;
-  }
-
   handleSliceChange(axis, type) {
+    if (this.ultimateHackRunning()) return;
     const minElement = document.getElementById(`slice-${axis}-min`);
     const maxElement = document.getElementById(`slice-${axis}-max`);
     let minValue = Number.parseInt(minElement.value, 10);
@@ -3301,10 +4554,6 @@ class HoloSweeperGame {
     this.updateSliceValue(axis);
     this.clearPointerHighlights();
     this.updateGridVisibility();
-    if (!this.isSliceFull()) {
-      this.hasUsedSlices = true;
-      if (this.waitingTutorialAction === 'slice') this.completeTutorialAction('slice');
-    }
   }
 
   updateSliceValue(axis) {
@@ -3322,7 +4571,8 @@ class HoloSweeperGame {
         for (let z = 0; z < this.depth; z += 1) {
           const cell = this.grid[x]?.[y]?.[z];
           if (!cell) continue;
-          cell.group.visible = x >= this.slice.xMin && x <= this.slice.xMax
+          cell.group.visible = !cell.isPurged
+            && x >= this.slice.xMin && x <= this.slice.xMax
             && y >= this.slice.yMin && y <= this.slice.yMax
             && z >= this.slice.zMin && z <= this.slice.zMax;
         }
@@ -3346,32 +4596,36 @@ class HoloSweeperGame {
   }
 
   resetSlices(userInitiated = false) {
-    const hadReducedView = !this.isSliceFull() || this.hasUsedSlices;
+    void userInitiated;
     this.slice.xMin = 0; this.slice.xMax = this.width - 1;
     this.slice.yMin = 0; this.slice.yMax = this.height - 1;
     this.slice.zMin = 0; this.slice.zMax = this.depth - 1;
     this.syncSliceSlidersUI();
     this.updateGridVisibility();
-    if (userInitiated && hadReducedView) {
-      this.hasResetSlices = true;
-      if (this.waitingTutorialAction === 'sliceReset') this.completeTutorialAction('sliceReset');
-    }
   }
 
   // -------------------------------------------------------------
   // 11. 统计面板数据同步
   // -------------------------------------------------------------
+  currentBoardProgress(snapshot = this.roomSnapshot) {
+    const totalCells = this.width * this.height * this.depth;
+    const purgedCells = snapshot?.purged?.length ?? 0;
+    const remainingMineCount = snapshot?.remainingMineCount ?? this.mineCount;
+    const safeCells = Math.max(0, totalCells - purgedCells - remainingMineCount);
+    const revealedCells = snapshot?.revealed?.length ?? this.revealedCount;
+    const percent = safeCells > 0 ? Math.min(100, Math.round((revealedCells / safeCells) * 100)) : 100;
+    return { safeCells, revealedCells, percent };
+  }
+
   updateStats() {
     // 标记数与总雷数
-    const mineStatus = `${this.flaggedCount} / ${this.mineCount}`;
+    const remainingMineCount = this.roomSnapshot?.remainingMineCount ?? this.mineCount;
+    const mineStatus = `${this.flaggedCount} / ${remainingMineCount}`;
     document.getElementById('stat-mines').innerText = mineStatus;
     document.getElementById('mobile-stat-mines').innerText = mineStatus;
     
     // 计算空间净化率进度条
-    const totalCells = this.width * this.height * this.depth;
-    const safeCells = totalCells - this.mineCount;
-    const progress = safeCells > 0 ? (this.revealedCount / safeCells) : 0;
-    const progressPercent = Math.min(100, Math.round(progress * 100));
+    const progressPercent = this.currentBoardProgress().percent;
     
     document.getElementById('stat-progress-percent').innerText = `${progressPercent}%`;
     document.getElementById('stat-progress').style.width = `${progressPercent}%`;
@@ -3380,9 +4634,7 @@ class HoloSweeperGame {
   }
 
   updateMissionGuide(progressPercent = null) {
-    const totalCells = this.width * this.height * this.depth;
-    const safeCells = Math.max(1, totalCells - this.mineCount);
-    const progress = progressPercent ?? Math.min(100, Math.round((this.revealedCount / safeCells) * 100));
+    const progress = progressPercent ?? this.currentBoardProgress().percent;
     const objective = document.getElementById('mission-objective');
     const dialogue = document.getElementById('mission-dialogue');
     const bar = document.getElementById('mission-progress');
@@ -3531,6 +4783,9 @@ class HoloSweeperGame {
         }
       }
     }
+
+    this.updateCellRevealAnimations();
+    this.updateSectorPurgeAnimations();
 
     this.controls.update();
     this.renderer.render(this.scene, this.camera);

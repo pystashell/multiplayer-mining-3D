@@ -71,12 +71,13 @@ function isSubset(left, rightSet) {
   return left.every((key) => rightSet.has(key));
 }
 
-export function buildConstraints({ width, height, depth, revealed = [], flags = [] }) {
+export function buildConstraints({ width, height, depth, revealed = [], flags = [], excluded = [] }) {
+  const excludedKeys = new Set(excluded.map(pointKey));
   const revealedByKey = new Map(revealed.map((cell) => [pointKey(cell), cell]));
   const flagKeys = new Set(flags.map(pointKey));
   const hidden = allPoints(width, height, depth)
     .map(pointKey)
-    .filter((key) => !revealedByKey.has(key) && !flagKeys.has(key))
+    .filter((key) => !excludedKeys.has(key) && !revealedByKey.has(key) && !flagKeys.has(key))
     .sort(compareKeys);
   const hiddenSet = new Set(hidden);
   const constraints = [];
@@ -524,10 +525,11 @@ export function solveMinesweeperHint({
   phase,
   revealed = [],
   flags = [],
+  excluded = [],
   maxNodes = 2_000_000,
   maxMs = 180,
 }) {
-  const knowledge = buildConstraints({ width, height, depth, revealed, flags });
+  const knowledge = buildConstraints({ width, height, depth, revealed, flags, excluded });
   if (knowledge.inconsistent || mineCount - flags.length < 0) return { status: 'inconsistent', rule: 'inconsistent', target: null, evidence: [] };
   if (!knowledge.hidden.length) return { status: 'complete', rule: 'complete', target: null, evidence: [] };
 
