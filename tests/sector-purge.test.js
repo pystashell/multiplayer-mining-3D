@@ -75,17 +75,31 @@ test('automatically purges a solved squad sector and publishes the removal event
 
   const snapshot = engine.snapshot(2_001);
   assert.equal(snapshot.phase, 'won');
-  assert.equal(snapshot.purged.length, 1);
+  assert.equal(snapshot.purged.length, 0);
   assert.equal(snapshot.remainingMineCount, 0);
   assert.equal(snapshot.purgedMineCount, 1);
   assert.equal(snapshot.purgedSafeCount, 0);
   assert.equal(snapshot.flags.length, 0);
-  assert.equal(snapshot.revealed.length, 26);
+  assert.equal(snapshot.revealed.length, 27);
   assert.equal(snapshot.revealed.every((clue) => clue.count === 0), true);
   assert.equal(snapshot.lastPurge.mines.length, 1);
-  assert.equal(snapshot.lastPurge.clues.length, 26);
+  assert.deepEqual(snapshot.lastPurge.leadFlags, [{ x: 1, y: 1, z: 1 }]);
+  assert.equal(snapshot.lastPurge.clues.length, 27);
   assert.equal(snapshot.lastPurge.cells.length, 1);
   assert.equal(snapshot.activity.some((entry) => entry.key === 'sectorPurged'), true);
+});
+
+test('does not invent a lead flag for a purge started by another action', () => {
+  const engine = RoomEngine.create({ code: 'PURGE2', hostId: 'host', hostName: 'Host', tokenHash: 'hash', mode: 'squad', now: 1_000 });
+  engine.state.config = { ...config };
+  engine.state.phase = 'playing';
+  engine.state.mines = [13];
+  engine.state.revealed = revealedExcept([13]);
+  engine.state.flags = [13];
+
+  engine.purgeMines('host', [13], 2_000, { kind: 'sector', sectorCount: 1 });
+
+  assert.deepEqual(engine.snapshot(2_001).lastPurge.leadFlags, []);
 });
 
 test('recalculates connected clues and keeps every non-zero number visible', () => {
@@ -102,11 +116,33 @@ test('recalculates connected clues and keeps every non-zero number visible', () 
   const snapshot = engine.snapshot(2_001);
   const zeroClue = snapshot.revealed.find((clue) => clue.x === 0 && clue.y === 0 && clue.z === 0);
   const retainedClue = snapshot.revealed.find((clue) => clue.x === 2 && clue.y === 2 && clue.z === 1);
-  assert.deepEqual(snapshot.purged, [{ x: 1, y: 1, z: 1 }]);
+  const replacementClue = snapshot.revealed.find((clue) => clue.x === 1 && clue.y === 1 && clue.z === 1);
+  assert.deepEqual(snapshot.purged, []);
   assert.equal(zeroClue.count, 0);
   assert.equal(retainedClue.count, 1);
-  assert.equal(snapshot.lastPurge.updatedClues.length, 25);
+  assert.equal(replacementClue.count, 1);
+  assert.equal(snapshot.lastPurge.updatedClues.length, 26);
   assert.equal(snapshot.lastPurge.cells.length, 1);
+});
+
+test('rewrites an Auto-Purged mine as the exact remaining adjacent mine count', () => {
+  const engine = RoomEngine.create({ code: 'PURGEN', hostId: 'host', hostName: 'Host', tokenHash: 'hash', mode: 'squad', now: 1_000 });
+  engine.state.config = { width: 3, height: 3, depth: 3, mineCount: 3, ruleset: 'sector', autoPurge: true, reduction: false, campaign: false };
+  engine.state.phase = 'playing';
+  engine.state.mines = [0, 2, 13];
+  engine.state.revealed = revealedExcept([0, 2, 13]);
+  engine.state.flags = [];
+  engine.state.startedAt = 900;
+
+  engine.apply('host', { op: 'flag', x: 1, y: 1, z: 1 }, { id: 'replace-with-two', sequence: 1, now: 2_000 });
+
+  const snapshot = engine.snapshot(2_001);
+  const replacementClue = snapshot.revealed.find((cell) => cell.x === 1 && cell.y === 1 && cell.z === 1);
+  assert.equal(replacementClue?.count, 2);
+  assert.deepEqual(snapshot.purged, []);
+  assert.equal(snapshot.remainingMineCount, 2);
+  assert.equal(snapshot.purgedMineCount, 1);
+  assert.equal(snapshot.reducedMineCount, 0);
 });
 
 test('cascades into hidden safe cells when a recalculated clue drops to zero', () => {
@@ -122,11 +158,15 @@ test('cascades into hidden safe cells when a recalculated clue drops to zero', (
 
   const snapshot = engine.snapshot(2_001);
   assert.equal(snapshot.phase, 'won');
-  assert.deepEqual(snapshot.purged, [{ x: 1, y: 1, z: 1 }]);
-  assert.equal(snapshot.revealed.length, 26);
+  assert.deepEqual(snapshot.purged, []);
+  assert.equal(snapshot.revealed.length, 27);
+  assert.equal(snapshot.revealed.find((cell) => cell.x === 1 && cell.y === 1 && cell.z === 1)?.count, 0);
   assert.deepEqual(snapshot.lastPurge.opened, [{ x: 0, y: 0, z: 0, count: 0, wave: 1 }]);
   assert.equal(snapshot.lastReveal.kind, 'sector');
-  assert.deepEqual(snapshot.lastReveal.opened, [{ x: 0, y: 0, z: 0, count: 0, wave: 1 }]);
+  assert.deepEqual(snapshot.lastReveal.opened, [
+    { x: 1, y: 1, z: 1, count: 0, wave: 0 },
+    { x: 0, y: 0, z: 0, count: 0, wave: 1 },
+  ]);
 });
 
 test('continues a direct reveal wave before a same-action Sector Purge cascade', () => {
@@ -315,7 +355,7 @@ for (const { label, autoPurge, reduction } of [
     let snapshot = flagEngine.snapshot(2_001);
     assert.equal(snapshot.sectorPurgeEnabled, autoPurge);
     assert.equal(snapshot.reductionEnabled, reduction);
-    assert.equal(snapshot.purged.length, autoPurge ? 1 : 0);
+    assert.equal(snapshot.purged.length, 0);
     assert.equal(snapshot.flags.length, autoPurge ? 0 : 1);
 
     const reductionEngine = RoomEngine.create({ code: 'REDMAT', hostId: 'host', hostName: 'Host', tokenHash: 'hash', mode: 'solo', now: 1_000 });
@@ -359,7 +399,8 @@ test('a Reduction bridge removal immediately Auto-Purges the newly isolated flag
   engine.apply('host', { op: 'reduce', x: 1, y: 0, z: 0 }, { id: 'bridge-reduction', sequence: 1, now: 2_000 });
 
   const snapshot = engine.snapshot(2_001);
-  assert.deepEqual(snapshot.purged, [{ x: 0, y: 0, z: 0 }]);
+  assert.deepEqual(snapshot.purged, []);
+  assert.equal(snapshot.revealed.some((cell) => cell.x === 0 && cell.y === 0 && cell.z === 0), true);
   assert.equal(snapshot.remainingMineCount, 1);
   assert.equal(snapshot.purgedMineCount, 1);
   assert.equal(snapshot.reducedMineCount, 1);

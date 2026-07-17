@@ -1,3 +1,10 @@
+import {
+  BEGINNER_TUTORIAL_START,
+  createBeginnerTutorialLayout,
+} from "./beginner-layout.js";
+
+export { BEGINNER_TUTORIAL_START } from "./beginner-layout.js";
+
 export const ROOM_TTL_MS = 24 * 60 * 60 * 1000;
 export const MAX_PLAYERS = 8;
 export const MAX_CHAT = 100;
@@ -20,13 +27,6 @@ const DEFAULT_CONFIG = Object.freeze({
   reduction: false,
   campaign: false,
 });
-
-export const BEGINNER_TUTORIAL_START = Object.freeze({ x: 2, y: 0, z: 0 });
-export const BEGINNER_TUTORIAL_MINES = Object.freeze([
-  Object.freeze({ x: 0, y: 0, z: 0 }),
-  Object.freeze({ x: 0, y: 2, z: 1 }),
-  Object.freeze({ x: 2, y: 2, z: 2 }),
-]);
 
 function normalizeMode(value) {
   return value === "solo" ? "solo" : "squad";
@@ -73,10 +73,6 @@ function indexOf(config, x, y, z) {
 function isBeginnerTutorialConfig(config) {
   return config.campaign === true
     && config.width === 3 && config.height === 3 && config.depth === 3 && config.mineCount === 3;
-}
-
-function beginnerTutorialMineIndexes(config) {
-  return BEGINNER_TUTORIAL_MINES.map(({ x, y, z }) => indexOf(config, x, y, z));
 }
 
 function pointOf(config, index) {
@@ -259,6 +255,7 @@ export class RoomEngine {
       revealed: {},
       flags: [],
       purged: [],
+      sectorPurgedMineIndexes: [],
       lastPurge: null,
       lastReveal: null,
       pendingMine: null,
@@ -283,6 +280,9 @@ export class RoomEngine {
     restored.config = normalizeConfig(restored.config);
     restored.reviveStartedBy ??= null;
     restored.purged ??= [];
+    // Legacy Sector Purge physically erased every removed mine, so older
+    // states can safely seed the cumulative feature counter from `purged`.
+    restored.sectorPurgedMineIndexes ??= [...restored.purged];
     restored.lastPurge ??= null;
     restored.lastReveal ??= null;
     restored.pendingFailureKind ??= restored.pendingMine == null ? null : "mine";
@@ -305,9 +305,29 @@ export class RoomEngine {
     if (this.state.members.length >= MAX_PLAYERS) throw new Error("ROOM_FULL");
     if (this.state.members.some((member) => member.name.toLowerCase() === name.toLowerCase())) throw new Error("NAME_TAKEN");
     this.state.members.push({ id: playerId, name, tokenHash, joinedAt: now, lastSequence: 0 });
+    if (!this.state.hostId || !this.member(this.state.hostId)) this.state.hostId = playerId;
     this.touch(now);
     this.addActivity("joined", { name }, now);
     return this.snapshot(now);
+  }
+
+  leaveRoom(playerId, now = Date.now()) {
+    const memberIndex = this.state.members.findIndex((member) => member.id === playerId);
+    if (memberIndex < 0) throw new Error("MEMBER_NOT_FOUND");
+    const [member] = this.state.members.splice(memberIndex, 1);
+    const wasHost = this.state.hostId === playerId;
+    if (wasHost) this.state.hostId = this.state.members[0]?.id ?? null;
+    if (this.state.reviveStartedBy === playerId) this.state.reviveStartedBy = null;
+    if (this.state.ultimateHack?.startedBy === playerId && this.ultimateHackRunning()) {
+      this.state.ultimateHack.status = "cancelled";
+    }
+    this.state.receipts = this.state.receipts.filter((receipt) => receipt.playerId !== playerId);
+    this.addActivity("left", { name: member.name }, now);
+    if (wasHost && this.state.hostId) {
+      const nextHost = this.member(this.state.hostId);
+      if (nextHost) this.addActivity("hostTransferred", { name: nextHost.name }, now);
+    }
+    return "已退出当前房间";
   }
 
   inspectSequence(playerId, id, sequence) {
@@ -428,6 +448,7 @@ export class RoomEngine {
       reductionMineIndexes: [...new Set(reductionMineIndexes)].sort((left, right) => left - right),
       purgedMineIndexes: [...new Set(purgedMineIndexes)].sort((left, right) => left - right),
       cellIndexes: [...new Set(cells)].sort((left, right) => left - right),
+      leadFlagIndexes: [...new Set(newPurge?.leadFlagIndexes || [])].sort((left, right) => left - right),
       remainingMineCount: this.state.mines.length,
       sectorCount: Number(newPurge?.sectorCount) || 0,
       at: now,
@@ -471,6 +492,7 @@ export class RoomEngine {
         updatedClues: (step.updatedClues || []).map(({ index, count }) => publicCell(config, index, count)),
         reductionMines: (step.reductionMineIndexes || []).map((index) => pointOf(config, index)),
         purgedMines: (step.purgedMineIndexes || []).map((index) => pointOf(config, index)),
+        leadFlags: (step.leadFlagIndexes || []).map((index) => pointOf(config, index)),
         cells: (step.cellIndexes || []).map((index) => pointOf(config, index)),
         remainingMineCount: step.remainingMineCount,
         sectorCount: step.sectorCount,
@@ -612,6 +634,7 @@ export class RoomEngine {
       message = this.stepUltimateHack(playerId, command.runId, now, command.expectedStep);
     }
     else if (command.op === "ultimate_hack_cancel") message = this.cancelUltimateHack(playerId, command.runId, now);
+    else if (command.op === "leave") message = this.leaveRoom(playerId, now);
     else if (command.op === "sync") message = "同步完成";
     else throw new Error("UNKNOWN_COMMAND");
     this.recordReplayTransition(playerId, command, replayBefore, now);
@@ -633,6 +656,7 @@ export class RoomEngine {
     this.state.revealed = {};
     this.state.flags = [];
     this.state.purged = [];
+    this.state.sectorPurgedMineIndexes = [];
     this.state.lastPurge = null;
     this.state.lastReveal = null;
     this.state.pendingMine = null;
@@ -694,10 +718,16 @@ export class RoomEngine {
   }
 
   appendPurgeCascade(opened, purgeEvent) {
-    if (!purgeEvent?.cascadeIndexes?.length) return opened;
-    const depthOffset = opened.reduce((maximum, cell) => Math.max(maximum, cell.depth), 0);
+    if (!purgeEvent) return opened;
+    const openedIndexes = new Set(opened.map(({ index }) => index));
+    const replacementCells = (purgeEvent.mineIndexes || [])
+      .filter((index) => this.state.revealed[index] !== undefined && !openedIndexes.has(index))
+      .map((index) => ({ index, depth: 0 }));
+    const visibleOpened = [...opened, ...replacementCells];
+    if (!purgeEvent.cascadeIndexes?.length) return visibleOpened;
+    const depthOffset = visibleOpened.reduce((maximum, cell) => Math.max(maximum, cell.depth), 0);
     return [
-      ...opened,
+      ...visibleOpened,
       ...purgeEvent.cascadeIndexes.map((index, position) => ({
         index,
         depth: depthOffset + Math.max(1, Number(purgeEvent.cascadeDepths?.[position]) || 1),
@@ -734,6 +764,7 @@ export class RoomEngine {
       cascadeIndexes: combinedCascade.map(({ index }) => index),
       cascadeDepths: combinedCascade.map(({ depth }) => depth),
       cellIndexes: unique([...(first.cellIndexes || []), ...(second.cellIndexes || [])]),
+      leadFlagIndexes: unique([...(first.leadFlagIndexes || []), ...(second.leadFlagIndexes || [])]),
       // Reduction is a cell operation, not an isolated sector. Only the
       // Sector-Purge half contributes to the island count in a combined event.
       sectorCount: [first, second].reduce((total, event) => (
@@ -775,7 +806,7 @@ export class RoomEngine {
       : this.ruleset() === RULESETS.REDUCTION;
   }
 
-  purgeSolvedSectors(playerId, now) {
+  purgeSolvedSectors(playerId, now, { leadFlagIndexes = [] } = {}) {
     if (!this.sectorPurgeEnabled() || this.state.phase !== "playing") return null;
     const sectors = findPurgeableSectors({
       config: this.state.config,
@@ -787,10 +818,18 @@ export class RoomEngine {
     if (!sectors.length) return null;
 
     const mineIndexes = [...new Set(sectors.flatMap((sector) => sector.mineIndexes))].sort((a, b) => a - b);
-    return this.purgeMines(playerId, mineIndexes, now, { kind: RULESETS.SECTOR, sectorCount: sectors.length });
+    return this.purgeMines(playerId, mineIndexes, now, {
+      kind: RULESETS.SECTOR,
+      sectorCount: sectors.length,
+      leadFlagIndexes,
+    });
   }
 
-  purgeMines(playerId, requestedMineIndexes, now, { kind, sectorCount = 1 } = {}) {
+  purgeMines(playerId, requestedMineIndexes, now, {
+    kind,
+    sectorCount = 1,
+    leadFlagIndexes = [],
+  } = {}) {
     const operationKind = kind ?? this.ruleset();
     const featureEnabled = operationKind === RULESETS.REDUCTION
       ? this.reductionEnabled()
@@ -802,21 +841,29 @@ export class RoomEngine {
       .filter((index) => currentMineSet.has(index))
       .sort((a, b) => a - b);
     if (!mineIndexes.length) return null;
+    const mineIndexSet = new Set(mineIndexes);
+    const confirmedLeadFlagIndexes = [...new Set(leadFlagIndexes)]
+      .filter((index) => mineIndexSet.has(index))
+      .sort((a, b) => a - b);
     const clueSet = new Set();
     for (const mine of mineIndexes) {
       for (const neighbor of neighbors(this.state.config, mine)) {
         if (!this.state.purged.includes(neighbor) && this.state.revealed[neighbor] !== undefined) clueSet.add(neighbor);
       }
     }
-    // Reduction rewrites the removed mine into a safe clue. Sector purge, by
-    // contrast, physically removes its solved cells from the active board.
-    if (isReduction) for (const mine of mineIndexes) clueSet.add(mine);
+    // Removing a mine never removes its coordinate from the board. Both
+    // features rewrite that position from the remaining minefield: n stays
+    // visible as a clue, while 0 becomes an empty revealed cell and cascades.
+    for (const mine of mineIndexes) clueSet.add(mine);
     const clueIndexes = [...clueSet].sort((a, b) => a - b);
     const cellIndexes = [...mineIndexes];
-    const purgedSet = new Set(this.state.purged);
-    if (!isReduction) for (const mine of mineIndexes) purgedSet.add(mine);
     const removedMineSet = new Set(mineIndexes);
-    this.state.purged = [...purgedSet].sort((a, b) => a - b);
+    if (!isReduction) {
+      this.state.sectorPurgedMineIndexes = [...new Set([
+        ...(this.state.sectorPurgedMineIndexes || []),
+        ...mineIndexes,
+      ])].sort((a, b) => a - b);
+    }
     this.state.mines = this.state.mines.filter((index) => !removedMineSet.has(index));
     this.state.flags = this.state.flags.filter((index) => !removedMineSet.has(index));
     const remainingMineSet = new Set(this.state.mines);
@@ -826,7 +873,7 @@ export class RoomEngine {
       return { index, count };
     });
     const zeroClueSet = new Set(updatedClues.filter(({ count }) => count === 0).map(({ index }) => index));
-    const targetZeroIndexes = isReduction ? mineIndexes.filter((index) => zeroClueSet.has(index)) : [];
+    const targetZeroIndexes = mineIndexes.filter((index) => zeroClueSet.has(index));
     const zeroClueIndexes = [
       ...targetZeroIndexes,
       ...[...zeroClueSet].filter((index) => !targetZeroIndexes.includes(index)),
@@ -846,15 +893,14 @@ export class RoomEngine {
       cascadeIndexes,
       cascadeDepths,
       cellIndexes,
+      leadFlagIndexes: confirmedLeadFlagIndexes,
       sectorCount,
       at: now,
     };
-    if (isReduction) {
-      this.recordReveal(operationKind, [
-        ...mineIndexes.map((index) => ({ index, depth: 0 })),
-        ...cascadeCells,
-      ], now);
-    }
+    this.recordReveal(operationKind, [
+      ...mineIndexes.map((index) => ({ index, depth: 0 })),
+      ...cascadeCells,
+    ], now);
     const member = this.member(playerId);
     this.addActivity("sectorPurged", {
       name: member?.name ?? "Silver Wolf",
@@ -872,14 +918,23 @@ export class RoomEngine {
     if (!["ready", "playing"].includes(this.state.phase)) throw new Error("WRONG_PHASE");
     if (!validPoint(this.state.config, point)) throw new Error("INVALID_CELL");
     const index = indexOf(this.state.config, point.x, point.y, point.z);
+    const isReadyBeginner = this.state.phase === "ready"
+      && this.state.mode === "solo"
+      && isBeginnerTutorialConfig(this.state.config);
+    if (isReadyBeginner) {
+      const tutorialStartIndex = indexOf(
+        this.state.config,
+        BEGINNER_TUTORIAL_START.x,
+        BEGINNER_TUTORIAL_START.y,
+        BEGINNER_TUTORIAL_START.z,
+      );
+      if (index !== tutorialStartIndex) throw new Error("TUTORIAL_FIRST_MOVE_REQUIRED");
+    }
     if (this.state.purged.includes(index)) return "区块已经清除";
     if (this.state.flags.includes(index) || this.state.revealed[index] !== undefined) return "方块没有变化";
     if (this.state.phase === "ready") {
-      const tutorialMines = this.state.mode === "solo" && isBeginnerTutorialConfig(this.state.config)
-        ? beginnerTutorialMineIndexes(this.state.config)
-        : null;
-      this.state.mines = tutorialMines && !tutorialMines.includes(index)
-        ? tutorialMines
+      this.state.mines = isReadyBeginner
+        ? createBeginnerTutorialLayout(this.random)
         : createMines(this.state.config, index, this.random);
       this.state.phase = "playing";
       this.state.startedAt = now;
@@ -951,6 +1006,11 @@ export class RoomEngine {
   flag(playerId, point, now, { deferPurge = false } = {}) {
     if (!["ready", "playing"].includes(this.state.phase)) throw new Error("WRONG_PHASE");
     if (!validPoint(this.state.config, point)) throw new Error("INVALID_CELL");
+    if (this.state.phase === "ready"
+      && this.state.mode === "solo"
+      && isBeginnerTutorialConfig(this.state.config)) {
+      throw new Error("TUTORIAL_FIRST_MOVE_REQUIRED");
+    }
     const index = indexOf(this.state.config, point.x, point.y, point.z);
     if (this.state.purged.includes(index)) return "区块已经清除";
     if (this.state.revealed[index] !== undefined) return "已揭开的方块不能标记";
@@ -959,7 +1019,7 @@ export class RoomEngine {
     else this.state.flags.push(index);
     this.addActivity("flagged", { name: this.member(playerId).name }, now);
     if (position < 0 && this.sectorPurgeEnabled() && !deferPurge) {
-      const purgeEvent = this.purgeSolvedSectors(playerId, now);
+      const purgeEvent = this.purgeSolvedSectors(playerId, now, { leadFlagIndexes: [index] });
       const cascade = this.appendPurgeCascade([], purgeEvent);
       if (cascade.length) this.recordReveal(RULESETS.SECTOR, cascade, now);
     }
@@ -1036,17 +1096,18 @@ export class RoomEngine {
     const revealed = Object.entries(this.state.revealed).map(([index, count]) => publicCell(config, Number(index), count));
     const reviveStarter = this.member(this.state.reviveStartedBy);
     const isGuidedBeginner = this.state.mode === "solo" && isBeginnerTutorialConfig(config);
-    const tutorialMineIndexes = isGuidedBeginner
-      ? (this.state.mines.length ? this.state.mines : beginnerTutorialMineIndexes(config))
-      : [];
     const remainingMineCount = this.state.phase === "ready" ? config.mineCount : this.state.mines.length;
     const removedMineCount = this.state.phase === "ready" ? 0 : Math.max(0, config.mineCount - remainingMineCount);
-    // `purged` contains cells physically erased by Sector Purge. Reduction
-    // keeps its target as a rewritten safe clue, so it must not inflate this
-    // count when both modules are enabled.
-    const purgedMineCount = Math.min(this.state.purged.length, removedMineCount);
+    // Sector Purge and Reduction both rewrite removed mine positions as safe
+    // clues. Track which feature removed each mine independently from the
+    // legacy `purged` holes retained only for backwards-compatible restores.
+    const purgedMineCount = Math.min(
+      new Set(this.state.sectorPurgedMineIndexes || []).size,
+      removedMineCount,
+    );
     const reducedMineCount = Math.max(0, removedMineCount - purgedMineCount);
-    const purgedSafeCount = Math.max(0, this.state.purged.length - purgedMineCount);
+    const legacyPurgedMineCount = Math.min(this.state.purged.length, purgedMineCount);
+    const purgedSafeCount = Math.max(0, this.state.purged.length - legacyPurgedMineCount);
     const updatedClues = this.state.lastPurge?.updatedClues
       ?? (this.state.lastPurge?.clueIndexes || []).map((index) => ({ index, count: this.state.revealed[index] ?? 0 }));
     const reductionMineIndexes = this.state.lastPurge?.reductionMineIndexes
@@ -1059,6 +1120,7 @@ export class RoomEngine {
       mines: this.state.lastPurge.mineIndexes.map((index) => pointOf(config, index)),
       reductionMines: reductionMineIndexes.map((index) => pointOf(config, index)),
       purgedMines: purgedMineIndexes.map((index) => pointOf(config, index)),
+      leadFlags: (this.state.lastPurge.leadFlagIndexes || []).map((index) => pointOf(config, index)),
       clues: updatedClues.map(({ index, count }) => publicCell(config, index, count)),
       updatedClues: updatedClues.map(({ index, count }) => publicCell(config, index, count)),
       opened: (this.state.lastPurge.cascadeIndexes || []).map((index, position) => ({
@@ -1111,7 +1173,7 @@ export class RoomEngine {
       lastReveal,
       mines: this.state.phase === "lost" ? this.state.mines.map((index) => pointOf(config, index)) : [],
       tutorialStart: isGuidedBeginner ? { ...BEGINNER_TUTORIAL_START } : null,
-      tutorialMines: tutorialMineIndexes.map((index) => pointOf(config, index)),
+      tutorialMines: [],
       pendingMine: this.state.pendingMine === null ? null : pointOf(config, this.state.pendingMine),
       pendingFailureKind: this.state.pendingFailureKind,
       reviveEndsAt: this.state.reviveEndsAt,

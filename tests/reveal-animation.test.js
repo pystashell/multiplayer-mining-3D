@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   BOARD_ANIMATION_TIMING,
   revealAnimationTiming,
+  sectorPurgeAnimationTiming,
 } from '../public/reveal-animation.js';
 
 test('opens every player-selected first wave with one fast consistent timing', () => {
@@ -35,4 +36,19 @@ test('keeps non-action snapshot reconciliation on the neutral reveal timing', ()
     isPrimary: false,
     isCascade: false,
   });
+});
+
+test('holds a newly placed purge flag through its rise before the island dissolves', () => {
+  const preview = sectorPurgeAnimationTiming(1, { flagPreview: true });
+  assert.equal(BOARD_ANIMATION_TIMING.flagRiseDurationMs, 210);
+  assert.equal(preview.leadInMs, 420);
+  assert.ok(preview.leadInMs >= BOARD_ANIMATION_TIMING.flagRiseDurationMs * 2);
+  assert.equal(preview.staggerMs, 0);
+  assert.equal(preview.durationMs, 650);
+  assert.equal(preview.totalMs, 1070);
+
+  const ordinary = sectorPurgeAnimationTiming(3);
+  assert.equal(ordinary.leadInMs, 0);
+  assert.equal(ordinary.staggerMs, 96);
+  assert.equal(ordinary.totalMs, 746);
 });

@@ -40,13 +40,14 @@ test('uses mobile-sized master-derived art for each dialogue beat', () => {
     assert.ok(bytes < 250_000, `${filename} should remain lightweight for mobile dialogue loading`);
     assert.match(appSource, new RegExp(`assets/${filename.replaceAll('.', '\\.')}`));
   }
-  for (const artKey of ['neighbors', 'scan', 'tip', 'inspect', 'ready']) {
+  for (const artKey of ['neighbors', 'scan', 'tip', 'ready']) {
     assert.match(appSource, new RegExp(`artKey: '${artKey}'`));
   }
 });
 
 test('reuses the advanced chapter main art for every advanced dialogue', () => {
   assert.match(appSource, /hard: Object\.freeze\(\{\s*main: STORY_ART\.hard,\s*\}\)/);
+  assert.match(appSource, /ultimate: Object\.freeze\(\{\s*main: STORY_ART\.ultimate,\s*\}\)/);
   assert.match(appSource, /hard: \['main', 'main', 'main'\]/);
   assert.doesNotMatch(appSource, /silver-wolf-hard-commit|artKey: 'commit'/);
 });

@@ -1,11 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { solveMinesweeperHint } from '../public/minesweeper-solver.js';
 import {
-  BEGINNER_TUTORIAL_MINES,
   BEGINNER_TUTORIAL_START,
   RoomEngine,
   normalizeConfig,
 } from '../worker/room-engine.js';
+import {
+  createBeginnerTutorialLayout,
+  enumerateBeginnerTutorialCandidates,
+  isExplainableBeginnerHint,
+  validateBeginnerTutorialLayout,
+} from '../worker/beginner-layout.js';
 
 function createEngine(now = 1_000) {
   return RoomEngine.create({ code: 'ABC234', hostId: 'host', hostName: 'Host', tokenHash: 'hash', now });
@@ -13,6 +19,18 @@ function createEngine(now = 1_000) {
 
 function apply(engine, sequence, command, now = 1_000 + sequence) {
   return engine.apply('host', command, { id: `command-${sequence}`, sequence, now });
+}
+
+function cellIndex(config, point) {
+  return (point.x * config.height + point.y) * config.depth + point.z;
+}
+
+function pointFromIndex(config, index) {
+  const z = index % config.depth;
+  const plane = (index - z) / config.depth;
+  const y = plane % config.height;
+  const x = (plane - y) / config.height;
+  return { x, y, z };
 }
 
 test('normalizes three-dimensional boards and enforces the 60 percent mine limit', () => {
@@ -231,12 +249,12 @@ test('task rewind only undoes the mine hit and preserves the current minefield',
   });
   engine.random = () => 0;
   apply(engine, 1, { op: 'restart', config: { width: 3, height: 3, depth: 3, mineCount: 3, ruleset: 'classic', campaign: true } });
-  apply(engine, 2, { op: 'dig', x: 1, y: 1, z: 1 });
+  apply(engine, 2, { op: 'dig', ...BEGINNER_TUTORIAL_START });
   const mine = engine.state.mines[0];
-  const point = { x: Math.floor(mine / 9), y: Math.floor((mine % 9) / 3), z: mine % 3 };
+  const point = pointFromIndex(engine.state.config, mine);
   const flagIndex = Array.from({ length: 27 }, (_, index) => index)
     .find(index => !engine.state.mines.includes(index) && engine.state.revealed[index] === undefined);
-  const flagPoint = { x: Math.floor(flagIndex / 9), y: Math.floor((flagIndex % 9) / 3), z: flagIndex % 3 };
+  const flagPoint = pointFromIndex(engine.state.config, flagIndex);
   apply(engine, 3, { op: 'flag', ...flagPoint });
   const minesBefore = [...engine.state.mines];
   const revealedBefore = { ...engine.state.revealed };
@@ -261,14 +279,55 @@ test('task rewind only undoes the mine hit and preserves the current minefield',
   assert.deepEqual(engine.state.revealed, {});
   assert.deepEqual(engine.state.flags, []);
   engine.random = () => 0.999999;
-  apply(engine, 9, { op: 'dig', x: 1, y: 1, z: 1 });
-  assert.deepEqual(engine.state.mines, minesBefore);
+  apply(engine, 9, { op: 'dig', ...BEGINNER_TUTORIAL_START });
+  assert.equal(validateBeginnerTutorialLayout(engine.state.mines), true);
 });
 
 test('only the host can reconfigure a room', () => {
   const engine = createEngine();
   engine.reserveMember({ playerId: 'guest', name: 'Guest', tokenHash: 'guest-hash', now: 2_000 });
   assert.throws(() => engine.apply('guest', { op: 'restart', config: {} }, { id: 'guest-command', sequence: 1, now: 2_001 }), /HOST_ONLY/);
+});
+
+test('intentional leave removes a squad member and frees the seat', () => {
+  const engine = createEngine();
+  engine.reserveMember({ playerId: 'guest', name: 'Guest', tokenHash: 'guest-hash', now: 2_000 });
+
+  engine.apply('guest', { op: 'leave' }, { id: 'guest-leave', sequence: 1, now: 2_100 });
+
+  assert.equal(engine.member('guest'), null);
+  assert.deepEqual(engine.snapshot().players.map((player) => player.id), ['host']);
+  assert.equal(engine.state.activity.at(-1).key, 'left');
+  assert.deepEqual(engine.state.activity.at(-1).params, { name: 'Guest' });
+});
+
+test('host leave transfers control to the earliest remaining squad member', () => {
+  const engine = createEngine();
+  engine.reserveMember({ playerId: 'guest-a', name: 'Guest A', tokenHash: 'guest-a-hash', now: 2_000 });
+  engine.reserveMember({ playerId: 'guest-b', name: 'Guest B', tokenHash: 'guest-b-hash', now: 2_100 });
+
+  apply(engine, 1, { op: 'leave' }, 2_200);
+
+  assert.equal(engine.state.hostId, 'guest-a');
+  assert.equal(engine.snapshot().players.find((player) => player.id === 'guest-a').isHost, true);
+  assert.equal(engine.state.activity.at(-1).key, 'hostTransferred');
+  assert.deepEqual(engine.state.activity.at(-1).params, { name: 'Guest A' });
+  assert.doesNotThrow(() => engine.apply(
+    'guest-a',
+    { op: 'restart', config: { width: 3, height: 3, depth: 3, mineCount: 3 } },
+    { id: 'new-host-restart', sequence: 1, now: 2_300 },
+  ));
+});
+
+test('a new member becomes host when reusing an empty squad room', () => {
+  const engine = createEngine();
+  apply(engine, 1, { op: 'leave' }, 2_000);
+  assert.equal(engine.state.hostId, null);
+  assert.deepEqual(engine.snapshot().players, []);
+
+  engine.reserveMember({ playerId: 'replacement', name: 'Replacement', tokenHash: 'replacement-hash', now: 2_100 });
+  assert.equal(engine.state.hostId, 'replacement');
+  assert.equal(engine.snapshot().players[0].isHost, true);
 });
 
 test('stores semantic activity data so every client can localize it', () => {
@@ -294,62 +353,159 @@ test('keeps task mode private and exposes the selected mode in snapshots', () =>
   assert.equal(engine.snapshot().players.length, 1);
 });
 
-test('uses a fixed solution only for the guided beginner mission', () => {
+test('constructs the complete dispersed three-layer beginner candidate space at runtime', () => {
+  const candidates = enumerateBeginnerTutorialCandidates();
+  assert.equal(candidates.length, 186);
+  assert.equal(new Set(candidates.map((layout) => layout.join(','))).size, candidates.length);
+  const config = { width: 3, height: 3, depth: 3 };
+  const startIndex = cellIndex(config, BEGINNER_TUTORIAL_START);
+  for (const layout of candidates) {
+    assert.equal(layout.length, 3);
+    assert.equal(new Set(layout).size, 3);
+    assert.equal(layout.includes(startIndex), false);
+    assert.deepEqual([...layout].sort((left, right) => left - right), layout);
+    assert.equal(new Set(layout.map((index) => pointFromIndex(config, index).z)).size, 3);
+    for (let left = 0; left < layout.length; left += 1) {
+      for (let right = left + 1; right < layout.length; right += 1) {
+        const a = pointFromIndex(config, layout[left]);
+        const b = pointFromIndex(config, layout[right]);
+        const distance = Math.abs(a.x - b.x) + Math.abs(a.y - b.y) + Math.abs(a.z - b.z);
+        assert.ok(distance >= 3, `${layout.join(',')} keeps its mines visibly dispersed`);
+      }
+    }
+  }
+});
+
+test('shadow validation accepts a no-guess route and rejects a visually valid forced guess', () => {
+  assert.equal(validateBeginnerTutorialLayout([0, 5, 16]), true);
+  assert.equal(validateBeginnerTutorialLayout([1, 15, 23]), false);
+});
+
+test('beginner shadow validation only accepts certain rules with a directly explainable proof', () => {
+  const base = { status: 'hint', certainty: 'certain', target: { x: 0, y: 0, z: 0 } };
+  assert.equal(isExplainableBeginnerHint({ ...base, rule: 'direct-safe' }), true);
+  assert.equal(isExplainableBeginnerHint({ ...base, rule: 'subset-mine' }), true);
+  assert.equal(isExplainableBeginnerHint({ ...base, rule: 'cover-safe' }), true);
+  assert.equal(isExplainableBeginnerHint({ ...base, rule: 'enumeration-safe' }), false);
+  assert.equal(isExplainableBeginnerHint({ ...base, rule: 'enumeration-mine' }), false);
+  assert.equal(isExplainableBeginnerHint({ ...base, certainty: 'guess', rule: 'guess' }), false);
+});
+
+test('gates the beginner first action without initializing or leaking the selected mine layout', () => {
   const solo = RoomEngine.create({
     code: 'SOLO24', hostId: 'host', hostName: 'Host', tokenHash: 'hash', mode: 'solo', now: 1_000,
   });
+  let randomCalls = 0;
+  solo.random = () => {
+    randomCalls += 1;
+    return 0;
+  };
   apply(solo, 1, { op: 'restart', config: { width: 3, height: 3, depth: 3, mineCount: 3, ruleset: 'classic', campaign: true } });
+
   assert.deepEqual(solo.snapshot().tutorialStart, BEGINNER_TUTORIAL_START);
-  assert.deepEqual(solo.snapshot().tutorialMines, BEGINNER_TUTORIAL_MINES);
+  assert.deepEqual(solo.snapshot().tutorialMines, []);
+  assert.throws(() => apply(solo, 2, { op: 'dig', x: 0, y: 0, z: 0 }), /TUTORIAL_FIRST_MOVE_REQUIRED/);
+  assert.throws(() => apply(solo, 3, { op: 'flag', ...BEGINNER_TUTORIAL_START }), /TUTORIAL_FIRST_MOVE_REQUIRED/);
+  assert.equal(randomCalls, 0);
+  assert.equal(solo.state.phase, 'ready');
+  assert.deepEqual(solo.state.mines, []);
+  assert.deepEqual(solo.state.flags, []);
+  assert.deepEqual(solo.state.revealed, {});
+  assert.equal(solo.state.startedAt, null);
 
-  apply(solo, 2, { op: 'dig', ...BEGINNER_TUTORIAL_START });
-  assert.deepEqual(solo.snapshot().tutorialMines, BEGINNER_TUTORIAL_MINES);
-  const startIndex = (BEGINNER_TUTORIAL_START.x * 3 + BEGINNER_TUTORIAL_START.y) * 3 + BEGINNER_TUTORIAL_START.z;
-  assert.equal(solo.state.mines.includes(startIndex), false);
-  assert.ok(solo.snapshot().revealed.some((cell) => cell.x === BEGINNER_TUTORIAL_START.x && cell.y === BEGINNER_TUTORIAL_START.y && cell.z === BEGINNER_TUTORIAL_START.z));
-
-  assert.equal(new Set(BEGINNER_TUTORIAL_MINES.map((mine) => mine.z)).size, 3, 'the tutorial places one mine in every depth layer');
-  for (let left = 0; left < BEGINNER_TUTORIAL_MINES.length; left++) {
-    for (let right = left + 1; right < BEGINNER_TUTORIAL_MINES.length; right++) {
-      const a = BEGINNER_TUTORIAL_MINES[left];
-      const b = BEGINNER_TUTORIAL_MINES[right];
-      const distance = Math.abs(a.x - b.x) + Math.abs(a.y - b.y) + Math.abs(a.z - b.z);
-      assert.ok(distance >= 3, 'tutorial mines remain visibly dispersed');
-    }
-  }
+  apply(solo, 4, { op: 'dig', ...BEGINNER_TUTORIAL_START });
+  assert.ok(randomCalls > 0 && randomCalls <= 185);
+  assert.equal(validateBeginnerTutorialLayout(solo.state.mines), true);
+  assert.deepEqual(solo.snapshot().tutorialMines, []);
+  assert.deepEqual(solo.snapshot().mines, []);
 
   const squad = createEngine();
   assert.equal(squad.snapshot().tutorialStart, null);
   assert.deepEqual(squad.snapshot().tutorialMines, []);
+  assert.doesNotThrow(() => apply(squad, 1, { op: 'flag', x: 0, y: 0, z: 0 }));
 
-  apply(solo, 3, { op: 'restart', config: { width: 5, height: 5, depth: 5, mineCount: 10, ruleset: 'sector', campaign: true } });
+  apply(solo, 5, { op: 'restart', config: { width: 5, height: 5, depth: 5, mineCount: 10, ruleset: 'sector', campaign: true } });
   assert.equal(solo.snapshot().tutorialStart, null);
   assert.deepEqual(solo.snapshot().tutorialMines, []);
 });
 
-test('the fixed beginner route safely guides the player through the full board', () => {
-  const solo = RoomEngine.create({
-    code: 'SOLO24', hostId: 'host', hostName: 'Host', tokenHash: 'hash', mode: 'solo', now: 1_000,
-  });
-  apply(solo, 1, { op: 'restart', config: { width: 3, height: 3, depth: 3, mineCount: 3, ruleset: 'classic', campaign: true } });
-  const guidedCommands = [
-    { op: 'dig', ...BEGINNER_TUTORIAL_START },
-    { op: 'flag', x: 0, y: 0, z: 0 },
-    { op: 'dig', x: 0, y: 1, z: 0 },
-    { op: 'dig', x: 0, y: 2, z: 0 },
-    { op: 'dig', x: 0, y: 2, z: 2 },
-    { op: 'flag', x: 0, y: 2, z: 1 },
-    { op: 'flag', x: 2, y: 2, z: 2 },
-    { op: 'dig', x: 1, y: 2, z: 2 },
-  ];
-  guidedCommands.forEach((command, index) => {
-    apply(solo, index + 2, command);
-    assert.notEqual(solo.state.phase, 'revive');
-  });
+function seededRandom(seed) {
+  let state = seed >>> 0;
+  return () => {
+    state = (Math.imul(1_664_525, state) + 1_013_904_223) >>> 0;
+    return state / 0x1_0000_0000;
+  };
+}
 
-  assert.equal(solo.state.phase, 'won');
-  assert.equal(solo.snapshot().revealed.length, 24);
-  assert.deepEqual(solo.snapshot().flags, BEGINNER_TUTORIAL_MINES);
+test('selects varied solver-verified beginner layouts from seeded random candidate orders', () => {
+  const layouts = new Set();
+  for (let seed = 1; seed <= 20; seed += 1) {
+    const layout = createBeginnerTutorialLayout(seededRandom(seed));
+    assert.equal(validateBeginnerTutorialLayout(layout), true, `seed ${seed}`);
+    layouts.add(layout.join(','));
+  }
+  assert.ok(layouts.size >= 10, `expected varied generated layouts, received ${layouts.size}`);
+});
+
+test('pathological random sources remain bounded and can never bypass shadow validation', () => {
+  for (const brokenRandom of [() => 0, () => Number.NaN, () => { throw new Error('rng failed'); }]) {
+    let calls = 0;
+    const layout = createBeginnerTutorialLayout(() => {
+      calls += 1;
+      return brokenRandom();
+    });
+    assert.ok(calls <= 185, `shuffle stayed bounded at ${calls} calls`);
+    assert.equal(validateBeginnerTutorialLayout(layout), true);
+  }
+});
+
+test('the public solver completes generated beginner layouts with certain moves and all three flags', () => {
+  for (let seed = 1; seed <= 12; seed += 1) {
+    const solo = RoomEngine.create({
+      code: `LAY${seed}`, hostId: 'host', hostName: 'Host', tokenHash: 'hash', mode: 'solo', now: 1_000,
+    });
+    solo.random = seededRandom(seed);
+    let sequence = 1;
+    apply(solo, sequence++, { op: 'restart', config: { width: 3, height: 3, depth: 3, mineCount: 3, ruleset: 'classic', campaign: true } });
+    apply(solo, sequence++, { op: 'dig', ...BEGINNER_TUTORIAL_START });
+    assert.equal(validateBeginnerTutorialLayout(solo.state.mines), true, `seed ${seed} server layout`);
+
+    let flagMoves = 0;
+    for (let step = 0; step < 64 && solo.state.phase === 'playing'; step += 1) {
+      const snapshot = solo.snapshot();
+      assert.deepEqual(snapshot.tutorialMines, []);
+      assert.deepEqual(snapshot.mines, []);
+      const hint = solveMinesweeperHint({
+        ...snapshot.config,
+        phase: snapshot.phase,
+        revealed: snapshot.revealed,
+        flags: snapshot.flags,
+        excluded: snapshot.purged,
+        maxMs: 1_000,
+      });
+      assert.equal(hint.status, 'hint', `seed ${seed} solver status`);
+      assert.equal(hint.certainty, 'certain', `seed ${seed} must never guess`);
+      assert.equal(isExplainableBeginnerHint(hint), true, `seed ${seed} must use a teachable rule`);
+
+      const targetIndex = cellIndex(snapshot.config, hint.target);
+      if (hint.action === 'flag') {
+        flagMoves += 1;
+        assert.equal(solo.state.mines.includes(targetIndex), true, `seed ${seed} flags only real mines`);
+      } else {
+        assert.equal(hint.action, 'dig');
+        assert.equal(solo.state.mines.includes(targetIndex), false, `seed ${seed} digs only safe cells`);
+      }
+      apply(solo, sequence++, { op: hint.action, ...hint.target });
+      assert.notEqual(solo.state.phase, 'revive');
+    }
+
+    assert.equal(solo.state.phase, 'won', `seed ${seed} reaches a win`);
+    assert.equal(flagMoves, 3, `seed ${seed} teaches all three flags`);
+    assert.equal(solo.state.flags.length, 3);
+    assert.deepEqual([...solo.state.flags].sort((left, right) => left - right), [...solo.state.mines]);
+    assert.equal(solo.snapshot().revealed.length, 24);
+    assert.deepEqual(solo.snapshot().tutorialMines, []);
+  }
 });
 
 test('restores legacy rooms as multiplayer squad rooms', () => {

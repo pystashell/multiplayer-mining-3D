@@ -69,6 +69,16 @@ const reconnected = await connect(joined.session);
 assert.equal(reconnected.welcome.identity.playerName, 'Bob');
 assert.ok(reconnected.welcome.snapshot.revealed.length > 0);
 
+const transferredHost = waitFor(
+  reconnected.socket,
+  (message) => message.type === 'snapshot'
+    && message.snapshot.players.length === 1
+    && message.snapshot.players[0].id === joined.session.playerId
+    && message.snapshot.players[0].isHost,
+);
+await command(alice.socket, 3, { op: 'leave' });
+await transferredHost;
+
 alice.socket.close();
 reconnected.socket.close();
 console.log(`LIVE_ROOM_TEST=PASS room=${created.roomCode}`);

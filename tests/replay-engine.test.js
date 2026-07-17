@@ -146,10 +146,14 @@ test('records an atomic Sector Purge with the correct flag, updated clues, and c
   assert.equal(step.kind, 'sector');
   assert.deepEqual(step.flags, [pointOf(sectorConfig, 13)]);
   assert.deepEqual(step.purgedMines, [pointOf(sectorConfig, 13)]);
+  assert.deepEqual(step.leadFlags, [pointOf(sectorConfig, 13)]);
   assert.deepEqual(step.reductionMines, []);
   assert.deepEqual(step.cells, [pointOf(sectorConfig, 13)]);
   assert.ok(step.updatedClues.length > 0);
-  assert.deepEqual(step.opened, [{ ...pointOf(sectorConfig, 0), count: 0, wave: 1 }]);
+  assert.deepEqual(step.opened, [
+    { ...pointOf(sectorConfig, 13), count: 0, wave: 0 },
+    { ...pointOf(sectorConfig, 0), count: 0, wave: 1 },
+  ]);
   assert.equal(step.sectorCount, 1);
   assert.equal(snapshot.phase, 'won');
 });
@@ -173,6 +177,7 @@ test('records both halves of a combined Reduction and Auto-Purge event', () => {
   assert.equal(step.kind, 'combined');
   assert.deepEqual(step.reductionMines, [pointOf(combinedConfig, 4)]);
   assert.deepEqual(step.purgedMines, [pointOf(combinedConfig, 0)]);
+  assert.deepEqual(step.leadFlags, []);
   assert.deepEqual(step.cells, [pointOf(combinedConfig, 0), pointOf(combinedConfig, 4)]);
   assert.ok(step.updatedClues.length > 0);
   assert.ok(step.opened.length > 0);

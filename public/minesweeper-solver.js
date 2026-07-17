@@ -71,6 +71,112 @@ function isSubset(left, rightSet) {
   return left.every((key) => rightSet.has(key));
 }
 
+function clueDetails(constraint, source = constraint.sources[0]) {
+  return {
+    source: { x: source.x, y: source.y, z: source.z, count: source.count },
+    number: source.count,
+    flagged: constraint.flagged,
+    hidden: constraint.cells.length,
+    remaining: constraint.required,
+    unknownCells: constraint.cells.map(pointFromKey),
+  };
+}
+
+function labelClues(clues) {
+  return clues.map((clue, index) => ({ ...clue, id: String.fromCharCode(65 + index) }));
+}
+
+function findCoverInference(constraints, dimensions, preferMines = false) {
+  const moves = [];
+  for (const upper of constraints) {
+    const lowers = constraints.filter((candidate) => candidate !== upper
+      && candidate.cells.length < upper.cells.length
+      && isSubset(candidate.cells, upper.cellSet));
+
+    const visit = (start, selected, covered, coveredMines) => {
+      if (selected.length >= 2) {
+        const difference = upper.cells.filter((key) => !covered.has(key));
+        const differenceMines = upper.required - coveredMines;
+        if (difference.length > 0
+          && (differenceMines === 0 || differenceMines === difference.length)) {
+          moves.push({ upper, lowers: [...selected], difference, differenceMines, covered: [...covered] });
+        }
+      }
+      if (selected.length === 4) return;
+
+      for (let index = start; index < lowers.length; index += 1) {
+        const lower = lowers[index];
+        if (lower.cells.some((key) => covered.has(key))) continue;
+        const nextMines = coveredMines + lower.required;
+        if (nextMines > upper.required) continue;
+        const nextCovered = new Set(covered);
+        for (const key of lower.cells) nextCovered.add(key);
+        visit(index + 1, [...selected, lower], nextCovered, nextMines);
+      }
+    };
+    visit(0, [], new Set(), 0);
+  }
+
+  moves.sort((left, right) => {
+    const leftSafe = left.differenceMines === 0;
+    const rightSafe = right.differenceMines === 0;
+    const leftPreferred = preferMines ? !leftSafe : leftSafe;
+    const rightPreferred = preferMines ? !rightSafe : rightSafe;
+    return Number(rightPreferred) - Number(leftPreferred)
+      || left.lowers.length - right.lowers.length
+      || left.difference.length - right.difference.length
+      || comparePeripheralKeys(chooseTargetKey(left.difference, dimensions), chooseTargetKey(right.difference, dimensions), dimensions);
+  });
+  const move = moves[0];
+  if (!move) return null;
+
+  const safe = move.differenceMines === 0;
+  const [upperClue, ...lowerClues] = labelClues([
+    clueDetails(move.upper),
+    ...move.lowers.map((lower) => clueDetails(lower)),
+  ]);
+  const coveredMines = move.lowers.reduce((total, lower) => total + lower.required, 0);
+  const proof = {
+    kind: 'set-cover',
+    clues: [upperClue, ...lowerClues],
+    relations: [
+      ...lowerClues.map((clue) => ({ kind: 'subset', subset: clue.id, superset: upperClue.id })),
+      { kind: 'pairwise-disjoint', clues: lowerClues.map((clue) => clue.id) },
+      {
+        kind: 'subtract-covered',
+        from: upperClue.id,
+        subtract: lowerClues.map((clue) => clue.id),
+        coveredMines,
+        otherHidden: move.difference.length,
+        otherRemaining: move.differenceMines,
+      },
+    ],
+    conclusion: {
+      differenceCells: move.difference.map(pointFromKey),
+      differenceMines: move.differenceMines,
+      targetValue: safe ? 'safe' : 'mine',
+    },
+  };
+  return {
+    action: safe ? 'dig' : 'flag',
+    certainty: 'certain',
+    rule: safe ? 'cover-safe' : 'cover-mine',
+    target: chooseTarget(move.difference, dimensions),
+    evidence: proof.clues.map((clue) => clue.source),
+    details: {
+      upperNumber: upperClue.number,
+      upperFlagged: upperClue.flagged,
+      upperHidden: upperClue.hidden,
+      upperRemaining: upperClue.remaining,
+      coveredHidden: move.covered.length,
+      coveredMines,
+      difference: move.difference.length,
+      differenceMines: move.differenceMines,
+      proof,
+    },
+  };
+}
+
 export function buildConstraints({ width, height, depth, revealed = [], flags = [], excluded = [] }) {
   const excludedKeys = new Set(excluded.map(pointKey));
   const revealedByKey = new Map(revealed.map((cell) => [pointKey(cell), cell]));
@@ -133,13 +239,13 @@ function directInference(constraint, action, dimensions) {
   };
 }
 
-export function findDeterministicInference(constraints, dimensions = null) {
+export function findDeterministicInference(constraints, dimensions = null, { preferMines = false } = {}) {
   const ordered = [...constraints].sort((left, right) => left.cells.length - right.cells.length
     || left.required - right.required
     || comparePeripheralKeys(chooseTargetKey(left.cells, dimensions), chooseTargetKey(right.cells, dimensions), dimensions));
   const directSafe = ordered.find((constraint) => constraint.required === 0);
-  if (directSafe) return directInference(directSafe, 'dig', dimensions);
   const directMine = ordered.find((constraint) => constraint.required === constraint.cells.length);
+  if (!preferMines && directSafe) return directInference(directSafe, 'dig', dimensions);
   if (directMine) return directInference(directMine, 'flag', dimensions);
 
   const subsetMoves = [];
@@ -156,32 +262,41 @@ export function findDeterministicInference(constraints, dimensions = null) {
   subsetMoves.sort((left, right) => {
     const leftSafe = left.differenceMines === 0;
     const rightSafe = right.differenceMines === 0;
-    return Number(rightSafe) - Number(leftSafe)
+    const leftPreferred = preferMines ? !leftSafe : leftSafe;
+    const rightPreferred = preferMines ? !rightSafe : rightSafe;
+    return Number(rightPreferred) - Number(leftPreferred)
       || left.difference.length - right.difference.length
       || comparePeripheralKeys(chooseTargetKey(left.difference, dimensions), chooseTargetKey(right.difference, dimensions), dimensions);
   });
   const move = subsetMoves[0];
-  if (!move) return null;
-  const lowerSource = move.lower.sources[0];
-  const upperSource = move.upper.sources[0];
-  const safe = move.differenceMines === 0;
-  return {
-    action: safe ? 'dig' : 'flag',
-    certainty: 'certain',
-    rule: safe ? 'subset-safe' : 'subset-mine',
-    target: chooseTarget(move.difference, dimensions),
-    evidence: [lowerSource, upperSource],
-    details: {
-      lowerNumber: lowerSource.count,
-      lowerRemaining: move.lower.required,
-      lowerHidden: move.lower.cells.length,
-      upperNumber: upperSource.count,
-      upperRemaining: move.upper.required,
-      upperHidden: move.upper.cells.length,
-      difference: move.difference.length,
-      differenceMines: move.differenceMines,
-    },
-  };
+  const subsetHint = move ? (() => {
+    const lowerSource = move.lower.sources[0];
+    const upperSource = move.upper.sources[0];
+    const safe = move.differenceMines === 0;
+    return {
+      action: safe ? 'dig' : 'flag',
+      certainty: 'certain',
+      rule: safe ? 'subset-safe' : 'subset-mine',
+      target: chooseTarget(move.difference, dimensions),
+      evidence: [lowerSource, upperSource],
+      details: {
+        lowerNumber: lowerSource.count,
+        lowerRemaining: move.lower.required,
+        lowerHidden: move.lower.cells.length,
+        upperNumber: upperSource.count,
+        upperRemaining: move.upper.required,
+        upperHidden: move.upper.cells.length,
+        difference: move.difference.length,
+        differenceMines: move.differenceMines,
+      },
+    };
+  })() : null;
+  if (!preferMines) return subsetHint || findCoverInference(ordered, dimensions);
+  if (subsetHint?.action === 'flag') return subsetHint;
+  const coverHint = findCoverInference(ordered, dimensions, true);
+  if (coverHint?.action === 'flag') return coverHint;
+  if (directSafe) return directInference(directSafe, 'dig', dimensions);
+  return subsetHint || coverHint;
 }
 
 function buildComponents(constraints) {
@@ -480,6 +595,40 @@ function evidenceForTarget(targetKey, constraints) {
     .slice(0, 4);
 }
 
+function enumerationEvidence(targetKey, constraints, assumption, validWays) {
+  const pending = [...constraints];
+  const keyConstraints = [];
+  const connectedCells = new Set([targetKey]);
+  while (pending.length && keyConstraints.length < 4) {
+    const index = pending.findIndex((constraint) => constraint.cells.some((key) => connectedCells.has(key)));
+    if (index < 0) break;
+    const [constraint] = pending.splice(index, 1);
+    keyConstraints.push(constraint);
+    for (const key of constraint.cells) connectedCells.add(key);
+  }
+  const clues = keyConstraints.map((constraint) => {
+    const clue = clueDetails(constraint);
+    const containsTarget = constraint.cellSet.has(targetKey);
+    return {
+      ...clue,
+      containsTarget,
+      otherHidden: clue.hidden - Number(containsTarget),
+      otherRemaining: clue.remaining - Number(containsTarget && assumption === 'mine'),
+    };
+  });
+  return {
+    evidence: clues.map((clue) => clue.source),
+    proof: {
+      kind: 'contradiction-enumeration',
+      clueScope: 'key-constraints',
+      assumption,
+      oppositeWays: '0',
+      validWays: validWays.toString(),
+      clues,
+    },
+  };
+}
+
 function boundedGuess(hidden, constraints, remainingMines, nodes, dimensions) {
   const globalDensity = hidden.length ? remainingMines / hidden.length : 1;
   const candidates = hidden.map((key) => {
@@ -528,6 +677,7 @@ export function solveMinesweeperHint({
   excluded = [],
   maxNodes = 2_000_000,
   maxMs = 180,
+  preferMines = false,
 }) {
   const knowledge = buildConstraints({ width, height, depth, revealed, flags, excluded });
   if (knowledge.inconsistent || mineCount - flags.length < 0) return { status: 'inconsistent', rule: 'inconsistent', target: null, evidence: [] };
@@ -539,8 +689,9 @@ export function solveMinesweeperHint({
   }
 
   const dimensions = { width, height, depth };
-  const deterministic = findDeterministicInference(knowledge.constraints, dimensions);
-  if (deterministic) return { status: 'hint', ...deterministic };
+  const deterministic = findDeterministicInference(knowledge.constraints, dimensions, { preferMines });
+  const deterministicSafeFallback = preferMines && deterministic?.action === 'dig' ? deterministic : null;
+  if (deterministic && !deterministicSafeFallback) return { status: 'hint', ...deterministic };
 
   const remainingMines = mineCount - flags.length;
   if (!knowledge.constraints.length) {
@@ -554,21 +705,39 @@ export function solveMinesweeperHint({
   }
 
   const exact = exactProbabilities({ constraints: knowledge.constraints, hidden: knowledge.hidden, remainingMines, maxNodes, maxMs });
-  if (exact.incomplete) return boundedGuess(knowledge.hidden, knowledge.constraints, remainingMines, exact.nodes, dimensions);
+  if (exact.incomplete) {
+    if (deterministicSafeFallback) return { status: 'hint', ...deterministicSafeFallback };
+    return boundedGuess(knowledge.hidden, knowledge.constraints, remainingMines, exact.nodes, dimensions);
+  }
   if (exact.inconsistent) return { status: 'inconsistent', rule: 'inconsistent', target: null, evidence: [] };
 
   const safe = exact.probabilities.filter((entry) => entry.numerator === 0n).sort((left, right) => comparePeripheralKeys(left.key, right.key, dimensions) || Number(right.frontier) - Number(left.frontier) || compareKeys(left.key, right.key))[0];
-  if (safe) return {
-    status: 'hint', action: 'dig', certainty: 'certain', rule: 'enumeration-safe', target: pointFromKey(safe.key),
-    evidence: evidenceForTarget(safe.key, knowledge.constraints),
-    details: { totalWays: exact.totalWays.toString(), nodes: exact.nodes, mineProbability: 0, safeProbability: 1 },
-  };
   const mine = exact.probabilities.filter((entry) => entry.numerator === entry.denominator).sort((left, right) => comparePeripheralKeys(left.key, right.key, dimensions) || Number(right.frontier) - Number(left.frontier) || compareKeys(left.key, right.key))[0];
-  if (mine) return {
-    status: 'hint', action: 'flag', certainty: 'certain', rule: 'enumeration-mine', target: pointFromKey(mine.key),
-    evidence: evidenceForTarget(mine.key, knowledge.constraints),
-    details: { totalWays: exact.totalWays.toString(), nodes: exact.nodes, mineProbability: 1, safeProbability: 0 },
-  };
+  if (preferMines && mine) {
+    const { evidence, proof } = enumerationEvidence(mine.key, knowledge.constraints, 'safe', exact.totalWays);
+    return {
+      status: 'hint', action: 'flag', certainty: 'certain', rule: 'enumeration-mine', target: pointFromKey(mine.key),
+      evidence,
+      details: { totalWays: exact.totalWays.toString(), nodes: exact.nodes, mineProbability: 1, safeProbability: 0, proof },
+    };
+  }
+  if (deterministicSafeFallback) return { status: 'hint', ...deterministicSafeFallback };
+  if (safe) {
+    const { evidence, proof } = enumerationEvidence(safe.key, knowledge.constraints, 'mine', exact.totalWays);
+    return {
+      status: 'hint', action: 'dig', certainty: 'certain', rule: 'enumeration-safe', target: pointFromKey(safe.key),
+      evidence,
+      details: { totalWays: exact.totalWays.toString(), nodes: exact.nodes, mineProbability: 0, safeProbability: 1, proof },
+    };
+  }
+  if (mine) {
+    const { evidence, proof } = enumerationEvidence(mine.key, knowledge.constraints, 'safe', exact.totalWays);
+    return {
+      status: 'hint', action: 'flag', certainty: 'certain', rule: 'enumeration-mine', target: pointFromKey(mine.key),
+      evidence,
+      details: { totalWays: exact.totalWays.toString(), nodes: exact.nodes, mineProbability: 1, safeProbability: 0, proof },
+    };
+  }
 
   const guess = [...exact.probabilities].sort((left, right) => left.probability - right.probability || comparePeripheralKeys(left.key, right.key, dimensions) || Number(right.frontier) - Number(left.frontier) || compareKeys(left.key, right.key))[0];
   return {

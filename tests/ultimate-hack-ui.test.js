@@ -48,10 +48,11 @@ test('routes hard completion into the hidden mission and only ultimate completio
 });
 
 test('keeps Ultimate Hack separate from Add-ons and exposes a dedicated live HUD', () => {
+  const customStart = indexSource.indexOf('id="custom-toggle"');
   const pickerStart = indexSource.indexOf('id="ruleset-picker"');
   const pickerEnd = indexSource.indexOf('id="ultimate-hack-launch"');
-  const launchEnd = indexSource.indexOf('id="custom-toggle"');
-  assert.ok(pickerStart >= 0 && pickerEnd > pickerStart && launchEnd > pickerEnd);
+  const launchEnd = indexSource.indexOf('class="panel-section action-section"');
+  assert.ok(customStart >= 0 && pickerStart > customStart && pickerEnd > pickerStart && launchEnd > pickerEnd);
   const pickerSource = indexSource.slice(pickerStart, pickerEnd);
   assert.equal((pickerSource.match(/data-feature=/g) || []).length, 2);
   assert.match(indexSource.slice(pickerEnd, launchEnd), /id="btn-ultimate-hack-start"/);
@@ -146,6 +147,8 @@ test('localizes the Ultimate Hack surface and retires the old Reduction brand wi
   assert.doesNotMatch(indexSource, /动态化简|Dynamic Reduction|\bReduction\b|REDUCTION/);
   assert.match(appSource, /reduction:\s*true/);
   assert.match(i18nSource, /'reduction\.tutorialTitle'/);
+  assert.doesNotMatch(i18nSource, /'task\.ultimate\.(?:trojanFact|installFact)'/);
+  assert.doesNotMatch(appSource, /factKey:\s*'task\.ultimate\.(?:trojanFact|installFact)'/);
 });
 
 test('keeps the successful replay entry and lifecycle available after auto-solving', () => {

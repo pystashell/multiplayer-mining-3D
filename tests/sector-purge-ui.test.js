@@ -15,20 +15,54 @@ test('renders the Sector Purge identity and live elimination banner', () => {
   assert.match(styleSource, /\.sector-purge-banner\s*\{[^}]*position:\s*fixed[^}]*pointer-events:\s*none/s);
 });
 
-test('keeps purged cells removed across slicing and drives a 3D dissolve animation', () => {
+test('keeps legacy physical purge holes removed across slicing and animates them', () => {
   assert.match(appSource, /isPurged:\s*false/);
   assert.match(appSource, /cell\.group\.visible\s*=\s*!cell\.isPurged[\s\S]*this\.slice\.xMin/);
   assert.match(appSource, /animateSectorPurge\(newlyPurged, event\)/);
   assert.match(appSource, /this\.updateSectorPurgeAnimations\(\);/);
   assert.match(appSource, /this\.particles\?\.createExplosion\(world, 0x29e7ff, 24\)/);
+  assert.match(engineSource, /restored\.sectorPurgedMineIndexes \?\?= \[\.\.\.restored\.purged\]/);
 });
 
 test('uses one fast first-cell timing and a slower overlapping recursive cadence', () => {
-  assert.match(revealAnimationSource, /primaryRevealDurationMs:\s*110[\s\S]*cascadeRevealDurationMs:\s*420[\s\S]*cascadeLeadInMs:\s*150[\s\S]*cascadeWaveStepMs:\s*140[\s\S]*sectorPurgeCellDurationMs:\s*650/);
+  assert.match(revealAnimationSource, /primaryRevealDurationMs:\s*110[\s\S]*cascadeRevealDurationMs:\s*420[\s\S]*cascadeLeadInMs:\s*150[\s\S]*cascadeWaveStepMs:\s*140[\s\S]*flagRiseDurationMs:\s*210[\s\S]*sectorPurgeFlagPreviewMs:\s*420[\s\S]*sectorPurgeCellDurationMs:\s*650/);
   assert.match(appSource, /revealAnimationTiming\(isActionReveal \? actionWave : null\)/);
-  assert.match(appSource, /durationMs:\s*timing\.durationMs[\s\S]*delayMs:\s*timing\.delayMs/);
+  assert.match(appSource, /durationMs:\s*timing\.durationMs[\s\S]*delayMs:\s*revealDelayMs/);
   assert.match(appSource, /duration:\s*BOARD_ANIMATION_TIMING\.sectorPurgeCellDurationMs/);
   assert.match(appSource, /const eased = progress \* progress \* \(3 - 2 \* progress\)/);
+});
+
+test('rewrites an Auto-Purged mine as a clue and previews its flag before reveal', () => {
+  assert.match(engineSource, /for \(const mine of mineIndexes\) clueSet\.add\(mine\)/);
+  assert.match(engineSource, /const zeroClueSet = new Set\(updatedClues\.filter\(\(\{ count \}\) => count === 0\)/);
+  assert.match(engineSource, /const targetZeroIndexes = mineIndexes\.filter\(\(index\) => zeroClueSet\.has\(index\)\)/);
+  assert.match(engineSource, /replacementCells = \(purgeEvent\.mineIndexes \|\| \[\]\)[\s\S]*depth:\s*0/);
+  assert.match(appSource, /sectorReplacementKeys = new Set\([\s\S]*lastPurge\?\.purgedMines[\s\S]*revealedKeys\.has\(key\)/);
+  assert.match(appSource, /sectorLeadFlagKeys = new Set\([\s\S]*sectorReplacementKeys\.has\(key\)/);
+  assert.match(appSource, /if \(sectorLeadFlagKeys\.has\(key\) && this\.grid\[x\]\[y\]\[z\]\.isFlagged && !shouldFlag\) continue/);
+  assert.match(appSource, /revealDelayMs = timing\.delayMs \+ \(holdLeadFlag[\s\S]*sectorPurgeFlagPreviewMs/);
+  assert.match(appSource, /holdFlagUntilReveal:\s*holdLeadFlag/);
+  assert.match(appSource, /revealServerCell\(data,[\s\S]*holdFlagUntilReveal = false[\s\S]*if \(cell\.isFlagged && holdFlagUntilReveal\)[\s\S]*const revealNumber = \(\) =>[\s\S]*cell\.group\.remove\(heldFlag\)/);
+  assert.match(appSource, /animateCellReveal\(cell, \{ durationMs, delayMs, wave, onStart: revealNumber \}\)/);
+  assert.match(appSource, /const animationGeneration = this\.boardAnimationGeneration;[\s\S]*const burst = \(\) => \{[\s\S]*animationGeneration !== this\.boardAnimationGeneration/);
+});
+
+test('replay keeps replacement clues while retaining legacy physical purge holes', () => {
+  assert.match(appSource, /openedKeys = new Set\(opened\.map/);
+  assert.match(appSource, /physicallyPurgedMines = purgedMines[\s\S]*filter\(\(point\) => !openedKeys\.has/);
+  assert.match(appSource, /for \(const point of physicallyPurgedMines\) purgedByKey\.set/);
+  assert.match(appSource, /replacementLeadFlagKeys = new Set\([\s\S]*purgedMineKeys\.has\(key\) && openedKeys\.has\(key\)/);
+  assert.match(appSource, /replacementLeadFlagKeys\.has\(this\.pointKey\(point\)\)[\s\S]*sectorPurgeFlagPreviewMs/);
+  assert.match(appSource, /holdFlagUntilReveal:\s*holdLeadFlag/);
+});
+
+test('keeps the legacy physical-hole flag preview and dissolve animation compatible', () => {
+  assert.match(engineSource, /purgeSolvedSectors\(playerId, now, \{ leadFlagIndexes = \[\] \} = \{\}\)/);
+  assert.match(engineSource, /purgeSolvedSectors\(playerId, now, \{ leadFlagIndexes: \[index\] \}\)/);
+  assert.match(engineSource, /leadFlags:\s*\(this\.state\.lastPurge\.leadFlagIndexes \|\| \[\]\)\.map/);
+  assert.match(appSource, /const leadFlagKeys = new Set\([\s\S]*event\.leadFlags[\s\S]*!cell\.flagInstance[\s\S]*this\.attachFlagVisual\(cell, \{ animate: true \}\)[\s\S]*cell\.isPurged = true/);
+  assert.match(appSource, /sectorPurgeAnimationTiming\(ordered\.length,[\s\S]*flagPreview: Boolean\(event\?\.leadFlags\?\.length\)/);
+  assert.match(appSource, /this\.revealAnimationEndsAt = Math\.max\([\s\S]*performance\.now\(\) \+ timing\.totalMs/);
 });
 
 test('plays dig, chord, and Reduction recursion as delayed BFS wave fronts', () => {
@@ -82,7 +116,7 @@ test('progresses campaign features from classic to auto purge to the combined to
 
 test('keeps every campaign chapter open and moves free play configuration into the game', () => {
   const pickerStart = indexSource.indexOf('id="ruleset-picker"');
-  const pickerEnd = indexSource.indexOf('id="custom-toggle"', pickerStart);
+  const pickerEnd = indexSource.indexOf('id="ultimate-hack-launch"', pickerStart);
   const pickerSource = indexSource.slice(pickerStart, pickerEnd);
   assert.match(indexSource, /id="btn-task-freeplay"/);
   assert.match(indexSource, /data-mission="easy"[\s\S]*data-mission="medium"[\s\S]*data-mission="hard"/);
@@ -185,7 +219,8 @@ test('enters the hidden Ultimate chapter after hard, then returns to a hard Free
 
 test('keeps number auto-open separate from direct cell reduction', () => {
   const chordSource = engineSource.slice(engineSource.indexOf('  chord('), engineSource.indexOf('  reduceCell('));
-  assert.match(appSource, /reduction\.readyMessage/);
+  assert.equal((appSource.match(/titleKey: 'reduction\.tutorialTitle'/g) || []).length, 1);
+  assert.doesNotMatch(appSource, /maybeShowHardReductionTip|hardReductionTipShown|reduction\.ready/);
   assert.match(appSource, /event\.kind === 'reduction' \? 'reduction' : 'purge'/);
   assert.match(appSource, /this\.roomClient\.send\(\{ op: 'reduce', x, y, z \}\)/);
   assert.doesNotMatch(chordSource, /purgeMines/);

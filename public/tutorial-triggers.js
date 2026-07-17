@@ -42,3 +42,12 @@ export function findChordOpportunity(snapshot) {
 
   return null;
 }
+
+export function isNewSuccessfulChord(snapshot, previous) {
+  const reveal = snapshot?.lastReveal;
+  return Boolean(
+    reveal?.id
+    && reveal.kind === 'chord'
+    && reveal.id !== previous?.lastReveal?.id
+  );
+}

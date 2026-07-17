@@ -93,10 +93,11 @@ test('starts from a clean visual board, locks interaction, and uses the existing
   assert.match(startSource, /this\.controls\.autoRotate = true/);
   assert.match(startSource, /getElementById\('replay-hud'\)\.classList\.remove\('hidden'\)/);
 
-  assert.match(applyStepSource, /for \(const point of flags\) this\.setFlagLocal\(point\.x, point\.y, point\.z, true, false\)/);
+  assert.match(applyStepSource, /for \(const point of flags\) this\.setFlagLocal\(point\.x, point\.y, point\.z, true, false, \{ animate: true \}\)/);
   assert.match(applyStepSource, /revealAnimationTiming\(Math\.max\(0, Number\(point\.wave\) \|\| 0\)\)/);
   assert.match(applyStepSource, /this\.syncPurgedCells\(\{ purged: state\.purged, lastPurge: event \}, false\)/);
-  assert.match(applyStepSource, /this\.revealServerCell\(point, true, \{[\s\S]*durationMs: timing\.durationMs[\s\S]*delayMs: timing\.delayMs[\s\S]*wave: timing\.isCascade[\s\S]*playSound: false/);
+  assert.match(applyStepSource, /this\.revealServerCell\(point, true, \{[\s\S]*durationMs: timing\.durationMs[\s\S]*delayMs,[\s\S]*wave: timing\.isCascade[\s\S]*playSound: false[\s\S]*holdFlagUntilReveal: holdLeadFlag/);
+  assert.match(applyStepSource, /hasElimination \? Math\.max\(720, sectorEnd\) : 0/);
   assert.match(applyStepSource, /state\.remainingMineCount = Number\.isFinite\(Number\(step\.remainingMineCount\)\)/);
   assert.match(applyStepSource, /generation !== this\.boardAnimationGeneration/);
 });

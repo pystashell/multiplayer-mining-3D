@@ -78,6 +78,7 @@ function errorMessage(code) {
     NAME_TAKEN: "这个昵称已被使用。",
     HOST_ONLY: "只有房主可以重新初始化矩阵。",
     WRONG_PHASE: "当前游戏阶段不能执行这个操作。",
+    TUTORIAL_FIRST_MOVE_REQUIRED: "请点击银狼标出的安全入口。",
     INVALID_CELL: "方块坐标无效。",
     EMPTY_CHAT: "消息不能为空。",
     UNKNOWN_COMMAND: "无法识别这个操作。",
@@ -198,6 +199,9 @@ export class GameRoom {
     }
     try {
       const result = this.engine.apply(attachment.playerId, message.command, message);
+      if (message.command.op === "leave") {
+        socket.serializeAttachment({ ...attachment, joined: false, playerId: null });
+      }
       await this.persistAndSchedule();
       this.sendAck(socket, result.receipt);
       this.broadcast();

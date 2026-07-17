@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Zero Domain Protocol: Sector Purge | Silver Wolf</title>
   <meta name="description" content="在银狼的骇客矩阵中隔离雷区孤岛，确认反制节点后消除整个封闭区块。">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20260718-assist-layout-2">
   <!-- 引入 Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -56,6 +56,11 @@
   <!-- 背景星空网格层 (CSS特效) -->
   <div class="stars-overlay"></div>
 
+  <button id="btn-return-lobby" class="return-lobby-button" type="button" aria-label="返回主界面" title="返回主界面" data-i18n-aria-label="navigation.backToLobby" data-i18n-title="navigation.backToLobby">
+    <span aria-hidden="true">←</span>
+    <strong id="btn-return-lobby-label" data-i18n="navigation.backToLobby">主界面</strong>
+  </button>
+
   <!-- HUD 界面主容器 -->
   <div class="hud-container">
     
@@ -76,7 +81,7 @@
           <span id="stat-time" class="stat-value text-glow-cyan">00:00</span>
         </div>
         <div class="stat-card glass-inner">
-          <span class="stat-label" data-i18n="stats.mines">🚩 标记/地雷</span>
+          <span class="stat-label" data-i18n="stats.mines">🚩 已标记 / 剩余地雷</span>
           <span id="stat-mines" class="stat-value text-glow-orange">0 / 0</span>
         </div>
         <div class="stat-card glass-inner full-width">
@@ -106,6 +111,30 @@
           </button>
         </div>
 
+        <div class="custom-toggle-header" id="custom-toggle">
+          <span data-i18n="settings.custom">⚙️ 自定义矩阵</span>
+          <span class="arrow">▼</span>
+        </div>
+
+        <div class="custom-inputs-wrapper hidden" id="custom-inputs">
+          <div class="input-row">
+            <label for="input-w" data-i18n="settings.width">X轴 (宽):</label>
+            <input type="number" id="input-w" min="2" max="15" value="5">
+          </div>
+          <div class="input-row">
+            <label for="input-h" data-i18n="settings.height">Y轴 (高):</label>
+            <input type="number" id="input-h" min="2" max="15" value="5">
+          </div>
+          <div class="input-row">
+            <label for="input-d" data-i18n="settings.depth">Z轴 (深):</label>
+            <input type="number" id="input-d" min="2" max="15" value="5">
+          </div>
+          <div class="input-row">
+            <label for="input-m" data-i18n="settings.mineCount">地雷数量:</label>
+            <input type="number" id="input-m" min="1" max="200" value="10">
+          </div>
+        </div>
+
         <div id="ruleset-picker" class="ruleset-picker">
           <span class="ruleset-picker-label" data-i18n="settings.features">演算协议 Add-ons</span>
           <div class="ruleset-buttons" role="group" aria-label="演算协议 Add-ons" data-i18n-aria-label="settings.features">
@@ -131,30 +160,6 @@
             <strong id="btn-ultimate-hack-start-label" data-i18n="ultimateHack.launch">植入终极骇客</strong>
           </button>
         </div>
-
-        <div class="custom-toggle-header" id="custom-toggle">
-          <span data-i18n="settings.custom">⚙️ 自定义矩阵</span>
-          <span class="arrow">▼</span>
-        </div>
-
-        <div class="custom-inputs-wrapper hidden" id="custom-inputs">
-          <div class="input-row">
-            <label for="input-w" data-i18n="settings.width">X轴 (宽):</label>
-            <input type="number" id="input-w" min="2" max="15" value="5">
-          </div>
-          <div class="input-row">
-            <label for="input-h" data-i18n="settings.height">Y轴 (高):</label>
-            <input type="number" id="input-h" min="2" max="15" value="5">
-          </div>
-          <div class="input-row">
-            <label for="input-d" data-i18n="settings.depth">Z轴 (深):</label>
-            <input type="number" id="input-d" min="2" max="15" value="5">
-          </div>
-          <div class="input-row">
-            <label for="input-m" data-i18n="settings.mineCount">地雷数量:</label>
-            <input type="number" id="input-m" min="1" max="200" value="10">
-          </div>
-        </div>
       </section>
 
       <!-- 操作模式切换 -->
@@ -173,6 +178,7 @@
       <!-- 常用控制按钮 -->
       <footer class="panel-footer">
         <button id="btn-restart" class="btn-primary glow-cyan-box" data-i18n="action.restart">重新初始化雷区</button>
+        <button id="btn-control-settings" class="btn-secondary control-settings-entry" type="button" data-i18n="controls.open" data-i18n-title="controls.openTitle">⚙️ 键位设置</button>
         <div class="utility-buttons">
           <button id="btn-reset-camera" class="btn-secondary" title="重置相机视角" data-i18n="action.resetCamera" data-i18n-title="action.resetCameraTitle">🎥 重置视角</button>
           <button id="btn-sound-toggle" class="btn-secondary" title="切换音效" data-i18n-title="action.soundTitle">🔊 音效:开</button>
@@ -227,39 +233,46 @@
             <span class="comms-name" data-i18n="mission.speaker">银狼 // SILVER WOLF</span>
             <span class="comms-status" data-i18n="mission.online">在线</span>
           </div>
-          <p id="mission-dialogue" class="comms-dialogue" data-i18n="task.mission.dialogue.ready">“先从基础开始。转动视角观察矩阵，再选一个节点建立入口——第一次扫描我会替你兜底。”</p>
-          <div class="mission-objective">
-            <span class="objective-label" data-i18n="mission.objectiveLabel">当前任务</span>
-            <strong id="mission-objective" data-i18n="task.mission.objective.ready">建立量子锚点，扫描首个安全节点</strong>
-            <div class="mission-progress-track"><span id="mission-progress"></span></div>
+          <p id="mission-dialogue" class="comms-dialogue" data-i18n="task.mission.dialogue.ready">“先从银狼标出的安全入口开始。第一次扫描我会替你兜底。”</p>
+        </div>
+      </section>
+
+      <section id="mission-floating-panel" class="mission-floating-panel" aria-label="任务列表" data-i18n-aria-label="task.guide.title">
+        <div class="mission-objective">
+          <span class="objective-label" data-i18n="mission.objectiveLabel">当前任务</span>
+          <strong id="mission-objective" data-i18n="task.mission.objective.ready">建立量子锚点，扫描首个安全节点</strong>
+          <div class="mission-progress-track"><span id="mission-progress"></span></div>
+          <div id="mission-action-hint" class="mission-action-hint hidden" role="status" aria-live="polite">
+            <span>SILVER WOLF // 实操验证</span>
+            <strong id="mission-action-hint-text"></strong>
           </div>
         </div>
+
+        <section id="solo-guide-section" class="solo-guide-section hidden">
+          <div class="solo-guide-heading">
+            <span data-i18n="task.guide.title">银狼的任务攻略</span>
+            <span id="solo-guide-count">0 / 3</span>
+          </div>
+          <ol class="solo-guide-steps">
+            <li id="solo-step-guided-start" class="active"><span>01</span><div><strong data-i18n="task.guide.guidedStartTitle">点击银狼指定的安全格</strong><small data-i18n="task.guide.guidedStartText">只点击青色箭头指向的方块</small></div></li>
+            <li id="solo-step-guided-mines"><span>02</span><div><strong data-i18n="task.guide.guidedMinesTitle">标记银狼指出的 3 个雷</strong><small data-i18n="task.guide.guidedMinesText">粉色箭头表示地雷，按提示逐个标记</small></div></li>
+            <li id="solo-step-guided-clear"><span>03</span><div><strong data-i18n="task.guide.guidedClearTitle">跟随指引完成初级关</strong><small data-i18n="task.guide.guidedClearText">继续点击每一个青色安全目标</small></div></li>
+          </ol>
+        </section>
       </section>
 
       <!-- 操作指南 -->
       <section class="panel-section guide-section" style="padding: 15px; border-bottom: 1px solid rgba(0, 240, 255, 0.1);">
         <h3 class="guide-title" style="margin-top: 0;" data-i18n="guide.title">🖱️ 操作说明</h3>
         <ul class="guide-list" style="margin-bottom: 0; font-size: 12px;">
-          <li data-i18n="guide.rotate">左键拖拽: 旋转空间视角</li>
-          <li data-i18n="guide.pan">右键拖拽: 平移视角</li>
+          <li id="guide-rotate" data-i18n="guide.rotate">电脑按住鼠标中键拖动 / 手机单指拖动: 旋转与翻面</li>
+          <li id="guide-zoom" data-i18n="guide.pan">鼠标滚轮 / 手机双指捏合: 缩放（矩阵始终居中）</li>
           <li data-i18n="guide.click">左键点击: 挖掘 / 插旗</li>
           <li data-i18n="guide.flag">右键点击: 快捷插旗/取消标记</li>
           <li id="guide-inspect" data-i18n="guide.inspect">右键按住数字: 高亮全部相邻格</li>
-          <li data-i18n="guide.chord">数字：电脑同时按左右键 / 手机双击可自动开启；开启熵域压缩时，未展开方块可用相同电脑操作，或在手机挖掘模式下双击执行压缩</li>
-          <li data-i18n="guide.keys">[D] / [F] 键: 模式切换</li>
+          <li data-i18n="guide.chord">数字：电脑同时按左右键 / 手机双击可自动开启；开启熵域压缩时，手机双击任意未展开方块（包括已标记方块）即可执行压缩，与当前挖掘/标记模式无关</li>
+          <li id="guide-keys" data-i18n="guide.keys">[D] / [F] 键: 模式切换</li>
         </ul>
-      </section>
-
-      <section id="solo-guide-section" class="panel-section solo-guide-section hidden">
-        <div class="solo-guide-heading">
-          <span data-i18n="task.guide.title">银狼的任务攻略</span>
-          <span id="solo-guide-count">0 / 3</span>
-        </div>
-        <ol class="solo-guide-steps">
-          <li id="solo-step-guided-start" class="active"><span>01</span><div><strong data-i18n="task.guide.guidedStartTitle">点击银狼指定的安全格</strong><small data-i18n="task.guide.guidedStartText">只点击青色箭头指向的方块</small></div></li>
-          <li id="solo-step-guided-mines"><span>02</span><div><strong data-i18n="task.guide.guidedMinesTitle">标记银狼指出的 3 个雷</strong><small data-i18n="task.guide.guidedMinesText">粉色箭头表示地雷，按提示逐个标记</small></div></li>
-          <li id="solo-step-guided-clear"><span>03</span><div><strong data-i18n="task.guide.guidedClearTitle">跟随指引完成初级关</strong><small data-i18n="task.guide.guidedClearText">继续点击每一个青色安全目标</small></div></li>
-        </ol>
       </section>
 
       <!-- 玩家列表 -->
@@ -294,14 +307,14 @@
   <!-- 手机端精简状态栏与操作坞 -->
   <div id="mobile-statusbar" class="mobile-only mobile-statusbar" aria-label="游戏状态" data-i18n-aria-label="mobile.statusLabel">
     <div><span>TIME</span><strong id="mobile-stat-time">00:00</strong></div>
-    <div><span>MINES</span><strong id="mobile-stat-mines">0 / 0</strong></div>
+    <div><span data-i18n="stats.mobileMines">标记 / 剩余</span><strong id="mobile-stat-mines">0 / 0</strong></div>
     <div><span>SYNC</span><strong id="mobile-stat-progress">0%</strong></div>
   </div>
 
   <div id="mobile-panel-backdrop" class="mobile-only mobile-panel-backdrop"></div>
 
   <nav id="mobile-control-dock" class="mobile-only mobile-control-dock" aria-label="手机操作" data-i18n-aria-label="mobile.controlsLabel">
-    <div class="mobile-touch-hint" data-i18n="mobile.touchHint">双击数字自动开启 · 高级区挖掘模式双击未展开方块执行熵域压缩 · 长按数字查看周围 · 单指旋转 · 双指平移缩放</div>
+    <div class="mobile-touch-hint" data-i18n="mobile.touchHint">双击数字自动开启 · 熵域压缩开启时双击任意未展开方块（含已标记）执行压缩，与当前模式无关 · 长按数字查看周围 · 单指旋转 · 双指平移缩放</div>
     <div class="mobile-dock-buttons">
       <button id="btn-mobile-controls" type="button" data-mobile-panel="control-panel" data-i18n-aria-label="mobile.controls">
         <span aria-hidden="true">☰</span><small data-i18n="mobile.controls">控制</small>
@@ -366,6 +379,7 @@
     <div id="lobby-modal" class="game-modal glass silver-lobby" style="width: 420px; padding: 40px;">
       <div class="lobby-protocol" data-i18n="lobby.protocol">PUNKLORDE // 先遣协议 01</div>
       <div class="modal-icon lobby-icon">⌁</div>
+      <button id="btn-control-settings-lobby" class="btn-secondary lobby-control-settings" type="button" aria-label="键位设置" title="键位设置" data-i18n-aria-label="controls.open" data-i18n-title="controls.openTitle">⚙</button>
       <button id="btn-language-toggle-lobby" class="btn-secondary" style="position:absolute; top:16px; right:16px; padding:5px 9px; min-height:0; font-size:12px;" data-i18n="language.toggle">EN</button>
       <h2 class="modal-title lobby-title" data-i18n="lobby.title">量子之海：先遣协议</h2>
       <p class="modal-message lobby-subtitle" data-i18n="lobby.subtitle">选择任务模式接受银狼的个人引导，或进入多人联机模式组建骇客小队。</p>
@@ -441,6 +455,108 @@
     </div>
   </div>
 
+  <div id="control-settings-overlay" class="control-settings-overlay hidden">
+    <section class="control-settings-dialog glass" role="dialog" aria-modal="true" aria-labelledby="control-settings-title" aria-describedby="control-settings-subtitle">
+      <header class="control-settings-header">
+        <div>
+          <span class="control-settings-kicker">INPUT // LOCAL PROFILE</span>
+          <h2 id="control-settings-title" data-i18n="controls.title">键位设置</h2>
+          <p id="control-settings-subtitle" data-i18n="controls.subtitle">选择一套手感，也可以逐项自定义。设置只保存在这台设备。</p>
+        </div>
+        <button id="btn-control-settings-close" class="control-settings-close" type="button" aria-label="关闭键位设置" title="关闭键位设置" data-i18n-aria-label="controls.close" data-i18n-title="controls.close">×</button>
+      </header>
+
+      <div class="control-settings-scroll">
+        <section class="control-settings-group">
+          <div class="control-settings-group-title">
+            <strong data-i18n="controls.presets">操作预设</strong>
+            <span id="control-settings-current"></span>
+          </div>
+          <div class="control-preset-grid" role="radiogroup" aria-label="操作预设" data-i18n-aria-label="controls.presets">
+            <button type="button" class="control-preset-card" data-control-preset="classic" role="radio" aria-checked="false">
+              <strong data-i18n="controls.preset.classic">经典轨道</strong>
+              <small data-i18n="controls.preset.classicDesc">中键或右键拖动旋转 · 滚轮缩放</small>
+            </button>
+            <button type="button" class="control-preset-card" data-control-preset="rightOrbit" role="radio" aria-checked="false">
+              <strong data-i18n="controls.preset.rightOrbit">右键轨道</strong>
+              <small data-i18n="controls.preset.rightOrbitDesc">右键拖动旋转 · 滚轮缩放</small>
+            </button>
+            <button type="button" class="control-preset-card" data-control-preset="wheelFlip" role="radio" aria-checked="false">
+              <strong data-i18n="controls.preset.wheelFlip">滚轮翻面</strong>
+              <small data-i18n="controls.preset.wheelFlipDesc">中键或右键旋转 · 滚轮俯仰 · Ctrl 缩放</small>
+            </button>
+            <button type="button" class="control-preset-card" data-control-preset="modeling" role="radio" aria-checked="false">
+              <strong data-i18n="controls.preset.modeling">建模手感</strong>
+              <small data-i18n="controls.preset.modelingDesc">右键旋转 · 中键缩放 · 滚轮环绕</small>
+            </button>
+          </div>
+        </section>
+
+        <section class="control-settings-group">
+          <div class="control-settings-group-title"><strong data-i18n="controls.custom">自定义视角</strong></div>
+          <div class="control-binding-grid">
+            <label for="control-middle-action" data-i18n="controls.middleDrag">中键拖动</label>
+            <select id="control-middle-action" data-control-setting="middleDragAction">
+              <option value="rotate" data-i18n="controls.action.rotate">自由旋转</option>
+              <option value="zoom" data-i18n="controls.action.zoom">缩放</option>
+              <option value="none" data-i18n="controls.action.none">不执行操作</option>
+            </select>
+            <label for="control-right-action" data-i18n="controls.rightDrag">右键拖动</label>
+            <select id="control-right-action" data-control-setting="rightDragAction">
+              <option value="rotate" data-i18n="controls.action.rotate">自由旋转</option>
+              <option value="zoom" data-i18n="controls.action.zoom">缩放</option>
+              <option value="none" data-i18n="controls.action.none">不执行操作</option>
+            </select>
+            <label for="control-wheel-action" data-i18n="controls.wheel">滚动滚轮</label>
+            <select id="control-wheel-action" data-control-setting="wheelAction">
+              <option value="zoom" data-i18n="controls.action.zoom">缩放</option>
+              <option value="pitch" data-i18n="controls.action.pitch">上下翻面</option>
+              <option value="yaw" data-i18n="controls.action.yaw">水平环绕</option>
+              <option value="none" data-i18n="controls.action.none">不执行操作</option>
+            </select>
+            <label for="control-shift-wheel-action" data-i18n="controls.shiftWheel">Shift + 滚轮</label>
+            <select id="control-shift-wheel-action" data-control-setting="shiftWheelAction">
+              <option value="zoom" data-i18n="controls.action.zoom">缩放</option>
+              <option value="pitch" data-i18n="controls.action.pitch">上下翻面</option>
+              <option value="yaw" data-i18n="controls.action.yaw">水平环绕</option>
+              <option value="none" data-i18n="controls.action.none">不执行操作</option>
+            </select>
+            <label for="control-ctrl-wheel-action" data-i18n="controls.ctrlWheel">Ctrl + 滚轮</label>
+            <select id="control-ctrl-wheel-action" data-control-setting="ctrlWheelAction">
+              <option value="zoom" data-i18n="controls.action.zoom">缩放</option>
+              <option value="pitch" data-i18n="controls.action.pitch">上下翻面</option>
+              <option value="yaw" data-i18n="controls.action.yaw">水平环绕</option>
+              <option value="none" data-i18n="controls.action.none">不执行操作</option>
+            </select>
+          </div>
+        </section>
+
+        <section class="control-settings-group">
+          <div class="control-settings-group-title"><strong data-i18n="controls.hotkeys">键盘快捷键</strong></div>
+          <div class="control-hotkey-grid">
+            <span data-i18n="controls.hotkey.dig">切换挖掘模式</span>
+            <button type="button" class="control-key-capture" data-control-key-field="digKey">D</button>
+            <span data-i18n="controls.hotkey.flag">切换标记模式</span>
+            <button type="button" class="control-key-capture" data-control-key-field="flagKey">F</button>
+            <span data-i18n="controls.hotkey.reset">重置视角</span>
+            <button type="button" class="control-key-capture" data-control-key-field="resetKey">SPACE</button>
+          </div>
+          <p class="control-fixed-note" data-i18n="controls.fixedNote">右键轻点仍然快速标记，按住不移动仍然检查数字邻格；只有拖动时才执行所选视角操作。左右键同时按仍然自动开启或压缩。</p>
+          <p class="control-touch-note" data-i18n="controls.touchNote">手机仍然是单指旋转、双指缩放，不受这里的桌面设置影响。</p>
+          <p id="control-settings-status" class="control-settings-status" role="alert" aria-live="polite"></p>
+        </section>
+      </div>
+
+      <footer class="control-settings-footer">
+        <button id="btn-control-settings-reset" class="btn-secondary" type="button" data-i18n="controls.restore">恢复默认</button>
+        <div>
+          <button id="btn-control-settings-cancel" class="btn-secondary" type="button" data-i18n="controls.cancel">取消</button>
+          <button id="btn-control-settings-save" class="btn-primary glow-cyan-box" type="button" data-i18n="controls.save">保存设置</button>
+        </div>
+      </footer>
+    </section>
+  </div>
+
   <!-- 银狼任务对话与交互式教程 -->
   <div id="tutorial-overlay" class="tutorial-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="tutorial-title">
     <div class="tutorial-dialog glass">
@@ -493,7 +609,7 @@
   </section>
 
   <div class="floating-assist-stack">
-    <div id="tutorial-action-hint" class="tutorial-action-hint hidden" role="status" aria-live="polite">
+    <div id="tutorial-action-hint" class="tutorial-action-hint mobile-tutorial-action-hint hidden" role="status" aria-live="polite">
       <span>SILVER WOLF // 实操验证</span>
       <strong id="tutorial-action-hint-text"></strong>
     </div>
@@ -504,14 +620,27 @@
         <strong id="solver-hint-button-label" data-i18n="solver.button">问银狼下一步</strong>
         <small id="solver-hint-button-note" data-i18n="solver.buttonNote">确定推理优先 · 能完整枚举时显示精确概率</small>
       </button>
+      <button id="btn-close-solver-hint" class="solver-hint-close" type="button" aria-label="退出推理模式" title="退出推理模式" data-i18n-aria-label="solver.close" data-i18n-title="solver.close">×</button>
       <div id="solver-hint-result" class="solver-hint-result hidden" role="status" aria-live="polite">
-        <button id="btn-close-solver-hint" class="solver-hint-close" type="button" aria-label="退出推理模式" title="退出推理模式" data-i18n-aria-label="solver.close" data-i18n-title="solver.close">×</button>
-        <div class="solver-hint-heading">
-          <span id="solver-hint-badge"></span>
-          <strong id="solver-hint-target"></strong>
+        <div class="solver-hint-controls">
+          <button id="btn-collapse-solver-hint" class="solver-hint-collapse" type="button" aria-controls="solver-hint-body" aria-expanded="true" aria-label="收起推理说明" title="收起推理说明" data-i18n-aria-label="solver.collapse" data-i18n-title="solver.collapse">−</button>
         </div>
-        <p id="solver-hint-reason"></p>
-        <small id="solver-hint-action"></small>
+        <span id="solver-hint-collapsed-label" class="solver-hint-collapsed-label" data-i18n="solver.collapsedLabel">推理说明已收起，矩阵标记仍保留</span>
+        <div id="solver-hint-body" class="solver-hint-body">
+          <div class="solver-hint-heading">
+            <span id="solver-hint-badge"></span>
+            <div class="solver-hint-target-copy">
+              <strong id="solver-hint-target"></strong>
+              <small id="solver-hint-coordinate"></small>
+            </div>
+          </div>
+          <p id="solver-hint-reason"></p>
+          <div id="solver-hint-proof" class="solver-hint-proof hidden"></div>
+          <div id="solver-hint-action" class="solver-hint-action">
+            <strong id="solver-hint-action-label"></strong>
+            <span id="solver-hint-action-detail"></span>
+          </div>
+        </div>
       </div>
     </section>
   </div>
@@ -529,6 +658,6 @@
     <span>▼</span>
   </button>
 
-  <script type="module" src="app.js"></script>
+  <script type="module" src="app.js?v=20260718-medium-chord-task-1"></script>
 </body>
 </html>

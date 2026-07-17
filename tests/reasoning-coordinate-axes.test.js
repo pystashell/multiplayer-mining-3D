@@ -19,12 +19,13 @@ test('shows a labeled 3D coordinate axis only while reasoning is active', () => 
 
 test('hides solver axes after the suggested target action is completed', () => {
   assert.match(appSource, /isSolverHintCompleted\(snapshot, hint = this\.solverHint\)/);
-  assert.match(appSource, /hint\.action === 'flag' \? snapshot\.flags : snapshot\.revealed/);
+  assert.match(appSource, /hint\.action === 'flag'[\s\S]*snapshot\.flags \|\| \[\][\s\S]*snapshot\.revealed \|\| \[\][\s\S]*snapshot\.purged \|\| \[\]/);
   assert.match(appSource, /previous\?\.revision !== snapshot\.revision && this\.isSolverHintCompleted\(snapshot\)/);
   assert.match(appSource, /clearSolverHint\(\)[\s\S]*?this\.syncReasoningCoordinateAxes\(\)/);
 });
 
 test('hides guided axes when the current teaching deduction ends', () => {
-  assert.match(appSource, /if \(nextIndex < 0\) \{\s*this\.clearGuidedTarget\(\);/s);
+  assert.match(appSource, /if \(snapshot\.phase === 'won'\) \{\s*this\.stopGuidedTutorial\(\);/s);
+  assert.match(appSource, /stopGuidedTutorial\(\)[\s\S]*?this\.clearGuidedTarget\(\)/);
   assert.match(appSource, /clearGuidedTarget\(\)[\s\S]*?this\.guidedTutorialTarget = null;[\s\S]*?this\.syncReasoningCoordinateAxes\(\)/);
 });

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { findChordOpportunity } from '../public/tutorial-triggers.js';
+import { findChordOpportunity, isNewSuccessfulChord } from '../public/tutorial-triggers.js';
 
 const config = { width: 3, height: 3, depth: 3 };
 
@@ -22,6 +22,14 @@ test('does not suggest auto-reveal before the clue has enough flags', () => {
   }), null);
 });
 
+test('does not suggest auto-reveal when flags exceed the clue', () => {
+  assert.equal(findChordOpportunity({
+    config,
+    revealed: [{ x: 1, y: 1, z: 1, count: 1 }],
+    flags: [{ x: 0, y: 0, z: 0 }, { x: 2, y: 2, z: 2 }],
+  }), null);
+});
+
 test('does not suggest auto-reveal when no unopened unflagged neighbor remains', () => {
   const flags = [{ x: 0, y: 0, z: 0 }];
   const revealed = [{ x: 1, y: 1, z: 1, count: 1 }];
@@ -32,4 +40,13 @@ test('does not suggest auto-reveal when no unopened unflagged neighbor remains',
   }
 
   assert.equal(findChordOpportunity({ config, revealed, flags }), null);
+});
+
+test('completes the lesson only for a new successful chord reveal', () => {
+  const previous = { lastReveal: { id: 'reveal-1', kind: 'dig' } };
+
+  assert.equal(isNewSuccessfulChord({ lastReveal: { id: 'reveal-2', kind: 'chord' } }, previous), true);
+  assert.equal(isNewSuccessfulChord({ lastReveal: { id: 'reveal-1', kind: 'chord' } }, previous), false);
+  assert.equal(isNewSuccessfulChord({ lastReveal: { id: 'reveal-2', kind: 'dig' } }, previous), false);
+  assert.equal(isNewSuccessfulChord({ lastReveal: null }, previous), false);
 });

@@ -6,6 +6,8 @@ export const BOARD_ANIMATION_TIMING = Object.freeze({
   cascadeLeadInMs: 150,
   cascadeWaveStepMs: 140,
   cascadeMaxDelayMs: 2400,
+  flagRiseDurationMs: 210,
+  sectorPurgeFlagPreviewMs: 420,
   sectorPurgeCellDurationMs: 650,
   sectorPurgeStaggerMs: 48,
 });
@@ -38,5 +40,22 @@ export function revealAnimationTiming(wave, timing = BOARD_ANIMATION_TIMING) {
     durationMs: timing.cascadeRevealDurationMs,
     isPrimary: false,
     isCascade: true,
+  };
+}
+
+export function sectorPurgeAnimationTiming(
+  cellCount,
+  { flagPreview = false } = {},
+  timing = BOARD_ANIMATION_TIMING,
+) {
+  const count = Math.max(0, Math.floor(Number(cellCount) || 0));
+  const leadInMs = flagPreview ? timing.sectorPurgeFlagPreviewMs : 0;
+  const staggerMs = Math.min(Math.max(0, count - 1), 18) * timing.sectorPurgeStaggerMs;
+  const durationMs = count ? timing.sectorPurgeCellDurationMs : 0;
+  return {
+    leadInMs,
+    staggerMs,
+    durationMs,
+    totalMs: leadInMs + staggerMs + durationMs,
   };
 }

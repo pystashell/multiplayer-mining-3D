@@ -125,7 +125,8 @@ test('keeps a scan-strategy flag visible for one snapshot before a later dig may
   snapshot = engine.snapshot();
   assert.equal(snapshot.phase, 'won');
   assert.equal(snapshot.ultimateHack.status, 'completed');
-  assert.deepEqual(snapshot.purged, [pointOf(config, 0)]);
+  assert.deepEqual(snapshot.purged, []);
+  assert.equal(snapshot.revealed.some((cell) => cell.x === 0 && cell.y === 0 && cell.z === 0 && cell.count === 0), true);
   assert.equal(snapshot.replay.steps.some((step) => step.flags.length > 0), true);
 });
 
