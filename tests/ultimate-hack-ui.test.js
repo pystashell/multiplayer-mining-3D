@@ -124,6 +124,8 @@ test('locks competing mobile controls and keeps a 44px abort target at the top s
   const mobileSource = sourceBetween(styleSource, '@media (max-width: 900px) {', '@media (max-width: 900px) and (max-height: 620px) {');
   assert.match(mobileSource, /\.ultimate-hack-hud\s*\{[^}]*top:\s*calc\(8px \+ env\(safe-area-inset-top\)\)[^}]*width:\s*calc\(100vw - 16px\)/s);
   assert.match(mobileSource, /\.ultimate-hack-cancel\s*\{[^}]*min-height:\s*44px/s);
+  assert.match(mobileSource, /body\.ultimate-hack-active \.return-lobby-button\s*\{[^}]*top:auto[^}]*bottom:calc\(10px \+ env\(safe-area-inset-bottom\)\)[^}]*left:10px[^}]*transform:none/s);
+  assert.match(mobileSource, /body\.ultimate-hack-active \.sector-purge-banner\s*\{[^}]*top:calc\(112px \+ env\(safe-area-inset-top\)\)/s);
   assert.match(mobileSource, /body\.ultimate-hack-active \.mobile-statusbar,[\s\S]*body\.ultimate-hack-active #mobile-control-dock,[\s\S]*body\.ultimate-hack-active #slicing-panel,[\s\S]*body\.ultimate-hack-active \.solver-hint-panel\s*\{[^}]*display:\s*none !important/s);
   assert.match(appSource, /this\.isInteractionLocked = this\.ultimateHackRunning\(snapshot\)/);
 });

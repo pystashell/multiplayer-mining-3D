@@ -127,11 +127,12 @@ test('shows the auto-reveal lesson once, only in intermediate after a new flag c
   assert.match(appSource, /this\.taskFlow !== 'campaign'/);
   assert.match(appSource, /this\.taskMission !== 'medium'/);
   assert.match(appSource, /snapshot\.phase !== 'playing'/);
-  assert.match(appSource, /snapshot\.flags\?\.length[\s\S]*?previous\.flags\?\.length/);
-  assert.match(appSource, /const clue = findChordOpportunity\(snapshot\)/);
+  assert.doesNotMatch(appSource, /snapshot\.flags\?\.length[\s\S]*?previous\.flags\?\.length/);
+  assert.match(appSource, /const clue = findNewChordOpportunity\(snapshot, previous\)/);
   assert.match(appSource, /this\.mediumChordTipShown = true/);
   assert.match(appSource, /this\.mediumChordObjectiveActive = true/);
   assert.match(appSource, /this\.mediumChordObjectiveTarget = \{ \.\.\.clue \}/);
+  assert.match(appSource, /this\.updateMissionGuide\(\);\s*this\.closeMobilePanels\(\);\s*this\.showSilverWolfDialogue/);
   assert.match(appSource, /chordTipTitle'/);
   assert.match(appSource, /buttonKey: 'tutorial\.tryChord'/);
   assert.match(appSource, /maybeCompleteMediumChordObjective\(snapshot, previous\)/);

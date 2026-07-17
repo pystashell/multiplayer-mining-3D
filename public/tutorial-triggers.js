@@ -43,6 +43,19 @@ export function findChordOpportunity(snapshot) {
   return null;
 }
 
+export function findNewChordOpportunity(snapshot, previous) {
+  const current = findChordOpportunity(snapshot);
+  if (!current) return null;
+  const prior = findChordOpportunity(previous);
+  if (
+    prior
+    && pointKey(prior) === pointKey(current)
+    && prior.count === current.count
+    && prior.hiddenAround === current.hiddenAround
+  ) return null;
+  return current;
+}
+
 export function isNewSuccessfulChord(snapshot, previous) {
   const reveal = snapshot?.lastReveal;
   return Boolean(

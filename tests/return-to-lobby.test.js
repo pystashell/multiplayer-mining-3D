@@ -26,6 +26,7 @@ test('returns from either game mode by clearing stale room and presentation stat
   assert.match(appSource, /btn-return-lobby'\)\.addEventListener\('click', \(\) => this\.returnToLobby\(\)\)/);
   assert.match(appSource, /async returnToLobby\(\)[\s\S]*await this\.roomClient\.leave\(\)/);
   assert.match(appSource, /returnToLobby\(\)[\s\S]*this\.roomSnapshot = null[\s\S]*this\.currentPlayerId = null/);
+  assert.match(appSource, /returnToLobby\(\)[\s\S]*this\.roomSnapshot = null[\s\S]*this\.currentPlayerId = null[\s\S]*this\.updateSolverHintVisibility\(null\)/);
   assert.match(appSource, /classList\.remove\('in-room', 'replay-active', 'ultimate-hack-active', 'mobile-panel-active'\)/);
   assert.match(appSource, /getElementById\('lobby-overlay'\)\.classList\.remove\('hidden'\)/);
   assert.match(appSource, /handleRoomWelcome\(message\)[\s\S]*document\.body\.classList\.add\('in-room'\)/);

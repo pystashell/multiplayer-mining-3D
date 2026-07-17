@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { findChordOpportunity, isNewSuccessfulChord } from '../public/tutorial-triggers.js';
+import { findChordOpportunity, findNewChordOpportunity, isNewSuccessfulChord } from '../public/tutorial-triggers.js';
 
 const config = { width: 3, height: 3, depth: 3 };
 
@@ -40,6 +40,29 @@ test('does not suggest auto-reveal when no unopened unflagged neighbor remains',
   }
 
   assert.equal(findChordOpportunity({ config, revealed, flags }), null);
+});
+
+test('detects a newly available auto-reveal clue without relying on total flag count', () => {
+  const wideConfig = { width: 5, height: 5, depth: 5 };
+  const previous = {
+    config: wideConfig,
+    revealed: [{ x: 2, y: 2, z: 2, count: 2 }],
+    flags: [{ x: 1, y: 1, z: 1 }, { x: 0, y: 0, z: 0 }],
+  };
+  const snapshot = {
+    config: wideConfig,
+    revealed: [{ x: 2, y: 2, z: 2, count: 2 }],
+    flags: [{ x: 1, y: 1, z: 1 }, { x: 3, y: 3, z: 3 }],
+  };
+
+  assert.deepEqual(findNewChordOpportunity(snapshot, previous), {
+    x: 2,
+    y: 2,
+    z: 2,
+    count: 2,
+    hiddenAround: 24,
+  });
+  assert.equal(findNewChordOpportunity(snapshot, snapshot), null);
 });
 
 test('completes the lesson only for a new successful chord reveal', () => {

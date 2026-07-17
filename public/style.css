@@ -2313,6 +2313,18 @@ body.replay-active #slicing-panel {
   .ultimate-hack-hud-metrics small { font-size:6px; }
   .ultimate-hack-hud-metrics strong { font-size:9px; }
   .ultimate-hack-cancel { grid-column:2; grid-row:1 / span 2; min-height:44px; padding:8px 10px; font-size:9px; }
+  body.ultimate-hack-active .return-lobby-button {
+    top:auto;
+    bottom:calc(10px + env(safe-area-inset-bottom));
+    left:10px;
+    transform:none;
+    min-width:44px;
+    min-height:44px;
+    padding:7px 10px;
+  }
+  body.ultimate-hack-active .sector-purge-banner {
+    top:calc(112px + env(safe-area-inset-top));
+  }
   body.ultimate-hack-active .mobile-statusbar,
   body.ultimate-hack-active #mobile-control-dock,
   body.ultimate-hack-active #mobile-panel-backdrop,

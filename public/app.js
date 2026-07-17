@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomClient } from './room-client.js?v=20260717-reduction-hint-4';
-import { initialLanguage, randomNickname, translate } from './i18n.js?v=20260718-medium-chord-task-1';
+import { initialLanguage, randomNickname, translate } from './i18n.js?v=20260718-mobile-chord-dialogue-1';
 import { solveMinesweeperHint } from './minesweeper-solver.js';
-import { findChordOpportunity, isNewSuccessfulChord } from './tutorial-triggers.js?v=20260718-medium-chord-task-1';
+import { findNewChordOpportunity, isNewSuccessfulChord } from './tutorial-triggers.js?v=20260718-mobile-chord-dialogue-1';
 import { chooseFloatingAxisPlacement, chooseGuidedCalloutPlacement } from './guided-callout.js';
 import {
   BOARD_ANIMATION_TIMING,
@@ -1226,6 +1226,7 @@ class HoloSweeperGame {
       this.taskExperienceStarted = false;
       this.roomSnapshot = null;
       this.currentPlayerId = null;
+      this.updateSolverHintVisibility(null);
       this.seenActivityIds.clear();
       this.seenChatIds.clear();
       this.automatedFlagKeys.clear();
@@ -1774,15 +1775,15 @@ class HoloSweeperGame {
       || this.dialogueState
       || snapshot.phase !== 'playing'
       || !previous
-      || (snapshot.flags?.length ?? 0) <= (previous.flags?.length ?? 0)
     ) return;
 
-    const clue = findChordOpportunity(snapshot);
+    const clue = findNewChordOpportunity(snapshot, previous);
     if (!clue) return;
     this.mediumChordTipShown = true;
     this.mediumChordObjectiveActive = true;
     this.mediumChordObjectiveTarget = { ...clue };
     this.updateMissionGuide();
+    this.closeMobilePanels();
     this.showSilverWolfDialogue([
       {
         artKey: 'tip',
