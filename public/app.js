@@ -1,7 +1,11 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomClient } from './room-client.js?v=20260717-reduction-hint-4';
-import { initialLanguage, randomNickname, translate } from './i18n.js?v=20260718-mobile-chord-dialogue-1';
+import { initialLanguage, randomNickname, translateForInput } from './i18n.js?v=20260718-input-copy-1';
+import {
+  detectInitialInputMode,
+  inputModeFromPointerType,
+} from './input-mode.js?v=20260718-input-copy-1';
 import { solveMinesweeperHint } from './minesweeper-solver.js';
 import { findNewChordOpportunity, isNewSuccessfulChord } from './tutorial-triggers.js?v=20260718-mobile-chord-dialogue-1';
 import { chooseFloatingAxisPlacement, chooseGuidedCalloutPlacement } from './guided-callout.js';
@@ -373,6 +377,11 @@ class ParticleSystem {
 class HoloSweeperGame {
   constructor() {
     this.language = initialLanguage();
+    this.inputMode = detectInitialInputMode({
+      matchMedia: window.matchMedia?.bind(window),
+      maxTouchPoints: navigator.maxTouchPoints,
+    });
+    document.body.dataset.inputMode = this.inputMode;
     this.generatedNickname = randomNickname(this.language);
     this.gameMode = 'solo';
     this.hasInspectedNeighbors = false;
@@ -519,6 +528,7 @@ class HoloSweeperGame {
 
   // 绑定 HTML 交互元素
   bindUI() {
+    this.bindInputModeTracking();
     // Lobby UI
     const readNickname = () => document.getElementById('input-nickname').value.trim();
     const persistNickname = (nickname) => {
@@ -554,8 +564,18 @@ class HoloSweeperGame {
     document.addEventListener('contextmenu', (event) => {
       if (!event.target.closest('input, textarea')) event.preventDefault();
     }, { capture: true });
-    tutorialOverlay.addEventListener('click', (event) => {
-      if (event.target === tutorialOverlay && !this.currentDialogueRequiresExplicitAction()) {
+    // Advance only when a fresh primary press actually starts on the visible
+    // backdrop. Mobile browsers may dispatch a compatibility click after the
+    // board touch has already opened this overlay; listening to click here
+    // would immediately dismiss a newly shown one-step dialogue.
+    tutorialOverlay.addEventListener('pointerdown', (event) => {
+      if (
+        event.button === 0
+        && event.isPrimary !== false
+        && event.target === tutorialOverlay
+        && !this.currentDialogueRequiresExplicitAction()
+      ) {
+        event.preventDefault();
         this.advanceSilverWolfDialogue();
       }
     });
@@ -1261,7 +1281,59 @@ class HoloSweeperGame {
   }
 
   t(key, params = {}) {
-    return translate(this.language, key, params);
+    return translateForInput(this.language, key, this.inputMode, params);
+  }
+
+  bindInputModeTracking() {
+    if ('PointerEvent' in window) {
+      document.addEventListener('pointerdown', (event) => {
+        this.setInputMode(inputModeFromPointerType(event.pointerType, this.inputMode));
+      }, { capture: true, passive: true });
+      return;
+    }
+    let lastTouchAt = 0;
+    document.addEventListener('touchstart', () => {
+      lastTouchAt = Date.now();
+      this.setInputMode('touch');
+    }, { capture: true, passive: true });
+    document.addEventListener('mousedown', () => {
+      if (Date.now() - lastTouchAt > 800) this.setInputMode('mouse');
+    }, { capture: true, passive: true });
+  }
+
+  setInputMode(inputMode) {
+    if (inputMode === this.inputMode || !['touch', 'mouse'].includes(inputMode)) return;
+    this.inputMode = inputMode;
+    document.body.dataset.inputMode = inputMode;
+    this.refreshInputModeCopy();
+  }
+
+  localizeDocumentElements() {
+    document.querySelectorAll('[data-i18n]').forEach((element) => {
+      element.textContent = this.t(element.dataset.i18n);
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach((element) => {
+      element.placeholder = this.t(element.dataset.i18nPlaceholder);
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach((element) => {
+      element.title = this.t(element.dataset.i18nTitle);
+    });
+    document.querySelectorAll('[data-i18n-alt]').forEach((element) => {
+      element.alt = this.t(element.dataset.i18nAlt);
+    });
+    document.querySelectorAll('[data-i18n-aria-label]').forEach((element) => {
+      element.setAttribute('aria-label', this.t(element.dataset.i18nAriaLabel));
+    });
+  }
+
+  refreshInputModeCopy() {
+    this.localizeDocumentElements();
+    this.updateControlCopy();
+    if (this.dialogueState && !this.waitingTutorialAction) this.renderSilverWolfDialogue();
+    if (this.waitingTutorialAction) this.setTutorialActionHint(this.waitingTutorialAction);
+    else this.setTutorialActionHint();
+    if (this.guidedTutorialTarget) this.renderGuidedHint();
+    if (this.solverHint) this.renderSolverHint(this.solverHint);
   }
 
   rollNickname() {
@@ -1303,21 +1375,7 @@ class HoloSweeperGame {
     document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en';
     document.title = this.t('document.title');
     document.querySelector('meta[name="description"]')?.setAttribute('content', this.t('document.description'));
-    document.querySelectorAll('[data-i18n]').forEach((element) => {
-      element.textContent = this.t(element.dataset.i18n);
-    });
-    document.querySelectorAll('[data-i18n-placeholder]').forEach((element) => {
-      element.placeholder = this.t(element.dataset.i18nPlaceholder);
-    });
-    document.querySelectorAll('[data-i18n-title]').forEach((element) => {
-      element.title = this.t(element.dataset.i18nTitle);
-    });
-    document.querySelectorAll('[data-i18n-alt]').forEach((element) => {
-      element.alt = this.t(element.dataset.i18nAlt);
-    });
-    document.querySelectorAll('[data-i18n-aria-label]').forEach((element) => {
-      element.setAttribute('aria-label', this.t(element.dataset.i18nAriaLabel));
-    });
+    this.localizeDocumentElements();
 
     const nicknameInput = document.getElementById('input-nickname');
     let savedNickname = null;
@@ -2142,8 +2200,7 @@ class HoloSweeperGame {
       this.guidedTutorialTarget = target;
       const cell = this.grid[target.x]?.[target.y]?.[target.z];
       if (!cell) return;
-      const coarsePointer = window.matchMedia?.('(pointer: coarse)')?.matches;
-      this.setMode(target.action === 'dig' || coarsePointer ? target.action : 'dig');
+      this.setMode(target.action === 'dig' || this.inputMode === 'touch' ? target.action : 'dig');
       this.createGuidedTargetMarker(cell, target.action);
       this.createGuidedEvidenceMarkers(target.evidence || [], target.solverHint?.details?.proof);
       this.syncReasoningCoordinateAxes();

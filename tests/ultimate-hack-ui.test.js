@@ -44,7 +44,7 @@ test('routes hard completion into the hidden mission and only ultimate completio
   assert.match(experienceSource, /\['ready', 'playing'\]\.includes\(snapshot\.phase\)/);
   assert.match(experienceSource, /this\.taskMission === 'ultimate'[\s\S]*task\.ultimate\.brief\.1[\s\S]*task\.ultimate\.trojanTitle[\s\S]*requiresExplicit:\s*true[\s\S]*onComplete:\s*\(\) => this\.startUltimateHack\(\)/);
   assert.match(appSource, /currentDialogueRequiresExplicitAction\(\)[\s\S]*requiresExplicit/);
-  assert.match(appSource, /event\.target === tutorialOverlay && !this\.currentDialogueRequiresExplicitAction\(\)/);
+  assert.match(appSource, /tutorialOverlay\.addEventListener\('pointerdown',[\s\S]*event\.button === 0[\s\S]*event\.isPrimary !== false[\s\S]*event\.target === tutorialOverlay[\s\S]*!this\.currentDialogueRequiresExplicitAction\(\)/);
 });
 
 test('keeps Ultimate Hack separate from Add-ons and exposes a dedicated live HUD', () => {
