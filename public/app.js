@@ -1,13 +1,18 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomClient } from './room-client.js?v=20260717-reduction-hint-4';
-import { initialLanguage, randomNickname, translateForInput } from './i18n.js?v=20260718-input-copy-1';
+import { initialLanguage, randomNickname, translateForInput } from './i18n.js?v=20260719-chord-target-1';
 import {
   detectInitialInputMode,
   inputModeFromPointerType,
 } from './input-mode.js?v=20260718-input-copy-1';
 import { solveMinesweeperHint } from './minesweeper-solver.js';
-import { findNewChordOpportunity, isNewSuccessfulChord } from './tutorial-triggers.js?v=20260718-mobile-chord-dialogue-1';
+import {
+  chordOpportunityAt,
+  findChordOpportunity,
+  findNewChordOpportunity,
+  isNewSuccessfulChord,
+} from './tutorial-triggers.js?v=20260719-chord-target-1';
 import { chooseFloatingAxisPlacement, chooseGuidedCalloutPlacement } from './guided-callout.js';
 import {
   BOARD_ANIMATION_TIMING,
@@ -408,6 +413,7 @@ class HoloSweeperGame {
     this.mediumChordTipShown = false;
     this.mediumChordObjectiveActive = false;
     this.mediumChordObjectiveTarget = null;
+    this.mediumChordObjectiveMarker = null;
     this.lobbyEntryPending = false;
     this.lobbyEntryTimer = null;
     this.lobbyEntryRetryReady = false;
@@ -1237,6 +1243,8 @@ class HoloSweeperGame {
       this.stopGuidedTutorial();
       this.dialogueState = null;
       this.waitingTutorialAction = null;
+      this.mediumChordObjectiveActive = false;
+      this.setMediumChordObjectiveTarget(null);
       this.clearSolverHint();
       this.clearPointerHighlights();
       this.closeMobilePanels();
@@ -1836,10 +1844,13 @@ class HoloSweeperGame {
     ) return;
 
     const clue = findNewChordOpportunity(snapshot, previous);
-    if (!clue) return;
+    if (clue) this.showMediumChordTipFor(clue);
+  }
+
+  showMediumChordTipFor(clue) {
     this.mediumChordTipShown = true;
     this.mediumChordObjectiveActive = true;
-    this.mediumChordObjectiveTarget = { ...clue };
+    this.setMediumChordObjectiveTarget(clue);
     this.updateMissionGuide();
     this.closeMobilePanels();
     this.showSilverWolfDialogue([
@@ -1847,13 +1858,18 @@ class HoloSweeperGame {
         artKey: 'tip',
         titleKey: 'task.medium.chordTipTitle',
         messageKey: 'task.medium.chordTip',
-        factText: this.t('task.medium.chordTipFact', {
-          number: clue.count,
-          x: clue.x + 1,
-          y: clue.y + 1,
-          z: clue.z + 1,
-          hidden: clue.hiddenAround,
-        }),
+        factText: this.t(
+          this.isMediumChordTargetVisible(clue)
+            ? 'task.medium.chordTipFact'
+            : 'task.medium.chordTipFactOutsideSlice',
+          {
+            number: clue.count,
+            x: clue.x + 1,
+            y: clue.y + 1,
+            z: clue.z + 1,
+            hidden: clue.hiddenAround,
+          },
+        ),
         buttonKey: 'tutorial.tryChord',
       },
     ]);
@@ -1861,10 +1877,72 @@ class HoloSweeperGame {
 
   maybeCompleteMediumChordObjective(snapshot, previous) {
     const boardRestarted = snapshot?.phase === 'ready' && previous?.phase !== 'ready';
-    if (!this.mediumChordObjectiveActive || (!boardRestarted && !isNewSuccessfulChord(snapshot, previous))) return;
-    this.mediumChordObjectiveActive = false;
-    this.mediumChordObjectiveTarget = null;
-    this.setTutorialActionHint();
+    if (!this.mediumChordObjectiveActive) return;
+    if (boardRestarted || isNewSuccessfulChord(snapshot, previous)) {
+      this.mediumChordObjectiveActive = false;
+      this.setMediumChordObjectiveTarget(null);
+      this.updateMissionGuide();
+      this.setTutorialActionHint();
+      return;
+    }
+
+    this.refreshMediumChordObjectiveTarget(snapshot);
+  }
+
+  isMediumChordTargetVisible(target) {
+    if (!target) return false;
+    const cell = this.grid[target.x]?.[target.y]?.[target.z];
+    return Boolean(
+      cell?.isRevealed
+      && !cell.isPurged
+      && cell.group?.visible,
+    );
+  }
+
+  refreshMediumChordObjectiveTarget(snapshot = this.roomSnapshot) {
+    if (!this.mediumChordObjectiveActive) return;
+    const exactTarget = chordOpportunityAt(snapshot, this.mediumChordObjectiveTarget);
+    const nextTarget = exactTarget ?? findChordOpportunity(snapshot);
+    const previousKey = this.mediumChordObjectiveTarget
+      ? this.pointKey(this.mediumChordObjectiveTarget)
+      : '';
+    const nextKey = nextTarget ? this.pointKey(nextTarget) : '';
+    const targetChanged = previousKey !== nextKey
+      || this.mediumChordObjectiveTarget?.hiddenAround !== nextTarget?.hiddenAround
+      || this.mediumChordObjectiveTarget?.count !== nextTarget?.count;
+
+    if (targetChanged || (nextTarget && !this.mediumChordObjectiveMarker)) {
+      this.setMediumChordObjectiveTarget(nextTarget);
+    }
+    if (targetChanged) {
+      this.updateMissionGuide();
+      this.setTutorialActionHint();
+    }
+  }
+
+  clearMediumChordObjectiveMarker() {
+    this.disposeGuidedMarker(this.mediumChordObjectiveMarker);
+    this.mediumChordObjectiveMarker = null;
+  }
+
+  ensureMediumChordObjectiveMarker() {
+    if (this.mediumChordObjectiveMarker || !this.mediumChordObjectiveTarget) return;
+    const target = this.mediumChordObjectiveTarget;
+    const cell = this.grid[target.x]?.[target.y]?.[target.z];
+    if (!cell?.spriteInstance) return;
+    const marker = this.createEvidenceReticle();
+    marker.name = 'medium-chord-objective-marker';
+    marker.renderOrder = 1001;
+    marker.userData.mediumChordObjective = true;
+    marker.raycast = () => {};
+    cell.group.add(marker);
+    this.mediumChordObjectiveMarker = marker;
+  }
+
+  setMediumChordObjectiveTarget(target) {
+    this.clearMediumChordObjectiveMarker();
+    this.mediumChordObjectiveTarget = target ? { ...target } : null;
+    this.ensureMediumChordObjectiveMarker();
   }
 
   startSilverWolfTutorial() {
@@ -1995,7 +2073,12 @@ class HoloSweeperGame {
     const params = displayAction === 'chord'
       ? { number: this.mediumChordObjectiveTarget?.count ?? '?' }
       : {};
-    this.renderTutorialActionHint(displayAction ? this.t(`tutorial.actionHint.${displayAction}`, params) : '');
+    const outsideSlice = displayAction === 'chord'
+      && !this.isMediumChordTargetVisible(this.mediumChordObjectiveTarget);
+    const hintKey = displayAction
+      ? `tutorial.actionHint.${displayAction}${outsideSlice ? '.outsideSlice' : ''}`
+      : '';
+    this.renderTutorialActionHint(hintKey ? this.t(hintKey, params) : '');
   }
 
   beginGuidedTutorial() {
@@ -3299,7 +3382,7 @@ class HoloSweeperGame {
     this.taskExperienceStarted = false;
     this.mediumChordTipShown = false;
     this.mediumChordObjectiveActive = false;
-    this.mediumChordObjectiveTarget = null;
+    this.setMediumChordObjectiveTarget(null);
     this.selectTaskFlow('freeplay');
     this.syncGameModeUI();
     this.roomClient.send({ op: 'restart', config }).catch(error => this.handleRoomError(error));
@@ -3309,14 +3392,14 @@ class HoloSweeperGame {
     const config = TASK_MISSIONS[mission];
     if (!config) return;
     this.stopGuidedTutorial();
+    this.mediumChordObjectiveActive = false;
+    this.setMediumChordObjectiveTarget(null);
     this.taskMission = mission;
     this.pendingTaskMission = mission;
     this.pendingTaskConfig = { ...config };
     this.taskExperienceStarted = false;
     if (mission === 'medium') {
       this.mediumChordTipShown = false;
-      this.mediumChordObjectiveActive = false;
-      this.mediumChordObjectiveTarget = null;
     }
     this.applyStoryArt('solo', mission);
     document.querySelectorAll('.btn-preset').forEach((button) => {
@@ -4681,6 +4764,7 @@ class HoloSweeperGame {
 
     this.clearGuidedTarget();
     this.clearSolverHint();
+    this.clearMediumChordObjectiveMarker();
 
     // 重置状态
     this.isFirstClick = true;
@@ -5529,6 +5613,12 @@ class HoloSweeperGame {
     
     cell.group.add(sprite);
     cell.spriteInstance = sprite;
+    if (
+      this.mediumChordObjectiveTarget
+      && this.pointKey(this.mediumChordObjectiveTarget) === this.pointKey(cell)
+    ) {
+      this.ensureMediumChordObjectiveMarker();
+    }
 
     // 伴随微小的漂浮浮动动画，增强灵动感
     let t = 0;
@@ -5801,6 +5891,8 @@ class HoloSweeperGame {
     this.updateSliceValue(axis);
     this.clearPointerHighlights();
     this.updateGridVisibility();
+    this.refreshMediumChordObjectiveTarget();
+    this.updateMissionGuide();
   }
 
   updateSliceValue(axis) {
@@ -5849,6 +5941,8 @@ class HoloSweeperGame {
     this.slice.zMin = 0; this.slice.zMax = this.depth - 1;
     this.syncSliceSlidersUI();
     this.updateGridVisibility();
+    this.refreshMediumChordObjectiveTarget();
+    this.updateMissionGuide();
   }
 
   // -------------------------------------------------------------
@@ -5894,10 +5988,13 @@ class HoloSweeperGame {
     else if (progress >= 35) state = 'mid';
     else if (progress > 0) state = 'started';
 
+    const chordGuideKey = this.isMediumChordTargetVisible(this.mediumChordObjectiveTarget)
+      ? 'task.medium.guide.chordOne'
+      : 'task.medium.guide.chordOneOutsideSlice';
     objective.textContent = this.hardReductionObjectivePending()
       ? this.t('task.hard.guide.reduceOne')
       : (this.mediumChordObjectivePending()
-        ? this.t('task.medium.guide.chordOne', {
+        ? this.t(chordGuideKey, {
           number: this.mediumChordObjectiveTarget?.count ?? '?',
         })
         : this.storyT(`mission.objective.${state}`, { progress }));
@@ -5914,6 +6011,7 @@ class HoloSweeperGame {
       && this.taskFlow === 'campaign'
       && this.taskMission === 'medium'
       && this.mediumChordObjectiveActive
+      && Boolean(this.mediumChordObjectiveTarget)
       && ['playing', 'revive'].includes(snapshot?.phase);
   }
 
@@ -6019,6 +6117,13 @@ class HoloSweeperGame {
       this.solverHintMarker.scale.setScalar(hintPulse);
       const evidenceOpacity = 0.64 + Math.sin(performance.now() * 0.0045) * 0.24;
       for (const marker of this.solverHintEvidenceMarkers) marker.material.opacity = evidenceOpacity;
+    }
+
+    if (this.mediumChordObjectiveMarker) {
+      const pulse = 1.28 + Math.sin(performance.now() * 0.0065) * 0.1;
+      this.mediumChordObjectiveMarker.scale.set(pulse, pulse, 1);
+      this.mediumChordObjectiveMarker.material.opacity = 0.72
+        + Math.sin(performance.now() * 0.005) * 0.2;
     }
 
     if (this.guidedTutorialTarget || this.solverHint?.target) this.positionReasoningCoordinateAxes();

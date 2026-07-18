@@ -82,10 +82,14 @@ test('explains the campaign, hidden Ultimate chapter, and independent Free Mode 
   assert.match(translate('zh', 'tutorial.actionHint.reduce'), /高级任务.*消除一颗地雷.*手机端.*双击未开启格子.*电脑端.*同时按下左右键/);
   assert.equal(translate('en', 'task.hard.guide.reduceOne'), 'Eliminate one mine');
   assert.match(translate('en', 'tutorial.actionHint.reduce'), /advanced objective.*eliminate one mine.*mobile.*double-tap.*desktop.*both mouse buttons/i);
-  assert.equal(translate('zh', 'task.medium.guide.chordOne', { number: 2 }), '对数字 2 执行一次自动展开');
-  assert.match(translate('zh', 'tutorial.actionHint.chord', { number: 2 }), /中级实操.*数字 2.*旗子已经标够.*左右键.*双击这个已开启数字/);
-  assert.equal(translate('en', 'task.medium.guide.chordOne', { number: 2 }), 'Auto-reveal around clue 2 once');
-  assert.match(translate('en', 'tutorial.actionHint.chord', { number: 2 }), /intermediate objective.*clue 2.*mines flagged.*both mouse buttons.*double-tap/i);
+  assert.equal(translate('zh', 'task.medium.guide.chordOne', { number: 2 }), '对金色圈出的数字 2 执行一次自动展开');
+  assert.match(translate('zh', 'tutorial.actionHint.chord', { number: 2 }), /中级实操.*金色圈出的数字 2.*旗子已经标够.*仍有邻格可开.*左右键.*双击金色数字/);
+  assert.equal(translate('zh', 'task.medium.guide.chordOneOutsideSlice', { number: 2 }), '自动展开目标在当前切片外：数字 2');
+  assert.match(translate('zh', 'tutorial.actionHint.chord.outsideSlice', { number: 2 }), /目标数字 2.*当前切片外.*切片.*显示全部.*金色圈/);
+  assert.equal(translate('en', 'task.medium.guide.chordOne', { number: 2 }), 'Auto-reveal around the gold-ringed clue 2');
+  assert.match(translate('en', 'tutorial.actionHint.chord', { number: 2 }), /intermediate objective.*gold-ringed clue 2.*enough flags.*neighbors to open.*both mouse buttons.*double-tap/i);
+  assert.equal(translate('en', 'task.medium.guide.chordOneOutsideSlice', { number: 2 }), 'Auto-reveal target is outside the current slice: clue 2');
+  assert.match(translate('en', 'tutorial.actionHint.chord.outsideSlice', { number: 2 }), /clue 2.*outside the current slice.*slices.*show all.*gold ring/i);
   assert.equal(translate('zh', 'settings.features'), '演算协议 Add-ons');
   assert.equal(translate('en', 'settings.features'), 'Protocol Add-ons');
   assert.equal(translate('zh', 'feature.autoPurge'), '区块清除');
