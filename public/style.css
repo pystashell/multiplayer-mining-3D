@@ -1,3 +1,63 @@
+/* Runtime fonts are vendored from the pinned @fontsource packages.
+ * These files contain Latin glyphs only; Chinese text intentionally falls
+ * through to the visitor's system sans-serif font.
+ */
+@font-face {
+  font-family: 'Orbitron';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 800;
+  src: url('./vendor/fonts/orbitron-5.2.8/orbitron-latin-800-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Orbitron';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 900;
+  src: url('./vendor/fonts/orbitron-5.2.8/orbitron-latin-900-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Share Tech Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('./vendor/fonts/share-tech-mono-5.2.7/share-tech-mono-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('./vendor/fonts/inter-5.2.8/inter-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url('./vendor/fonts/inter-5.2.8/inter-latin-600-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url('./vendor/fonts/inter-5.2.8/inter-latin-700-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 800;
+  src: url('./vendor/fonts/inter-5.2.8/inter-latin-800-normal.woff2') format('woff2');
+}
+
 /* -------------------------------------------------------------
  * 3D 全息扫雷 (Holo-Sweeper 3D) - 样式表
  * 使用现代科技感配色、玻璃拟态面板及霓虹发光文字

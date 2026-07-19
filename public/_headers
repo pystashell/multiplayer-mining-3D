@@ -1,0 +1,25 @@
+/*
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; frame-src 'none'; form-action 'self'; script-src 'self' 'unsafe-inline'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' ws: wss:; worker-src 'self' blob:; manifest-src 'self'
+  Permissions-Policy: camera=(), geolocation=(), microphone=(), payment=(), usb=()
+  Referrer-Policy: no-referrer
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+
+/
+  Cache-Control: no-cache
+
+/*.html
+  Cache-Control: no-cache
+
+/vendor/three-0.150.0/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/vendor/fonts/orbitron-5.2.8/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/vendor/fonts/share-tech-mono-5.2.7/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/vendor/fonts/inter-5.2.8/*
+  Cache-Control: public, max-age=31536000, immutable

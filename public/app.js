@@ -1,6 +1,6 @@
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { RoomClient } from './room-client.js?v=20260717-reduction-hint-4';
+import * as THREE from './vendor/three-0.150.0/build/three.module.js';
+import { OrbitControls } from './vendor/three-0.150.0/examples/jsm/controls/OrbitControls.js';
+import { HybridRoomClient } from './local-room-client.js?v=20260719-local-solo-1';
 import { initialLanguage, randomNickname, translateForInput } from './i18n.js?v=20260719-chord-target-1';
 import {
   detectInitialInputMode,
@@ -439,7 +439,7 @@ class HoloSweeperGame {
     this.lastSectorPurgeId = null;
     this.sectorPurgeBannerTimer = null;
     this.returningToLobby = false;
-    this.roomClient = new RoomClient({
+    this.roomClient = new HybridRoomClient({
       onSnapshot: (snapshot, initial) => this.applyRoomSnapshot(snapshot, initial),
       onWelcome: (message) => this.handleRoomWelcome(message),
       onError: (error) => this.handleRoomError(error),

@@ -1,0 +1,42 @@
+{
+  "generatedBy": "npm run vendor:sync",
+  "packages": {
+    "three": {
+      "name": "three",
+      "version": "0.150.0",
+      "license": "MIT"
+    },
+    "orbitron": {
+      "name": "@fontsource/orbitron",
+      "version": "5.2.8",
+      "license": "OFL-1.1"
+    },
+    "shareTechMono": {
+      "name": "@fontsource/share-tech-mono",
+      "version": "5.2.7",
+      "license": "OFL-1.1"
+    },
+    "inter": {
+      "name": "@fontsource/inter",
+      "version": "5.2.8",
+      "license": "OFL-1.1"
+    }
+  },
+  "files": [
+    "vendor/game-core/room-engine.js",
+    "vendor/game-core/beginner-layout.js",
+    "vendor/three-0.150.0/build/three.module.js",
+    "vendor/three-0.150.0/examples/jsm/controls/OrbitControls.js",
+    "vendor/three-0.150.0/LICENSE",
+    "vendor/fonts/orbitron-5.2.8/orbitron-latin-800-normal.woff2",
+    "vendor/fonts/orbitron-5.2.8/orbitron-latin-900-normal.woff2",
+    "vendor/fonts/orbitron-5.2.8/LICENSE",
+    "vendor/fonts/share-tech-mono-5.2.7/share-tech-mono-latin-400-normal.woff2",
+    "vendor/fonts/share-tech-mono-5.2.7/LICENSE",
+    "vendor/fonts/inter-5.2.8/inter-latin-400-normal.woff2",
+    "vendor/fonts/inter-5.2.8/inter-latin-600-normal.woff2",
+    "vendor/fonts/inter-5.2.8/inter-latin-700-normal.woff2",
+    "vendor/fonts/inter-5.2.8/inter-latin-800-normal.woff2",
+    "vendor/fonts/inter-5.2.8/LICENSE"
+  ]
+}

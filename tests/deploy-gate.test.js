@@ -16,7 +16,9 @@ test('production deployment is blocked unless the complete test suite passes fir
 
 test('development, validation, and live-smoke scripts remain available', () => {
   assert.equal(packageJson.scripts.dev, 'wrangler dev');
-  assert.equal(packageJson.scripts.test, 'node --test tests/*.test.js');
+  assert.equal(packageJson.scripts['vendor:sync'], 'node scripts/sync-vendor-assets.mjs');
+  assert.equal(packageJson.scripts['vendor:check'], 'node scripts/sync-vendor-assets.mjs --check');
+  assert.equal(packageJson.scripts.test, 'npm run vendor:check && node --test tests/*.test.js');
   assert.equal(packageJson.scripts['test:live'], 'node tests/live-room-smoke.js');
   assert.equal(packageJson.scripts['deploy:dry'], 'wrangler deploy --dry-run');
 });

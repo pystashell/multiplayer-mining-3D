@@ -7,6 +7,64 @@ const MAX_MESSAGE_BYTES = 4 * 1024;
 const MAX_SOCKETS = 16;
 const STATE_KEY = "room";
 
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'none'",
+  "frame-src 'none'",
+  "form-action 'self'",
+  "script-src 'self' 'unsafe-inline'",
+  "script-src-attr 'none'",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self' data:",
+  "img-src 'self' data: blob:",
+  "media-src 'self' data: blob:",
+  "connect-src 'self' ws: wss:",
+  "worker-src 'self' blob:",
+  "manifest-src 'self'",
+].join("; ");
+
+const SECURITY_HEADERS = {
+  "Content-Security-Policy": CONTENT_SECURITY_POLICY,
+  "Permissions-Policy": "camera=(), geolocation=(), microphone=(), payment=(), usb=()",
+  "Referrer-Policy": "no-referrer",
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+};
+
+function isVersionedVendorPath(pathname) {
+  if (!pathname.startsWith("/vendor/")) return false;
+  return pathname.slice("/vendor/".length).split("/").some((segment) => (
+    /^(?:v)?\d+\.\d+(?:\.\d+)?(?:[-+][a-z0-9.-]+)?$/i.test(segment)
+    || /(?:^|[@._-])v?\d+\.\d+(?:\.\d+)?(?:$|[._-])/i.test(segment)
+  ));
+}
+
+export function withSecurityHeaders(response, request) {
+  // Cloudflare WebSocket upgrade responses cannot be reconstructed as normal
+  // Responses. Leave the 101 response and its WebSocket endpoint untouched.
+  if (response?.status === 101 || response?.webSocket) return response;
+
+  const headers = new Headers(response.headers);
+  for (const [name, value] of Object.entries(SECURITY_HEADERS)) headers.set(name, value);
+
+  const url = request ? new URL(request.url) : null;
+  const contentType = headers.get("Content-Type") ?? "";
+  if (url && response.ok && isVersionedVendorPath(url.pathname)) {
+    headers.set("Cache-Control", "public, max-age=31536000, immutable");
+  } else if (url && (url.pathname === "/" || url.pathname.endsWith(".html") || contentType.includes("text/html"))) {
+    headers.set("Cache-Control", "no-cache");
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 function json(value, status = 200) {
   return Response.json(value, { status, headers: { "Cache-Control": "no-store" } });
 }
@@ -344,35 +402,45 @@ async function joinRoom(request, env, code) {
 const worker = {
   async fetch(request, env) {
     const url = new URL(request.url);
+    let response;
     try {
-      if (url.pathname === "/api/health") return json({ ok: true, service: "3d-multiplayer-mining" });
-      if (url.pathname === "/api/rooms" && request.method === "POST") {
-        if (!allowedOrigin(request)) return json({ error: "请求来源不允许。" }, 403);
-        const limited = await enforceRateLimit(request, env.ROOM_CREATE_LIMIT, "create");
-        if (limited) return limited;
-        return createRoom(request, env);
+      if (url.pathname === "/api/health") {
+        response = json({ ok: true, service: "3d-multiplayer-mining" });
+      } else if (url.pathname === "/api/rooms" && request.method === "POST") {
+        if (!allowedOrigin(request)) response = json({ error: "请求来源不允许。" }, 403);
+        else {
+          const limited = await enforceRateLimit(request, env.ROOM_CREATE_LIMIT, "create");
+          response = limited ?? await createRoom(request, env);
+        }
+      } else {
+        const socketMatch = /^\/api\/rooms\/([A-HJ-NP-Z2-9]{6})\/socket$/.exec(url.pathname);
+        const joinMatch = /^\/api\/rooms\/([A-HJ-NP-Z2-9]{6})$/.exec(url.pathname);
+        if (socketMatch) {
+          if (!allowedOrigin(request)) response = json({ error: "请求来源不允许。" }, 403);
+          else {
+            const limited = await enforceRateLimit(request, env.ROOM_SOCKET_LIMIT, "socket");
+            response = limited ?? await env.GAME_ROOMS.getByName(socketMatch[1]).fetch(request);
+          }
+        } else if (joinMatch && request.method === "POST") {
+          if (!allowedOrigin(request)) response = json({ error: "请求来源不允许。" }, 403);
+          else {
+            const limited = await enforceRateLimit(request, env.ROOM_JOIN_LIMIT, "join");
+            response = limited ?? await joinRoom(request, env, joinMatch[1]);
+          }
+        } else if (url.pathname.startsWith("/api/")) {
+          response = json({ error: "Not found" }, 404);
+        } else {
+          response = await env.ASSETS.fetch(request);
+        }
       }
-      const socketMatch = /^\/api\/rooms\/([A-HJ-NP-Z2-9]{6})\/socket$/.exec(url.pathname);
-      if (socketMatch) {
-        if (!allowedOrigin(request)) return json({ error: "请求来源不允许。" }, 403);
-        const limited = await enforceRateLimit(request, env.ROOM_SOCKET_LIMIT, "socket");
-        if (limited) return limited;
-        return env.GAME_ROOMS.getByName(socketMatch[1]).fetch(request);
-      }
-      const joinMatch = /^\/api\/rooms\/([A-HJ-NP-Z2-9]{6})$/.exec(url.pathname);
-      if (joinMatch && request.method === "POST") {
-        if (!allowedOrigin(request)) return json({ error: "请求来源不允许。" }, 403);
-        const limited = await enforceRateLimit(request, env.ROOM_JOIN_LIMIT, "join");
-        if (limited) return limited;
-        return joinRoom(request, env, joinMatch[1]);
-      }
-      if (url.pathname.startsWith("/api/")) return json({ error: "Not found" }, 404);
-      return env.ASSETS.fetch(request);
     } catch (error) {
-      if (error instanceof Response) return error;
-      console.error("Worker request failed", error);
-      return json({ error: "服务暂时不可用。" }, 500);
+      if (error instanceof Response) response = error;
+      else {
+        console.error("Worker request failed", error);
+        response = json({ error: "服务暂时不可用。" }, 500);
+      }
     }
+    return withSecurityHeaders(response, request);
   },
 };
 
