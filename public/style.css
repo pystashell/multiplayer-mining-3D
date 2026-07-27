@@ -1001,7 +1001,34 @@ body[data-game-mode="task"][data-task-flow="campaign"] .settings-section { displ
   cursor:pointer;
 }
 .control-settings-close:hover { color:#fff; border-color:var(--neon-magenta); background:rgba(255,79,216,.1); }
-.control-settings-scroll { display:grid; gap:14px; padding:16px 22px 20px; overflow-y:auto; }
+.control-settings-scroll {
+  display:grid;
+  gap:14px;
+  min-width:0;
+  padding:16px 22px 20px;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(123,110,224,.48) rgba(5,3,18,.18);
+}
+.control-settings-scroll::-webkit-scrollbar { width:8px; }
+.control-settings-scroll::-webkit-scrollbar-track {
+  background:rgba(5,3,18,.24);
+  border-left:1px solid rgba(109,93,252,.08);
+}
+.control-settings-scroll::-webkit-scrollbar-thumb {
+  min-height:54px;
+  border:2px solid rgba(5,3,18,.7);
+  border-radius:999px;
+  background:linear-gradient(180deg, rgba(139,126,235,.42), rgba(92,80,185,.5));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);
+}
+.control-settings-scroll::-webkit-scrollbar-thumb:hover {
+  background:linear-gradient(180deg, rgba(151,139,242,.62), rgba(109,93,252,.68));
+}
+.control-settings-scroll::-webkit-scrollbar-button { display:none; width:0; height:0; }
+.control-settings-scroll::-webkit-scrollbar-corner { background:transparent; }
 .control-settings-group {
   display:grid;
   gap:10px;
@@ -1124,13 +1151,27 @@ body[data-game-mode="task"][data-task-flow="campaign"] .settings-section { displ
   display:flex;
   align-items:center;
   justify-content:space-between;
+  min-width:0;
   gap:12px;
   padding:14px 22px calc(14px + env(safe-area-inset-bottom));
   border-top:1px solid rgba(255,255,255,.08);
   background:rgba(4,3,16,.72);
 }
-.control-settings-footer > div { display:flex; gap:8px; }
-.control-settings-footer button { flex:0 0 auto; min-height:40px; padding:9px 14px; }
+.control-settings-footer > div {
+  display:flex;
+  flex:0 1 auto;
+  justify-content:flex-end;
+  min-width:0;
+  gap:8px;
+}
+.control-settings-footer button {
+  flex:0 1 auto;
+  width:auto;
+  max-width:100%;
+  min-height:40px;
+  padding:9px 14px;
+  white-space:nowrap;
+}
 
 /* 指南列表 */
 .guide-section {
@@ -1216,10 +1257,13 @@ body[data-game-mode="task"][data-task-flow="campaign"] .settings-section { displ
   --story-lobby-art: url("assets/silver-wolf-quantum-pathfinder.png");
   max-width: calc(100vw - 20px);
   max-height: calc(100vh - 24px);
+  padding: clamp(22px, 3.2dvh, 40px) 40px !important;
   overflow-x: hidden;
   overflow-y: auto;
   align-items: stretch;
-  gap: 12px;
+  gap: clamp(6px, 1.25dvh, 12px);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(109, 93, 252, .28) transparent;
   border-color: rgba(109, 93, 252, .55);
   background:
     linear-gradient(180deg, rgba(9, 5, 27, .75), rgba(9, 5, 27, .96)),
@@ -1248,19 +1292,33 @@ body[data-story-art="squad"] .tutorial-portrait img { object-position: 48% 29%; 
   pointer-events: none;
   background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(41,231,255,.025) 4px);
 }
-.silver-lobby::-webkit-scrollbar { width: 5px; }
-.silver-lobby::-webkit-scrollbar-track { background: rgba(5,3,18,.5); }
-.silver-lobby::-webkit-scrollbar-thumb { background: linear-gradient(var(--neon-cyan), var(--neon-magenta)); border-radius: 4px; }
+.silver-lobby::-webkit-scrollbar { width: 3px; }
+.silver-lobby::-webkit-scrollbar-track { background: transparent; }
+.silver-lobby::-webkit-scrollbar-thumb {
+  background: linear-gradient(rgba(41,231,255,.24), rgba(255,79,216,.2));
+  border-radius: 999px;
+}
+.silver-lobby::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(rgba(41,231,255,.44), rgba(255,79,216,.38));
+}
 
 .lobby-protocol {
   color: var(--neon-magenta);
   font: 9px var(--font-mono);
   letter-spacing: 2px;
 }
-.lobby-icon { color: var(--neon-cyan); border-color: rgba(255,79,216,.32); text-shadow: 0 0 18px var(--neon-cyan); }
+.silver-lobby .lobby-icon {
+  width: clamp(58px, 8dvh, 80px);
+  height: clamp(58px, 8dvh, 80px);
+  margin-bottom: 0;
+  color: var(--neon-cyan);
+  border-color: rgba(255,79,216,.32);
+  font-size: clamp(36px, 5dvh, 50px);
+  text-shadow: 0 0 18px var(--neon-cyan);
+}
 .lobby-title { color: #fff; text-shadow: 2px 0 var(--neon-magenta), -2px 0 var(--neon-cyan), 0 0 15px rgba(109,93,252,.75); letter-spacing: 2px; }
 
-.lobby-subtitle { margin-bottom: 2px; }
+.lobby-subtitle { margin-bottom: 0; }
 
 .lobby-mode-switch {
   display: grid;
@@ -1324,7 +1382,7 @@ body[data-story-art="squad"] .tutorial-portrait img { object-position: 48% 29%; 
 .task-brief.squad span { color: var(--neon-magenta); }
 .task-brief p { color: #cbd5ff; font-size: 10px; line-height: 1.45; }
 
-.lobby-main-action { width: 100%; margin-top: 10px; padding: 12px; font-size: 14px; }
+.lobby-main-action { width: 100%; margin-top: clamp(10px, 2dvh, 18px); padding: 12px; font-size: 14px; }
 #lobby-modal[aria-busy="true"] #btn-start-task,
 #lobby-modal[aria-busy="true"] #btn-create-room,
 #lobby-modal[aria-busy="true"] #btn-join-room {
@@ -1337,7 +1395,7 @@ body[data-story-art="squad"] .tutorial-portrait img { object-position: 48% 29%; 
   cursor: pointer;
   filter: none;
 }
-.task-flow-switch { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:9px 0; }
+.task-flow-switch { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:clamp(5px, 1dvh, 9px) 0; }
 .task-flow-switch button {
   padding:7px 9px;
   border:1px solid rgba(255,255,255,.1);
@@ -1348,7 +1406,11 @@ body[data-story-art="squad"] .tutorial-portrait img { object-position: 48% 29%; 
   cursor:pointer;
 }
 .task-flow-switch button.active { color:#fff; border-color:var(--neon-magenta); background:rgba(255,79,216,.09); }
-.task-mission-picker { display: grid; gap: 6px; margin-top: 9px; }
+.task-mission-picker {
+  display: grid;
+  gap: clamp(4px, .7dvh, 6px);
+  margin-top: clamp(5px, 1dvh, 9px);
+}
 .freeplay-level-label {
   margin-top:10px;
   color:var(--neon-cyan);
@@ -1398,6 +1460,9 @@ body[data-story-art="squad"] .tutorial-portrait img { object-position: 48% 29%; 
 }
 .lobby-room-actions { display: flex; gap: 10px; }
 .lobby-room-actions button { flex: 1; padding: 11px; font-size: 13px; }
+.silver-lobby > .input-row { margin-bottom: clamp(2px, .8dvh, 10px) !important; }
+.silver-lobby > #lobby-status:empty { display: none; }
+.silver-lobby > #lobby-status:not(:empty) { margin-top: 8px !important; }
 .nickname-input-wrap { display:flex; align-items:stretch; gap:8px; }
 .nickname-input-wrap #input-nickname { flex:1; width:auto; min-width:0; }
 .nickname-random-button { flex:0 0 44px; width:44px; min-width:44px; padding:0; font-size:17px; }
@@ -2429,10 +2494,15 @@ body.replay-active #slicing-panel {
     width: min(420px, calc(100vw - 16px)) !important;
     max-width: calc(100vw - 16px);
     max-height: calc(100dvh - 16px);
-    padding: 20px 14px !important;
-    gap: 10px;
+    padding: clamp(14px, 2.8dvh, 24px) 14px !important;
+    gap: clamp(6px, 1.25dvh, 12px);
   }
 
+  .silver-lobby .lobby-icon {
+    width: clamp(44px, 7.6dvh, 50px);
+    height: clamp(44px, 7.6dvh, 50px);
+    font-size: clamp(28px, 4.7dvh, 31px);
+  }
   .lobby-title { padding: 0 34px; font-size: 18px; }
   .lobby-subtitle { font-size: 11px; }
   .lobby-mode-card { min-height: 58px; padding: 8px; }
@@ -2613,6 +2683,19 @@ body.replay-active #slicing-panel {
 }
 
 @media (max-width: 900px) and (max-height: 620px) {
+  .silver-lobby {
+    padding: 14px !important;
+    gap: 6px;
+  }
+  .silver-lobby .lobby-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 28px;
+  }
+  .silver-lobby > .input-row { margin-bottom: 2px !important; }
+  .task-flow-switch { margin: 5px 0; }
+  .task-mission-picker { gap: 4px; margin-top: 5px; }
+  .lobby-main-action { margin-top: 10px; }
   .mobile-touch-hint { display: none; }
   .mobile-control-dock { bottom: calc(4px + env(safe-area-inset-bottom)); }
   .mobile-dock-buttons button { min-height: 44px; }
