@@ -36,7 +36,11 @@ test('keeps the advanced Reduction objective visible until one mine is truly rem
 test('keeps slice controls available without proactively teaching or highlighting them', () => {
   assert.match(indexSource, /id="slicing-panel"/);
   assert.match(indexSource, /id="btn-mobile-slices"/);
-  assert.equal((indexSource.match(/type="range"/g) || []).length, 6);
+  const slicePanelSource = indexSource.slice(
+    indexSource.indexOf('id="slicing-panel"'),
+    indexSource.indexOf('id="social-panel"'),
+  );
+  assert.equal((slicePanelSource.match(/type="range"/g) || []).length, 6);
   assert.match(appSource, /handleSliceChange\(axis, type\)/);
   assert.match(appSource, /updateGridVisibility\(\)/);
   assert.match(appSource, /resetSlices\(userInitiated = false\)/);

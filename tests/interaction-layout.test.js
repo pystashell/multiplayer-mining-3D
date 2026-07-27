@@ -6,21 +6,26 @@ const appSource = readFileSync(new URL('../public/app.js', import.meta.url), 'ut
 const indexSource = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
 const styleSource = readFileSync(new URL('../public/style.css', import.meta.url), 'utf8');
 
-test('keeps the matrix centered while desktop camera bindings remain runtime-configurable', () => {
+test('lets players lock or pan the matrix center while camera bindings remain runtime-configurable', () => {
   assert.match(appSource, /this\.controls\.enablePan\s*=\s*false/);
   assert.match(appSource, /this\.controls\.enableRotate\s*=\s*true/);
   assert.match(appSource, /this\.controls\.enableZoom\s*=\s*true/);
   assert.match(appSource, /this\.controls\.rotateSpeed\s*=\s*0\.9/);
   assert.match(appSource, /this\.controls\.touches\.ONE\s*=\s*THREE\.TOUCH\.ROTATE/);
   assert.match(appSource, /this\.controls\.touches\.TWO\s*=\s*THREE\.TOUCH\.DOLLY_PAN/);
-  assert.match(appSource, /applyControlBindings\(\)[\s\S]*const dragActions = \{[\s\S]*rotate:\s*THREE\.MOUSE\.ROTATE[\s\S]*zoom:\s*THREE\.MOUSE\.DOLLY[\s\S]*none:\s*null/);
-  assert.match(appSource, /this\.controls\.mouseButtons\.LEFT\s*=\s*null[\s\S]*this\.controls\.mouseButtons\.RIGHT\s*=\s*dragActions\[this\.controlSettings\.rightDragAction\][\s\S]*this\.controls\.mouseButtons\.MIDDLE\s*=\s*dragActions\[this\.controlSettings\.middleDragAction\]/);
+  assert.match(appSource, /applyControlBindings\(\)[\s\S]*this\.controls\.enablePan\s*=\s*this\.controlSettings\.centerMode === 'movable'[\s\S]*const dragActions = \{[\s\S]*rotate:\s*THREE\.MOUSE\.ROTATE[\s\S]*zoom:\s*THREE\.MOUSE\.DOLLY[\s\S]*pan:\s*THREE\.MOUSE\.PAN[\s\S]*none:\s*null/);
+  assert.match(appSource, /this\.controls\.mouseButtons\.LEFT\s*=\s*null[\s\S]*this\.controls\.mouseButtons\.RIGHT\s*=\s*this\.controlSettings\.centerMode === 'movable'[\s\S]*\?\s*null[\s\S]*dragActions\[effectiveRightDragAction\(this\.controlSettings\)\][\s\S]*this\.controls\.mouseButtons\.MIDDLE\s*=\s*dragActions\[this\.controlSettings\.middleDragAction\]/);
   assert.match(appSource, /this\.controls\.target\.set\(0, 0, 0\)/);
   assert.match(appSource, /addEventListener\('wheel',[\s\S]*handleConfiguredWheel\(event\)[\s\S]*capture:\s*true,\s*passive:\s*false/);
   assert.match(appSource, /handleConfiguredWheel\(event\)[\s\S]*wheelActionForEvent\(this\.controlSettings, event\)[\s\S]*normalizeWheelDelta\(event, window\.innerHeight\)/);
-  assert.match(appSource, /const rotatedMatrix = distance >= 5 && cameraAngle >= 0\.002[\s\S]*if \(!rotatedMatrix && distance < clickDistance && timeElapsed < clickDuration\)/);
+  assert.match(appSource, /const rotatedMatrix = distance >= 5 && cameraAngle >= 0\.002[\s\S]*const pannedMatrix = distance >= 5[\s\S]*cameraPointerStartTarget\.distanceTo\(this\.controls\.target\) >= 0\.002[\s\S]*if \(!rotatedMatrix && !pannedMatrix && distance < clickDistance && timeElapsed < clickDuration\)/);
   assert.match(appSource, /e\.pointerType === 'mouse' && e\.button === 1[\s\S]*this\.clearPointerHighlights\(\);[\s\S]*return;[\s\S]*const clickDistance/);
   assert.match(appSource, /addEventListener\('auxclick',[\s\S]*event\.button === 1[\s\S]*event\.preventDefault\(\)/);
+  assert.match(appSource, /const wasMovable = this\.controlSettings\.centerMode === 'movable'[\s\S]*wasMovable && this\.controlSettings\.centerMode === 'fixed'[\s\S]*this\.centerCameraTarget\(\)/);
+  assert.match(appSource, /centerCameraTarget\(\)[\s\S]*camera\.position\.clone\(\)\.sub\(this\.controls\.target\)[\s\S]*this\.controls\.target\.set\(0, 0, 0\)[\s\S]*this\.camera\.position\.copy\(offset\)/);
+  assert.match(appSource, /resetCamera\(\)[\s\S]*this\.camera\.position\.set\(distance, distance \* 0\.9, distance\)[\s\S]*this\.controls\.target\.set\(0, 0, 0\)[\s\S]*this\.positionReasoningCoordinateAxes\(true\)/);
+  assert.match(appSource, /control-center-mode-toggle[\s\S]*settingsWithCenterMode\(this\.controlSettings, nextCenterMode\)[\s\S]*saveControlSettings\(liveSettings\)[\s\S]*this\.applyControlBindings\(\)/);
+  assert.match(styleSource, /body\.matrix-center-unlocked #canvas-container canvas\s*\{\s*cursor:grab/);
 });
 
 test('keeps view controls discoverable without making rotation a beginner task', () => {
@@ -47,16 +52,21 @@ test('preserves left, right, and two-button minesweeper actions across camera pr
   assert.match(appSource, /pointerdown',[\s\S]*this\.handlePointerMove\(e\);[\s\S]*mouseChordFocusTarget = this\.currentPointerFocusTarget\(\)/);
   assert.match(appSource, /event\.button === 2 \|\| this\.activeMode === 'flag'[\s\S]*this\.toggleFlag\(x, y, z\)[\s\S]*this\.dig\(x, y, z\)/);
   assert.match(appSource, /e\.pointerType === 'mouse' && \(e\.buttons & 4\) !== 0[\s\S]*this\.clearPointerHighlights\(\);[\s\S]*return;/);
-  assert.match(appSource, /this\.controlSettings\.rightDragAction !== 'none'[\s\S]*\(e\.buttons & 2\) !== 0[\s\S]*Math\.sqrt\(dx \* dx \+ dy \* dy\) >= 5[\s\S]*this\.clearPointerHighlights\(\)/);
+  assert.match(appSource, /beginMousePanCandidate\(e\)[\s\S]*startNeighborInspection\(e\)/);
+  assert.match(appSource, /this\.controlSettings\.centerMode === 'movable'[\s\S]*this\.mousePanPointerId === e\.pointerId[\s\S]*\(e\.buttons & 2\) !== 0[\s\S]*Math\.hypot\(dx, dy\) >= 5[\s\S]*this\.mousePanActive = true[\s\S]*this\.panCameraByPixels/);
+  assert.match(appSource, /wasMousePan[\s\S]*this\.endMousePan\(\)[\s\S]*this\.resetMouseChordState\(\)[\s\S]*this\.clearPointerHighlights\(\)/);
   assert.match(appSource, /if \(e\.pointerType === 'mouse' && \(this\.mouseChordButtons & 3\) !== 0\) return;/);
-  assert.match(appSource, /if \(!rotatedMatrix && distance < clickDistance && timeElapsed < clickDuration\)/);
+  assert.match(appSource, /if \(!rotatedMatrix && !pannedMatrix && distance < clickDistance && timeElapsed < clickDuration\)/);
 });
 
 test('keeps desktop two-button actions reliable across oblique views and interrupted input', () => {
   assert.match(appSource, /pickTwoButtonTargetAtPointer\(event, \{ includeClueProxy = false \} = \{\}\)[\s\S]*primaryTargets[\s\S]*clueProxyTargets[\s\S]*resolveTwoButtonRayHits/);
   assert.match(appSource, /currentPointerFocusTarget\(\)[\s\S]*targetFromFocusedCell\(this\.hoveredCell\)/);
   assert.match(appSource, /resolveTwoButtonGestureTargets\(\{ \.\.\.gesture, currentTarget \}, getCell\)/);
-  assert.match(appSource, /cameraMoved \? Number\.POSITIVE_INFINITY : anchorDistance/);
+  assert.match(appSource, /maxDragDistance:\s*0/);
+  assert.match(appSource, /const distance = Math\.hypot\([\s\S]*e\.clientX - this\.mouseChordAnchor\.clientX,[\s\S]*e\.clientY - this\.mouseChordAnchor\.clientY/);
+  assert.match(appSource, /this\.mouseChordAnchor\.maxDragDistance\s*=\s*Math\.max\([\s\S]*this\.mouseChordAnchor\.maxDragDistance \?\? 0,[\s\S]*distance/);
+  assert.match(appSource, /const dragDistance = Math\.max\(anchorDistance, anchor\?\.maxDragDistance \?\? 0\)[\s\S]*dragThreshold:\s*10/);
   assert.match(appSource, /progress >= 1[\s\S]*animation\.mesh\.visible = false[\s\S]*animation\.mesh\.scale\.setScalar\(1\)/);
   assert.match(appSource, /window\.addEventListener\('mouseup',[\s\S]*resetMouseChordState/);
   assert.match(appSource, /window\.addEventListener\('blur', \(\) => \{[\s\S]*resetMouseChordState\(\);[\s\S]*clearPointerHighlights\(\);[\s\S]*\}\)/);

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Zero Domain Protocol: Sector Purge | Silver Wolf</title>
   <meta name="description" content="在银狼的骇客矩阵中隔离雷区孤岛，确认反制节点后消除整个封闭区块。">
-  <link rel="stylesheet" href="style.css?v=20260719-self-host-1">
+  <link rel="stylesheet" href="style.css?v=3.1.0">
   <!-- 错误捕获脚本：如果发生任何 JS 运行错误，在页面顶部弹出红色提示栏 -->
   <script>
     window.addEventListener('error', function(e) {
@@ -44,6 +44,11 @@
   <button id="btn-return-lobby" class="return-lobby-button" type="button" aria-label="返回主界面" title="返回主界面" data-i18n-aria-label="navigation.backToLobby" data-i18n-title="navigation.backToLobby">
     <span aria-hidden="true">←</span>
     <strong id="btn-return-lobby-label" data-i18n="navigation.backToLobby">主界面</strong>
+  </button>
+
+  <button id="btn-center-camera" class="mobile-only center-camera-button" type="button" aria-label="回到中心视角" title="回到中心视角" data-i18n-aria-label="action.resetCameraTitle" data-i18n-title="action.resetCameraTitle">
+    <span aria-hidden="true">◎</span>
+    <strong data-i18n="action.centerShort">回中</strong>
   </button>
 
   <!-- HUD 界面主容器 -->
@@ -165,8 +170,21 @@
         <button id="btn-restart" class="btn-primary glow-cyan-box" data-i18n="action.restart">重新初始化雷区</button>
         <button id="btn-control-settings" class="btn-secondary control-settings-entry" type="button" data-i18n="controls.open" data-i18n-title="controls.openTitle">⚙️ 键位设置</button>
         <div class="utility-buttons">
-          <button id="btn-reset-camera" class="btn-secondary" title="重置相机视角" data-i18n="action.resetCamera" data-i18n-title="action.resetCameraTitle">🎥 重置视角</button>
-          <button id="btn-sound-toggle" class="btn-secondary" title="切换音效" data-i18n-title="action.soundTitle">🔊 音效:开</button>
+          <button id="btn-reset-camera" class="btn-secondary" title="回到中心视角" data-i18n="action.resetCamera" data-i18n-title="action.resetCameraTitle">◎ 回到中心视角</button>
+          <button id="btn-sound-toggle" class="btn-secondary audio-toggle" type="button" aria-pressed="true" title="切换音效" data-i18n-title="action.soundTitle">🔊 音效:开</button>
+          <button id="btn-music-toggle" class="btn-secondary audio-toggle" type="button" aria-pressed="true" title="切换背景音乐" data-i18n-title="action.musicTitle">🎵 音乐:开</button>
+          <section class="audio-volume-controls" aria-label="音频音量" data-i18n-aria-label="action.audioLevels">
+            <label class="audio-volume-row" for="sound-volume">
+              <span data-i18n="action.soundVolume">音效音量</span>
+              <input id="sound-volume" type="range" min="0" max="100" step="1" value="100" aria-label="音效音量" data-i18n-aria-label="action.soundVolume">
+              <output id="sound-volume-value" for="sound-volume">100%</output>
+            </label>
+            <label class="audio-volume-row" for="music-volume">
+              <span data-i18n="action.musicVolume">音乐音量</span>
+              <input id="music-volume" type="range" min="0" max="100" step="1" value="100" aria-label="音乐音量" data-i18n-aria-label="action.musicVolume">
+              <output id="music-volume-value" for="music-volume">100%</output>
+            </label>
+          </section>
         </div>
       </footer>
     </aside>
@@ -252,6 +270,7 @@
         <ul class="guide-list" style="margin-bottom: 0; font-size: 12px;">
           <li id="guide-rotate" data-i18n="guide.rotate">电脑按住鼠标中键拖动 / 手机单指拖动: 旋转与翻面</li>
           <li id="guide-zoom" data-i18n="guide.pan">鼠标滚轮 / 手机双指捏合: 缩放（矩阵始终居中）</li>
+          <li id="guide-center" data-i18n="guide.centerFixed">固定中心已开启：矩阵保持居中；可在键位设置中关闭</li>
           <li data-i18n="guide.click">左键点击: 挖掘 / 插旗</li>
           <li data-i18n="guide.flag">右键点击: 快捷插旗/取消标记</li>
           <li id="guide-inspect" data-i18n="guide.inspect">右键按住数字: 高亮全部相邻格</li>
@@ -479,6 +498,14 @@
 
         <section class="control-settings-group">
           <div class="control-settings-group-title"><strong data-i18n="controls.custom">自定义视角</strong></div>
+          <button id="control-center-mode-toggle" class="control-center-mode-toggle active" type="button" role="switch" aria-checked="true" aria-describedby="control-center-mode-description">
+            <span class="control-center-mode-copy">
+              <strong data-i18n="controls.center.title">固定矩阵中心</strong>
+              <small id="control-center-mode-description" data-i18n="controls.center.fixedHint">矩阵保持在画面中央，围绕中心旋转。</small>
+            </span>
+            <span class="control-center-mode-switch" aria-hidden="true"><i></i></span>
+            <span id="control-center-mode-state" class="control-center-mode-state" data-i18n="controls.center.fixedState">已固定</span>
+          </button>
           <div class="control-binding-grid">
             <label for="control-middle-action" data-i18n="controls.middleDrag">中键拖动</label>
             <select id="control-middle-action" data-control-setting="middleDragAction">
@@ -643,6 +670,6 @@
     <span>▼</span>
   </button>
 
-  <script type="module" src="app.js?v=20260719-local-solo-1"></script>
+  <script type="module" src="app.js?v=3.1.0"></script>
 </body>
 </html>

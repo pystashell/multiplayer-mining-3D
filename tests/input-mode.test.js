@@ -36,8 +36,10 @@ test('selects same-language input copy, replaces params, and falls back to the b
 test('keeps all gameplay instruction variants complete in Chinese and English', () => {
   const keys = [
     'mobile.touchHint',
+    'mobile.touchHintMovable',
     'controls.fixedNote',
     'controls.touchNote',
+    'controls.center.movableHint',
     'task.guide.guidedStartTitle',
     'task.guide.guidedMinesTitle',
     'tutorial.actionHint.scan',
@@ -47,6 +49,7 @@ test('keeps all gameplay instruction variants complete in Chinese and English', 
     'tutorial.actionHint.chord',
     'guide.rotateConfigured',
     'guide.zoomConfigured',
+    'guide.centerMovable',
     'guide.keysConfigured',
     'guide.click',
     'guide.flag',

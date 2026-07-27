@@ -1,18 +1,26 @@
 import * as THREE from './vendor/three-0.150.0/build/three.module.js';
 import { OrbitControls } from './vendor/three-0.150.0/examples/jsm/controls/OrbitControls.js';
-import { HybridRoomClient } from './local-room-client.js?v=20260719-local-solo-1';
-import { initialLanguage, randomNickname, translateForInput } from './i18n.js?v=20260719-chord-target-1';
+import { HybridRoomClient } from './local-room-client.js?v=3.1.0';
+import { initialLanguage, randomNickname, translateForInput } from './i18n.js?v=3.1.0';
 import {
   detectInitialInputMode,
   inputModeFromPointerType,
-} from './input-mode.js?v=20260718-input-copy-1';
+} from './input-mode.js?v=3.1.0';
+import {
+  interruptedGesturePatch,
+  recenterCameraKeepingOffset,
+  screenPanTranslation,
+  shouldStartMousePan,
+  shouldStartTouchPan,
+  touchHoldDecision,
+} from './camera-gestures.js?v=3.1.0';
 import { solveMinesweeperHint } from './minesweeper-solver.js';
 import {
   chordOpportunityAt,
   findChordOpportunity,
   findNewChordOpportunity,
   isNewSuccessfulChord,
-} from './tutorial-triggers.js?v=20260719-chord-target-1';
+} from './tutorial-triggers.js?v=3.1.0';
 import { chooseFloatingAxisPlacement, chooseGuidedCalloutPlacement } from './guided-callout.js';
 import {
   BOARD_ANIMATION_TIMING,
@@ -31,14 +39,26 @@ import {
   CONTROL_PRESETS,
   cloneControlSettings,
   controlPresetForSettings,
+  effectiveRightDragAction,
   formatControlKey,
   isBindableControlKey,
   loadControlSettings,
   normalizeWheelDelta,
   saveControlSettings,
+  settingsWithCenterMode,
   validateControlSettings,
   wheelActionForEvent,
-} from './control-settings.js';
+} from './control-settings.js?v=3.1.0';
+import {
+  SciFiMusicDirector,
+  getSharedAudioContext,
+  loadSfxEnabled,
+  loadSfxVolume,
+  musicTrackForGame,
+  persistSfxEnabled,
+  persistSfxVolume,
+  resumeSharedAudioContext,
+} from './soundtrack.js?v=3.1.0';
 
 const TASK_MISSIONS = Object.freeze({
   easy: Object.freeze({ width: 3, height: 3, depth: 3, mineCount: 3, ruleset: 'classic', autoPurge: false, reduction: false, campaign: true }),
@@ -100,24 +120,68 @@ const DIALOGUE_ART = Object.freeze({
 // 1. 音效合成器模块 (Web Audio API)
 // -------------------------------------------------------------
 class SoundSynthesizer {
-  constructor() {
+  constructor({ scope = window, storage } = {}) {
+    this.scope = scope;
+    if (storage === undefined) {
+      try { storage = scope?.localStorage; } catch { storage = null; }
+    }
+    this.storage = storage;
     this.ctx = null;
-    this.enabled = true;
+    this.master = null;
+    this.volume = loadSfxVolume(storage);
+    this.enabled = loadSfxEnabled(storage) && this.volume > 0;
   }
 
   init() {
-    if (!this.ctx) {
-      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.ctx = getSharedAudioContext(this.scope);
+    if (!this.ctx) return null;
+    if (!this.master || this.master.context !== this.ctx) {
+      this.master = this.ctx.createGain();
+      this.master.gain.setValueAtTime(this.volume, this.ctx.currentTime);
+      this.master.connect(this.ctx.destination);
     }
-    // 恢复 AudioContext（因浏览器安全策略，需在用户点击后初始化）
-    if (this.ctx.state === 'suspended') {
-      this.ctx.resume();
+    // Resume from the user gesture when possible. SFX and music share one
+    // context so iOS/Safari does not need to keep two audio engines alive.
+    void resumeSharedAudioContext(this.scope);
+    return this.ctx;
+  }
+
+  applyVolume() {
+    if (!this.master || !this.ctx) return;
+    const now = this.ctx.currentTime;
+    const nextValue = this.enabled ? this.volume : 0;
+    try {
+      this.master.gain.cancelScheduledValues(now);
+      this.master.gain.setValueAtTime(this.master.gain.value, now);
+      this.master.gain.linearRampToValueAtTime(nextValue, now + 0.025);
+    } catch {
+      this.master.gain.value = nextValue;
     }
+  }
+
+  setEnabled(enabled) {
+    if (enabled && this.volume <= 0) this.volume = persistSfxVolume(1, this.storage);
+    this.enabled = Boolean(enabled);
+    persistSfxEnabled(this.enabled, this.storage);
+    this.applyVolume();
+    return this.enabled;
+  }
+
+  toggleEnabled() {
+    return this.setEnabled(!this.enabled);
+  }
+
+  setVolume(volume) {
+    this.volume = persistSfxVolume(volume, this.storage);
+    this.applyVolume();
+    if (this.volume <= 0 && this.enabled) this.setEnabled(false);
+    else if (this.volume > 0 && !this.enabled) this.setEnabled(true);
+    return this.volume;
   }
 
   playDig() {
     if (!this.enabled) return;
-    this.init();
+    if (!this.init()) return;
     
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
@@ -131,7 +195,7 @@ class SoundSynthesizer {
     gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
     
     osc.connect(gain);
-    gain.connect(this.ctx.destination);
+    gain.connect(this.master);
     
     osc.start(now);
     osc.stop(now + 0.15);
@@ -139,7 +203,7 @@ class SoundSynthesizer {
 
   playFlag() {
     if (!this.enabled) return;
-    this.init();
+    if (!this.init()) return;
     
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
@@ -153,7 +217,7 @@ class SoundSynthesizer {
     gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
     
     osc.connect(gain);
-    gain.connect(this.ctx.destination);
+    gain.connect(this.master);
     
     osc.start(now);
     osc.stop(now + 0.12);
@@ -161,7 +225,7 @@ class SoundSynthesizer {
 
   playExplosion() {
     if (!this.enabled) return;
-    this.init();
+    if (!this.init()) return;
     
     const now = this.ctx.currentTime;
     const bufferSize = this.ctx.sampleRate * 1.5; // 1.5秒爆炸声
@@ -196,10 +260,10 @@ class SoundSynthesizer {
     
     noiseNode.connect(filter);
     filter.connect(gain);
-    gain.connect(this.ctx.destination);
+    gain.connect(this.master);
     
     subOsc.connect(subGain);
-    subGain.connect(this.ctx.destination);
+    subGain.connect(this.master);
     
     noiseNode.start(now);
     noiseNode.stop(now + 1.5);
@@ -209,7 +273,7 @@ class SoundSynthesizer {
 
   playWin() {
     if (!this.enabled) return;
-    this.init();
+    if (!this.init()) return;
     
     const now = this.ctx.currentTime;
     const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98, 2093.00]; // C大调和弦升音
@@ -226,7 +290,7 @@ class SoundSynthesizer {
       gain.gain.exponentialRampToValueAtTime(0.005, now + delay + 0.4);
       
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.master);
       
       osc.start(now + delay);
       osc.stop(now + delay + 0.5);
@@ -235,7 +299,7 @@ class SoundSynthesizer {
 
   playHover() {
     if (!this.enabled) return;
-    this.init();
+    if (!this.init()) return;
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
@@ -246,13 +310,14 @@ class SoundSynthesizer {
     gain.gain.linearRampToValueAtTime(0.001, now + 0.02);
     
     osc.connect(gain);
-    gain.connect(this.ctx.destination);
+    gain.connect(this.master);
     osc.start(now);
     osc.stop(now + 0.02);
   }
 }
 
-const sfx = new SoundSynthesizer();
+const sfx = new SoundSynthesizer({ scope: window });
+const music = new SciFiMusicDirector({ scope: window });
 
 // -------------------------------------------------------------
 // 2. 粒子效果引擎
@@ -460,6 +525,11 @@ class HoloSweeperGame {
     this.pendingControlSettings = null;
     this.controlKeyCaptureField = null;
     this.cameraPointerStartDirection = null;
+    this.cameraPointerStartTarget = null;
+    this.mousePanActive = false;
+    this.mousePanPointerId = null;
+    this.mousePanStartPosition = null;
+    this.mousePanLastPosition = null;
     this.particles = null;
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2();
@@ -504,6 +574,10 @@ class HoloSweeperGame {
     this.touchHoldTimer = null;
     this.touchHoldTriggered = false;
     this.touchInspectionActive = false;
+    this.touchPanActive = false;
+    this.touchPanPointerId = null;
+    this.touchPanLastPosition = null;
+    this.touchHoldLatestPosition = null;
     this.activeTouchPointers = new Set();
     this.touchGestureHadMultiplePointers = false;
     
@@ -535,6 +609,11 @@ class HoloSweeperGame {
   // 绑定 HTML 交互元素
   bindUI() {
     this.bindInputModeTracking();
+    const unlockAudioFromGesture = () => {
+      if (!music.unlocked || music.context?.state !== 'running') void music.unlock();
+    };
+    document.addEventListener('pointerdown', unlockAudioFromGesture, { capture: true, passive: true });
+    document.addEventListener('keydown', unlockAudioFromGesture, { capture: true });
     // Lobby UI
     const readNickname = () => document.getElementById('input-nickname').value.trim();
     const persistNickname = (nickname) => {
@@ -587,6 +666,7 @@ class HoloSweeperGame {
     });
 
     document.getElementById('btn-start-task').addEventListener('click', async () => {
+      void music.unlock();
       if (this.retryPendingLobbyConnection('btn-start-task')) return;
       if (this.lobbyEntryPending) return;
       const nickname = readNickname();
@@ -616,6 +696,7 @@ class HoloSweeperGame {
     });
 
     document.getElementById('btn-join-room').addEventListener('click', async () => {
+      void music.unlock();
       if (this.retryPendingLobbyConnection('btn-join-room')) return;
       if (this.lobbyEntryPending) return;
       const nickname = readNickname();
@@ -636,6 +717,7 @@ class HoloSweeperGame {
     });
 
     document.getElementById('btn-create-room').addEventListener('click', async () => {
+      void music.unlock();
       if (this.retryPendingLobbyConnection('btn-create-room')) return;
       if (this.lobbyEntryPending) return;
       const nickname = readNickname();
@@ -711,12 +793,26 @@ class HoloSweeperGame {
 
     // 常用控制
     document.getElementById('btn-restart').addEventListener('click', () => this.startNewGame());
-    document.getElementById('btn-reset-camera').addEventListener('click', () => this.resetCamera());
+    for (const id of ['btn-reset-camera', 'btn-center-camera']) {
+      document.getElementById(id)?.addEventListener('click', () => this.resetCamera());
+    }
     
     const soundBtn = document.getElementById('btn-sound-toggle');
     soundBtn.addEventListener('click', () => {
-      sfx.enabled = !sfx.enabled;
-      soundBtn.innerText = this.t(sfx.enabled ? 'action.soundOn' : 'action.soundOff');
+      sfx.toggleEnabled();
+      this.updateAudioControls();
+    });
+    document.getElementById('btn-music-toggle').addEventListener('click', () => {
+      void music.toggleEnabled();
+      this.updateAudioControls();
+    });
+    document.getElementById('sound-volume').addEventListener('input', (event) => {
+      sfx.setVolume(Number(event.currentTarget.value) / 100);
+      this.updateAudioControls();
+    });
+    document.getElementById('music-volume').addEventListener('input', (event) => {
+      void music.setVolume(Number(event.currentTarget.value) / 100);
+      this.updateAudioControls();
     });
 
     const openControlSettings = () => this.openControlSettings();
@@ -736,7 +832,11 @@ class HoloSweeperGame {
     });
     document.querySelectorAll('[data-control-preset]').forEach((button) => {
       button.addEventListener('click', () => {
-        this.pendingControlSettings = cloneControlSettings(CONTROL_PRESETS[button.dataset.controlPreset]);
+        const centerMode = this.pendingControlSettings?.centerMode ?? this.controlSettings.centerMode;
+        this.pendingControlSettings = {
+          ...cloneControlSettings(CONTROL_PRESETS[button.dataset.controlPreset]),
+          centerMode,
+        };
         this.controlKeyCaptureField = null;
         this.setControlSettingsStatus('');
         this.renderControlSettings();
@@ -749,6 +849,23 @@ class HoloSweeperGame {
         this.setControlSettingsStatus('');
         this.renderControlSettings();
       });
+    });
+    document.getElementById('control-center-mode-toggle').addEventListener('click', () => {
+      if (!this.pendingControlSettings) this.pendingControlSettings = cloneControlSettings(this.controlSettings);
+      const nextCenterMode = this.pendingControlSettings.centerMode === 'movable'
+        ? 'fixed'
+        : 'movable';
+      this.pendingControlSettings = settingsWithCenterMode(this.pendingControlSettings, nextCenterMode);
+      const wasMovable = this.controlSettings.centerMode === 'movable';
+      const liveSettings = settingsWithCenterMode(this.controlSettings, nextCenterMode);
+      saveControlSettings(liveSettings);
+      this.controlSettings = liveSettings;
+      this.applyControlBindings();
+      if (wasMovable && nextCenterMode === 'fixed') this.centerCameraTarget();
+      this.updateControlCopy();
+      if (this.dialogueState && !this.waitingTutorialAction) this.renderSilverWolfDialogue();
+      if (this.waitingTutorialAction) this.setTutorialActionHint(this.waitingTutorialAction);
+      this.setControlSettingsStatus('controls.saved', true);
     });
     document.querySelectorAll('[data-control-key-field]').forEach((button) => {
       button.addEventListener('click', () => {
@@ -868,9 +985,11 @@ class HoloSweeperGame {
       this.setControlSettingsStatus(`controls.error.${result.errors[0]}`);
       return;
     }
+    const wasMovable = this.controlSettings.centerMode === 'movable';
     saveControlSettings(result.settings);
     this.controlSettings = result.settings;
     this.applyControlBindings();
+    if (wasMovable && this.controlSettings.centerMode === 'fixed') this.centerCameraTarget();
     this.updateControlCopy();
     if (this.dialogueState && !this.waitingTutorialAction) this.renderSilverWolfDialogue();
     if (this.waitingTutorialAction) this.setTutorialActionHint(this.waitingTutorialAction);
@@ -884,6 +1003,20 @@ class HoloSweeperGame {
     document.querySelectorAll('[data-control-setting]').forEach((select) => {
       select.value = settings[select.dataset.controlSetting];
     });
+    const movable = settings.centerMode === 'movable';
+    const centerToggle = document.getElementById('control-center-mode-toggle');
+    centerToggle.classList.toggle('active', !movable);
+    centerToggle.classList.toggle('movable', movable);
+    centerToggle.setAttribute('aria-checked', String(!movable));
+    document.getElementById('control-center-mode-state').textContent = this.t(
+      movable ? 'controls.center.movableState' : 'controls.center.fixedState',
+    );
+    document.getElementById('control-center-mode-description').textContent = this.t(
+      movable ? 'controls.center.movableHint' : 'controls.center.fixedHint',
+    );
+    const rightDragSelect = document.getElementById('control-right-action');
+    rightDragSelect.disabled = movable;
+    rightDragSelect.title = movable ? this.t('controls.center.rightDragOverride') : '';
     const preset = controlPresetForSettings(settings);
     document.querySelectorAll('[data-control-preset]').forEach((button) => {
       const active = button.dataset.controlPreset === preset;
@@ -907,30 +1040,41 @@ class HoloSweeperGame {
 
   applyControlBindings() {
     if (!this.controls) return;
+    if (this.controlSettings.centerMode !== 'movable') this.endMousePan();
     this.controls.enableZoom = true;
+    this.controls.enablePan = this.controlSettings.centerMode === 'movable';
+    this.controls.screenSpacePanning = true;
     const dragActions = {
       rotate: THREE.MOUSE.ROTATE,
       zoom: THREE.MOUSE.DOLLY,
+      pan: THREE.MOUSE.PAN,
       none: null,
     };
     this.controls.mouseButtons.LEFT = null;
-    this.controls.mouseButtons.RIGHT = dragActions[this.controlSettings.rightDragAction];
+    // Movable-center right-drag is handled by the game gesture layer below.
+    // Keeping OrbitControls out of this one gesture prevents number inspection
+    // and two-button actions from racing its internal pan state.
+    this.controls.mouseButtons.RIGHT = this.controlSettings.centerMode === 'movable'
+      ? null
+      : dragActions[effectiveRightDragAction(this.controlSettings)];
     this.controls.mouseButtons.MIDDLE = dragActions[this.controlSettings.middleDragAction];
+    document.body.classList.toggle('matrix-center-unlocked', this.controlSettings.centerMode === 'movable');
   }
 
   controlBindingSummary(actionType) {
     const settings = this.controlSettings;
     const bindings = [
       ['controls.gesture.middleDrag', settings.middleDragAction],
-      ['controls.gesture.rightDrag', settings.rightDragAction],
+      ['controls.gesture.rightDrag', effectiveRightDragAction(settings)],
       ['controls.gesture.wheel', settings.wheelAction],
       ['controls.gesture.shiftWheel', settings.shiftWheelAction],
       ['controls.gesture.ctrlWheel', settings.ctrlWheelAction],
     ];
     return bindings
-      .filter(([, action]) => actionType === 'rotation'
-        ? ['rotate', 'yaw', 'pitch'].includes(action)
-        : action === 'zoom')
+      .filter(([, action]) => {
+        if (actionType === 'rotation') return ['rotate', 'yaw', 'pitch'].includes(action);
+        return action === actionType;
+      })
       .map(([gestureKey, action]) => this.t('controls.binding', {
         gesture: this.t(gestureKey),
         action: this.t(`controls.action.${action}`),
@@ -942,6 +1086,7 @@ class HoloSweeperGame {
     return {
       rotate: this.controlBindingSummary('rotation'),
       zoom: this.controlBindingSummary('zoom'),
+      pan: this.controlBindingSummary('pan'),
       dig: formatControlKey(this.controlSettings.digKey),
       flag: formatControlKey(this.controlSettings.flagKey),
       reset: formatControlKey(this.controlSettings.resetKey),
@@ -953,12 +1098,21 @@ class HoloSweeperGame {
     const rotateGuide = document.getElementById('guide-rotate');
     const zoomGuide = document.getElementById('guide-zoom');
     const keyGuide = document.getElementById('guide-keys');
+    const centerGuide = document.getElementById('guide-center');
     if (rotateGuide) rotateGuide.textContent = this.t('guide.rotateConfigured', params);
     if (zoomGuide) zoomGuide.textContent = this.t('guide.zoomConfigured', params);
+    if (centerGuide) centerGuide.textContent = this.t(
+      this.controlSettings.centerMode === 'movable' ? 'guide.centerMovable' : 'guide.centerFixed',
+      params,
+    );
     if (keyGuide) keyGuide.textContent = this.t('guide.keysConfigured', params);
     document.getElementById('btn-mode-dig').title = `${this.t('controls.hotkey.dig')}: ${params.dig}`;
     document.getElementById('btn-mode-flag').title = `${this.t('controls.hotkey.flag')}: ${params.flag}`;
     document.getElementById('btn-reset-camera').title = `${this.t('action.resetCameraTitle')}: ${params.reset}`;
+    document.getElementById('btn-center-camera').title = `${this.t('action.resetCameraTitle')}: ${params.reset}`;
+    document.querySelector('.mobile-touch-hint').textContent = this.t(
+      this.controlSettings.centerMode === 'movable' ? 'mobile.touchHintMovable' : 'mobile.touchHint',
+    );
     this.renderControlSettings();
   }
 
@@ -1179,6 +1333,7 @@ class HoloSweeperGame {
   async returnToLobby() {
     if (this.returningToLobby) return;
     this.returningToLobby = true;
+    music.setScene({ inRoom: false });
     const departingMode = this.gameMode;
     const departingCode = this.roomSnapshot?.code ?? this.roomClient.session?.code ?? '';
     const returnButton = document.getElementById('btn-return-lobby');
@@ -1203,6 +1358,8 @@ class HoloSweeperGame {
       clearTimeout(this.sectorPurgeBannerTimer);
       clearTimeout(this.touchHoldTimer);
       clearTimeout(this.lastMobileCellTap?.timer);
+      this.endMousePan();
+      this.endTouchPan({ force: true });
       this.timerInterval = null;
       this.revivalTimer = null;
       this.guidedCorrectionTimer = null;
@@ -1212,6 +1369,7 @@ class HoloSweeperGame {
       this.touchHoldTimer = null;
       this.lastMobileCellTap = null;
       this.lastMobileNumberTap = null;
+      this.touchHoldLatestPosition = null;
       this.activeTouchPointers.clear();
       this.touchGestureHadMultiplePointers = false;
       this.touchHoldTriggered = false;
@@ -1286,6 +1444,58 @@ class HoloSweeperGame {
       if (returnButton) returnButton.disabled = false;
       if (returnLabel) returnLabel.textContent = this.t('navigation.backToLobby');
     }
+  }
+
+  updateAudioControls() {
+    const soundButton = document.getElementById('btn-sound-toggle');
+    const musicButton = document.getElementById('btn-music-toggle');
+    const soundVolume = document.getElementById('sound-volume');
+    const musicVolume = document.getElementById('music-volume');
+    const soundPercent = Math.round(sfx.volume * 100);
+    const musicPercent = Math.round(music.volume * 100);
+    if (soundButton) {
+      soundButton.innerText = this.t(sfx.enabled ? 'action.soundOn' : 'action.soundOff');
+      soundButton.setAttribute('aria-pressed', String(sfx.enabled));
+    }
+    if (musicButton) {
+      musicButton.innerText = this.t(music.enabled ? 'action.musicOn' : 'action.musicOff');
+      musicButton.setAttribute('aria-pressed', String(music.enabled));
+      if (music.desiredTrackId) musicButton.dataset.track = music.desiredTrackId;
+      else delete musicButton.dataset.track;
+    }
+    if (soundVolume) {
+      soundVolume.value = String(soundPercent);
+      soundVolume.setAttribute('aria-valuetext', `${soundPercent}%`);
+    }
+    if (musicVolume) {
+      musicVolume.value = String(musicPercent);
+      musicVolume.setAttribute('aria-valuetext', `${musicPercent}%`);
+    }
+    const soundOutput = document.getElementById('sound-volume-value');
+    const musicOutput = document.getElementById('music-volume-value');
+    if (soundOutput) soundOutput.textContent = `${soundPercent}%`;
+    if (musicOutput) musicOutput.textContent = `${musicPercent}%`;
+  }
+
+  syncMusicForState(snapshot = this.roomSnapshot) {
+    const resolvedMode = snapshot?.mode === 'solo'
+      ? 'solo'
+      : (snapshot?.mode === 'squad' ? 'squad' : this.gameMode);
+    const resolvedConfig = resolvedMode === 'solo' && this.pendingTaskConfig
+      ? this.pendingTaskConfig
+      : (snapshot?.config ?? this.pendingTaskConfig);
+    const state = {
+      inRoom: Boolean(snapshot) && !this.returningToLobby,
+      gameMode: resolvedMode,
+      taskMission: this.pendingTaskMission ?? this.taskMission,
+      config: resolvedConfig,
+    };
+    const trackId = musicTrackForGame(state);
+    music.setScene(state);
+    if (trackId) document.body.dataset.musicTrack = trackId;
+    else delete document.body.dataset.musicTrack;
+    this.updateAudioControls();
+    return trackId;
   }
 
   t(key, params = {}) {
@@ -1392,7 +1602,7 @@ class HoloSweeperGame {
       if (!initializing || !this.generatedNickname) this.generatedNickname = randomNickname(language);
       nicknameInput.value = this.generatedNickname;
     }
-    document.getElementById('btn-sound-toggle').innerText = this.t(sfx.enabled ? 'action.soundOn' : 'action.soundOff');
+    this.updateAudioControls();
     const code = this.roomSnapshot?.code || '-';
     document.getElementById('room-code-display').innerText = this.t('players.roomCode', { code });
     const me = this.roomSnapshot?.players?.find(player => player.id === this.currentPlayerId);
@@ -1497,6 +1707,7 @@ class HoloSweeperGame {
         this.roomClient.send({ op: 'restart', config: desired }).catch(error => this.handleRoomError(error));
       }
     }
+    this.syncMusicForState(message.snapshot);
   }
 
   handleRoomError(error) {
@@ -1545,6 +1756,7 @@ class HoloSweeperGame {
       }
     }
     this.syncGameModeUI();
+    this.syncMusicForState(snapshot);
     const configChanged = !previous || CONFIG_KEYS
       .some(key => previous.config[key] !== snapshot.config[key]);
     const restarted = previous && snapshot.phase === 'ready' && previous.phase !== 'ready';
@@ -4488,7 +4700,7 @@ class HoloSweeperGame {
           target: currentTarget,
           clientX: e.clientX,
           clientY: e.clientY,
-          cameraDirection: this.cameraDirectionFromTarget(),
+          maxDragDistance: 0,
         };
         return;
       }
@@ -4500,13 +4712,11 @@ class HoloSweeperGame {
       const anchorDistance = anchor
         ? Math.hypot(e.clientX - anchor.clientX, e.clientY - anchor.clientY)
         : 0;
-      const currentCameraDirection = this.cameraDirectionFromTarget();
-      const cameraMoved = Boolean(anchor?.cameraDirection && currentCameraDirection
-        && anchor.cameraDirection.angleTo(currentCameraDirection) >= 0.002);
+      const dragDistance = Math.max(anchorDistance, anchor?.maxDragDistance ?? 0);
       this.handleTwoButtonActionAtPointer(e, {
         focusTarget: this.mouseChordFocusTarget,
         anchorTarget: anchor?.target ?? null,
-        dragDistance: cameraMoved ? Number.POSITIVE_INFINITY : anchorDistance,
+        dragDistance,
         dragThreshold: 10,
       });
       this.clearPointerHighlights();
@@ -4524,18 +4734,40 @@ class HoloSweeperGame {
       this.mouseDownPos.y = e.clientY;
       this.mouseDownTime = performance.now();
       this.cameraPointerStartDirection = this.cameraDirectionFromTarget();
+      this.cameraPointerStartTarget = this.controls.target.clone();
       this.touchHoldTriggered = false;
       this.touchInspectionActive = false;
       clearTimeout(this.touchHoldTimer);
+      if (e.pointerType === 'mouse' && e.button === 2
+        && this.controlSettings.centerMode === 'movable') {
+        this.beginMousePanCandidate(e);
+      } else if (e.pointerType === 'mouse' && e.button === 2) {
+        this.endMousePan();
+      }
       if (e.pointerType === 'mouse' && e.button === 1) {
         this.clearPointerHighlights();
       } else if (e.button === 2) {
         this.startNeighborInspection(e);
       } else if (e.pointerType === 'touch') {
         this.activeTouchPointers.add(e.pointerId);
-        if (this.activeTouchPointers.size > 1) {
+        this.touchHoldLatestPosition = {
+          clientX: e.clientX,
+          clientY: e.clientY,
+          pointerType: 'touch',
+          pointerId: e.pointerId,
+        };
+        if (this.activeTouchPointers.size > 1 && touchHoldDecision({
+          activePointerCount: this.activeTouchPointers.size,
+          hadMultiplePointers: true,
+          start: this.mouseDownPos,
+          current: this.touchHoldLatestPosition,
+        }) === 'cancel') {
           this.touchGestureHadMultiplePointers = true;
+          clearTimeout(this.touchHoldTimer);
           this.touchHoldTimer = null;
+          this.touchHoldLatestPosition = null;
+          this.endTouchPan({ force: true });
+          this.controls.enablePan = false;
           this.clearPointerHighlights();
           return;
         }
@@ -4544,8 +4776,23 @@ class HoloSweeperGame {
           this.touchHoldTimer = null;
           this.touchHoldTriggered = true;
           window.getSelection?.()?.removeAllRanges();
-          this.startNeighborInspection(touchPoint);
-          this.touchInspectionActive = Boolean(this.activeHighlightCenter);
+          const heldPoint = this.touchHoldLatestPosition?.pointerId === e.pointerId
+            ? this.touchHoldLatestPosition
+            : { ...touchPoint, pointerId: e.pointerId };
+          if (touchHoldDecision({
+            elapsedMs: 420,
+            start: this.mouseDownPos,
+            current: heldPoint,
+            activePointerCount: this.activeTouchPointers.size,
+            hadMultiplePointers: this.touchGestureHadMultiplePointers,
+          }) !== 'trigger') {
+            this.touchHoldTriggered = false;
+            return;
+          }
+          this.touchInspectionActive = this.startNeighborInspection(heldPoint);
+          if (!this.touchInspectionActive && this.controlSettings.centerMode === 'movable') {
+            this.beginTouchPan(heldPoint);
+          }
           if (this.touchInspectionActive) navigator.vibrate?.(18);
         }, 420);
       }
@@ -4553,6 +4800,19 @@ class HoloSweeperGame {
     dom.addEventListener('pointerup', (e) => {
       clearTimeout(this.touchHoldTimer);
       this.touchHoldTimer = null;
+      const wasMousePan = e.pointerType === 'mouse'
+        && this.mousePanPointerId === e.pointerId
+        && this.endMousePan();
+      const wasTouchPan = e.pointerType === 'touch'
+        && this.touchPanActive
+        && this.touchPanPointerId === e.pointerId;
+      if (wasMousePan) {
+        this.cameraPointerStartDirection = null;
+        this.cameraPointerStartTarget = null;
+        this.resetMouseChordState();
+        this.clearPointerHighlights();
+        return;
+      }
       if (e.pointerType === 'mouse' && this.mouseChordTriggered) {
         if ((e.buttons & 3) === 0) this.resetMouseChordState();
         this.clearPointerHighlights();
@@ -4562,6 +4822,14 @@ class HoloSweeperGame {
         this.touchGestureHadMultiplePointers || this.activeTouchPointers.size > 1
       );
       if (e.pointerType === 'touch') this.activeTouchPointers.delete(e.pointerId);
+      if (this.touchHoldLatestPosition?.pointerId === e.pointerId) this.touchHoldLatestPosition = null;
+      if (wasTouchPan) {
+        this.endTouchPan();
+        this.touchInspectionActive = false;
+        this.touchHoldTriggered = false;
+        if (this.activeTouchPointers.size === 0) this.touchGestureHadMultiplePointers = false;
+        return;
+      }
       if (e.pointerType === 'touch' && this.touchHoldTriggered) {
         if (this.touchInspectionActive) {
           this.clearPointerHighlights({ completeInspection: true });
@@ -4572,7 +4840,11 @@ class HoloSweeperGame {
         return;
       }
       if (wasMultiTouchGesture) {
-        if (this.activeTouchPointers.size === 0) this.touchGestureHadMultiplePointers = false;
+        if (this.activeTouchPointers.size === 0) {
+          this.touchGestureHadMultiplePointers = false;
+          this.endTouchPan({ force: true });
+          this.applyControlBindings();
+        }
         return;
       }
       const dx = e.clientX - this.mouseDownPos.x;
@@ -4584,7 +4856,11 @@ class HoloSweeperGame {
         ? this.cameraPointerStartDirection.angleTo(currentCameraDirection)
         : 0;
       const rotatedMatrix = distance >= 5 && cameraAngle >= 0.002;
+      const pannedMatrix = distance >= 5
+        && this.cameraPointerStartTarget
+        && this.cameraPointerStartTarget.distanceTo(this.controls.target) >= 0.002;
       this.cameraPointerStartDirection = null;
+      this.cameraPointerStartTarget = null;
       if (e.pointerType === 'mouse' && e.button === 1) {
         this.clearPointerHighlights();
         return;
@@ -4592,7 +4868,7 @@ class HoloSweeperGame {
       
       const clickDistance = e.pointerType === 'touch' ? 12 : 5;
       const clickDuration = e.pointerType === 'touch' ? 500 : 250;
-      if (!rotatedMatrix && distance < clickDistance && timeElapsed < clickDuration) {
+      if (!rotatedMatrix && !pannedMatrix && distance < clickDistance && timeElapsed < clickDuration) {
         this.handleCanvasClick(e);
       }
       if (e.pointerType === 'touch' && this.activeTouchPointers.size === 0) {
@@ -4603,13 +4879,25 @@ class HoloSweeperGame {
     const stopNeighborInspection = (event) => {
       if (event.pointerType === 'mouse' && (event.buttons & 3) === 0) this.resetMouseChordState();
       if (event.type === 'pointercancel') {
-        if (event.pointerType === 'mouse') this.resetMouseChordState();
+        if (event.pointerType === 'mouse') {
+          this.endMousePan();
+          this.resetMouseChordState();
+        }
         clearTimeout(this.touchHoldTimer);
         this.touchHoldTimer = null;
         this.touchHoldTriggered = false;
         this.touchInspectionActive = false;
         if (event.pointerType === 'touch') this.activeTouchPointers.delete(event.pointerId);
-        if (this.activeTouchPointers.size === 0) this.touchGestureHadMultiplePointers = false;
+        if (this.touchHoldLatestPosition?.pointerId === event.pointerId) this.touchHoldLatestPosition = null;
+        if (event.pointerType === 'touch') this.endTouchPan();
+        Object.assign(this, interruptedGesturePatch({
+          pointerType: event.pointerType,
+          clearMultiTouch: this.activeTouchPointers.size === 0,
+        }));
+        if (this.activeTouchPointers.size === 0) {
+          this.touchGestureHadMultiplePointers = false;
+          this.applyControlBindings();
+        }
       }
       if (event.type === 'pointerup' && event.button !== 2) return;
       this.clearPointerHighlights({
@@ -4625,30 +4913,122 @@ class HoloSweeperGame {
       if (this.mouseChordButtons === 0) this.resetMouseChordState();
     }, { capture: true });
     window.addEventListener('blur', () => {
+      this.endMousePan();
       this.resetMouseChordState();
+      clearTimeout(this.touchHoldTimer);
+      this.touchHoldTimer = null;
+      this.touchHoldTriggered = false;
+      this.touchInspectionActive = false;
+      this.touchHoldLatestPosition = null;
+      this.activeTouchPointers.clear();
+      this.touchGestureHadMultiplePointers = false;
+      this.endTouchPan({ force: true });
+      Object.assign(this, interruptedGesturePatch());
+      this.applyControlBindings();
       this.clearPointerHighlights();
     });
     dom.addEventListener('lostpointercapture', (event) => {
-      if (event.pointerType === 'mouse') this.resetMouseChordState();
+      if (event.pointerType === 'mouse') {
+        this.endMousePan();
+        this.resetMouseChordState();
+      }
+      if (event.pointerType === 'touch') {
+        this.activeTouchPointers.delete(event.pointerId);
+        if (this.touchHoldLatestPosition?.pointerId === event.pointerId) this.touchHoldLatestPosition = null;
+        if (this.activeTouchPointers.size === 0) this.touchGestureHadMultiplePointers = false;
+        this.endTouchPan({ force: true });
+        this.applyControlBindings();
+      }
     });
 
     // 鼠标移动监听，用于方块 Hover 效果
     dom.addEventListener('pointermove', (e) => {
+      if (e.pointerType === 'mouse' && this.mouseChordAnchor && (e.buttons & 3) !== 0) {
+        const distance = Math.hypot(
+          e.clientX - this.mouseChordAnchor.clientX,
+          e.clientY - this.mouseChordAnchor.clientY,
+        );
+        this.mouseChordAnchor.maxDragDistance = Math.max(
+          this.mouseChordAnchor.maxDragDistance ?? 0,
+          distance,
+        );
+      }
+      if (e.pointerType === 'touch' && this.touchHoldLatestPosition?.pointerId === e.pointerId) {
+        this.touchHoldLatestPosition = {
+          clientX: e.clientX,
+          clientY: e.clientY,
+          pointerType: 'touch',
+          pointerId: e.pointerId,
+        };
+      }
+      if (e.pointerType === 'touch' && this.touchHoldTriggered && !this.touchPanActive
+        && this.controlSettings.centerMode === 'movable') {
+        const dx = e.clientX - this.mouseDownPos.x;
+        const dy = e.clientY - this.mouseDownPos.y;
+        if (Math.hypot(dx, dy) >= 6 && shouldStartTouchPan({
+          centerMode: this.controlSettings.centerMode,
+          holdTriggered: this.touchHoldTriggered,
+          panActive: this.touchPanActive,
+          pointerId: e.pointerId,
+          holdPointerId: this.touchHoldLatestPosition?.pointerId,
+          activePointerCount: this.activeTouchPointers.size,
+          hadMultiplePointers: this.touchGestureHadMultiplePointers,
+          start: this.mouseDownPos,
+          current: e,
+        })) {
+          if (this.touchInspectionActive) this.clearPointerHighlights();
+          this.touchInspectionActive = false;
+          this.beginTouchPan({
+            clientX: e.clientX,
+            clientY: e.clientY,
+            pointerId: e.pointerId,
+          });
+        }
+      }
+      if (e.pointerType === 'touch' && this.touchPanActive && this.touchPanPointerId === e.pointerId) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const previous = this.touchPanLastPosition ?? { x: e.clientX, y: e.clientY };
+        this.panCameraByPixels(e.clientX - previous.x, e.clientY - previous.y);
+        this.touchPanLastPosition = { x: e.clientX, y: e.clientY };
+        return;
+      }
       if (e.pointerType === 'mouse' && (e.buttons & 4) !== 0) {
         this.clearPointerHighlights();
         return;
       }
       if (e.pointerType === 'mouse' && this.mouseChordTriggered) {
+        this.endMousePan();
         this.clearPointerHighlights();
         return;
       }
       if (e.pointerType === 'mouse'
-        && this.controlSettings.rightDragAction !== 'none'
+        && this.controlSettings.centerMode === 'movable'
+        && this.mousePanPointerId === e.pointerId
         && (e.buttons & 2) !== 0) {
         const dx = e.clientX - this.mouseDownPos.x;
         const dy = e.clientY - this.mouseDownPos.y;
-        if (Math.sqrt(dx * dx + dy * dy) >= 5) {
+        if (!this.mousePanActive && Math.hypot(dx, dy) >= 5 && shouldStartMousePan({
+          centerMode: this.controlSettings.centerMode,
+          pointerType: e.pointerType,
+          pointerId: e.pointerId,
+          panPointerId: this.mousePanPointerId,
+          buttons: e.buttons,
+          chordTriggered: this.mouseChordTriggered || (this.mouseChordButtons & 3) === 3,
+          start: this.mousePanStartPosition,
+          current: e,
+        })) {
+          this.mousePanActive = true;
+          document.body.classList.add('matrix-mouse-panning');
           this.clearPointerHighlights();
+        }
+        if (this.mousePanActive) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          const previous = this.mousePanLastPosition ?? this.mousePanStartPosition
+            ?? { x: e.clientX, y: e.clientY };
+          this.panCameraByPixels(e.clientX - previous.x, e.clientY - previous.y);
+          this.mousePanLastPosition = { x: e.clientX, y: e.clientY };
           return;
         }
       }
@@ -4659,7 +5039,13 @@ class HoloSweeperGame {
       if (e.pointerType === 'touch' && this.touchHoldTimer) {
         const dx = e.clientX - this.mouseDownPos.x;
         const dy = e.clientY - this.mouseDownPos.y;
-        if (Math.sqrt(dx * dx + dy * dy) > 10) {
+        if (Math.sqrt(dx * dx + dy * dy) > 10 && touchHoldDecision({
+          elapsedMs: 0,
+          start: this.mouseDownPos,
+          current: e,
+          activePointerCount: this.activeTouchPointers.size,
+          hadMultiplePointers: this.touchGestureHadMultiplePointers,
+        }) === 'cancel') {
           clearTimeout(this.touchHoldTimer);
           this.touchHoldTimer = null;
         }
@@ -4671,8 +5057,14 @@ class HoloSweeperGame {
       this.touchHoldTimer = null;
       this.touchHoldTriggered = false;
       this.touchInspectionActive = false;
+      if (event.pointerType === 'mouse') this.endMousePan();
       if (event.pointerType === 'touch') this.activeTouchPointers.delete(event.pointerId);
-      if (this.activeTouchPointers.size === 0) this.touchGestureHadMultiplePointers = false;
+      if (this.touchHoldLatestPosition?.pointerId === event.pointerId) this.touchHoldLatestPosition = null;
+      if (event.pointerType === 'touch') this.endTouchPan({ force: true });
+      if (this.activeTouchPointers.size === 0) {
+        this.touchGestureHadMultiplePointers = false;
+        this.applyControlBindings();
+      }
       if (event.pointerType === 'mouse' && (event.buttons & 3) === 0) this.resetMouseChordState();
       this.clearPointerHighlights();
     });
@@ -5006,6 +5398,71 @@ class HoloSweeperGame {
     }, this.mobileCellDoubleTapMs);
   }
 
+  beginMousePanCandidate({ clientX, clientY, pointerId }) {
+    if (this.controlSettings.centerMode !== 'movable' || !this.controls) return false;
+    this.mousePanActive = false;
+    this.mousePanPointerId = pointerId;
+    this.mousePanStartPosition = { x: clientX, y: clientY };
+    this.mousePanLastPosition = { x: clientX, y: clientY };
+    return true;
+  }
+
+  endMousePan() {
+    const wasActive = this.mousePanActive;
+    this.mousePanActive = false;
+    this.mousePanPointerId = null;
+    this.mousePanStartPosition = null;
+    this.mousePanLastPosition = null;
+    document.body.classList.remove('matrix-mouse-panning');
+    return wasActive;
+  }
+
+  beginTouchPan({ clientX, clientY, pointerId }) {
+    if (this.controlSettings.centerMode !== 'movable' || !this.controls) return false;
+    clearTimeout(this.lastMobileCellTap?.timer);
+    this.lastMobileCellTap = null;
+    this.lastMobileNumberTap = null;
+    this.touchPanActive = true;
+    this.touchPanPointerId = pointerId;
+    this.touchPanLastPosition = { x: clientX, y: clientY };
+    this.controls.enabled = false;
+    document.body.classList.add('matrix-touch-panning');
+    navigator.vibrate?.(12);
+    return true;
+  }
+
+  endTouchPan({ force = false } = {}) {
+    this.touchPanActive = false;
+    this.touchPanPointerId = null;
+    this.touchPanLastPosition = null;
+    document.body.classList.remove('matrix-touch-panning');
+    if (this.controls && (force || this.activeTouchPointers.size === 0)) {
+      this.controls.enabled = true;
+    }
+  }
+
+  panCameraByPixels(deltaX, deltaY) {
+    if (!this.camera || !this.controls || !this.renderer || (!deltaX && !deltaY)) return;
+    const viewportHeight = this.renderer.domElement.clientHeight || window.innerHeight || 1;
+    const targetDistance = Math.max(0.01, this.camera.position.distanceTo(this.controls.target));
+    const screenRight = new THREE.Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
+    const screenUp = new THREE.Vector3(0, 1, 0).applyQuaternion(this.camera.quaternion);
+    const pan = screenPanTranslation({
+      deltaX,
+      deltaY,
+      viewportHeight,
+      targetDistance,
+      verticalFovDegrees: this.camera.fov,
+      screenRight,
+      screenUp,
+    });
+    const translation = new THREE.Vector3(pan.x, pan.y, pan.z);
+    this.camera.position.add(translation);
+    this.controls.target.add(translation);
+    this.controls.update();
+    this.positionReasoningCoordinateAxes(true);
+  }
+
   resetMouseChordState() {
     this.mouseChordTriggered = false;
     this.mouseChordButtons = 0;
@@ -5171,11 +5628,11 @@ class HoloSweeperGame {
   }
 
   startNeighborInspection(event) {
-    if (this.isInteractionLocked || this.isGameOver || this.isGameWon) return;
+    if (this.isInteractionLocked || this.isGameOver || this.isGameWon) return false;
     const target = this.pickTwoButtonTargetAtPointer(event, {
       includeClueProxy: event.pointerType === 'touch',
     });
-    if (target?.type !== 'number') return;
+    if (target?.type !== 'number') return false;
     const { x, y, z } = target;
     this.focusNumberCell(this.grid[x]?.[y]?.[z]);
     if (this.hoveredCell && !this.hoveredCell.isRevealed) {
@@ -5185,6 +5642,7 @@ class HoloSweeperGame {
     this.hoveredCell = null;
     this.highlightNeighborsOn(x, y, z);
     this.activeHighlightCenter = { x, y, z };
+    return true;
   }
 
   // 右键按住数字时高亮显示周围的邻居格子
@@ -6072,15 +6530,41 @@ class HoloSweeperGame {
   // -------------------------------------------------------------
   // 12. 摄像机控制
   // -------------------------------------------------------------
+  centerCameraTarget() {
+    if (!this.camera || !this.controls) return;
+    const offset = this.camera.position.clone().sub(this.controls.target);
+    const recentered = recenterCameraKeepingOffset(this.camera.position, this.controls.target);
+    offset.set(
+      recentered.cameraPosition.x,
+      recentered.cameraPosition.y,
+      recentered.cameraPosition.z,
+    );
+    const dampingEnabled = this.controls.enableDamping;
+    this.controls.enableDamping = false;
+    this.controls.target.set(0, 0, 0);
+    this.camera.position.copy(offset);
+    this.camera.lookAt(this.controls.target);
+    this.controls.update();
+    this.controls.enableDamping = dampingEnabled;
+    this.positionReasoningCoordinateAxes(true);
+  }
+
   resetCamera() {
     // 计算合适观赏相机的对角线距离
     const maxDim = Math.max(this.width, this.height, this.depth);
     const distance = maxDim * 2.2;
     
     // 设置斜向下看 45 度的初始透视视角
+    this.endMousePan();
+    this.endTouchPan({ force: true });
+    const dampingEnabled = this.controls.enableDamping;
+    this.controls.enableDamping = false;
     this.camera.position.set(distance, distance * 0.9, distance);
     this.controls.target.set(0, 0, 0);
+    this.camera.lookAt(this.controls.target);
     this.controls.update();
+    this.controls.enableDamping = dampingEnabled;
+    this.positionReasoningCoordinateAxes(true);
   }
 
   // 屏幕缩放自适应

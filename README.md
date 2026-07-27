@@ -1,5 +1,7 @@
 # Holo-Sweeper 3D
 
+[![CI](https://github.com/pystashell/multiplayer-mining-3D/actions/workflows/ci.yml/badge.svg)](https://github.com/pystashell/multiplayer-mining-3D/actions/workflows/ci.yml)
+
 一个使用 Three.js、Cloudflare Workers、Durable Objects 和 Hibernating WebSockets 构建的多人 3D 扫雷游戏。
 
 ## 在线试玩
@@ -38,6 +40,8 @@ npm test
 npm run deploy:dry
 ```
 
+推送任意分支或建立 Pull Request 后，GitHub Actions 也会自动执行以上检查。测试记录可以在仓库的 **Actions → CI** 中查看。
+
 开发服务器运行时，可以执行真实双 WebSocket 测试：
 
 ```bash
@@ -52,3 +56,5 @@ npm run deploy
 ```
 
 部署后，网页、房间 API 和 WebSocket 共用同一个 `workers.dev` 域名。创建房间后 URL 会自动附加 `?room=六位房间码`，可以直接复制给朋友。
+
+正式版本采用“版本分支 → CI → 合并 `main` → SemVer 标签 → GitHub Release → Cloudflare”的固定流程。详细步骤和所需密钥见 [RELEASING.md](RELEASING.md)。

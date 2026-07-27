@@ -7,12 +7,14 @@ import {
   DEFAULT_CONTROL_SETTINGS,
   cloneControlSettings,
   controlPresetForSettings,
+  effectiveRightDragAction,
   formatControlKey,
   isBindableControlKey,
   loadControlSettings,
   normalizeControlSettings,
   normalizeWheelDelta,
   saveControlSettings,
+  settingsWithCenterMode,
   validateControlSettings,
   wheelActionForEvent,
 } from '../public/control-settings.js';
@@ -36,6 +38,7 @@ function memoryStorage(initial = {}) {
 
 test('defines middle-drag and right-drag control presets and recognizes custom profiles', () => {
   assert.deepEqual(CONTROL_PRESETS.classic, {
+    centerMode: 'fixed',
     middleDragAction: 'rotate',
     rightDragAction: 'rotate',
     wheelAction: 'zoom',
@@ -46,6 +49,7 @@ test('defines middle-drag and right-drag control presets and recognizes custom p
     resetKey: 'Space',
   });
   assert.deepEqual(CONTROL_PRESETS.wheelFlip, {
+    centerMode: 'fixed',
     middleDragAction: 'rotate',
     rightDragAction: 'rotate',
     wheelAction: 'pitch',
@@ -56,6 +60,7 @@ test('defines middle-drag and right-drag control presets and recognizes custom p
     resetKey: 'Space',
   });
   assert.deepEqual(CONTROL_PRESETS.modeling, {
+    centerMode: 'fixed',
     middleDragAction: 'zoom',
     rightDragAction: 'rotate',
     wheelAction: 'yaw',
@@ -66,6 +71,7 @@ test('defines middle-drag and right-drag control presets and recognizes custom p
     resetKey: 'Space',
   });
   assert.deepEqual(CONTROL_PRESETS.rightOrbit, {
+    centerMode: 'fixed',
     middleDragAction: 'none',
     rightDragAction: 'rotate',
     wheelAction: 'zoom',
@@ -85,6 +91,7 @@ test('defines middle-drag and right-drag control presets and recognizes custom p
 
   const customized = { ...CONTROL_PRESETS.classic, digKey: 'KeyQ' };
   assert.equal(controlPresetForSettings(customized), 'custom');
+  assert.equal(controlPresetForSettings({ ...CONTROL_PRESETS.classic, centerMode: 'movable' }), 'classic');
   const clone = cloneControlSettings(customized);
   assert.deepEqual(clone, customized);
   assert.notEqual(clone, customized);
@@ -92,6 +99,7 @@ test('defines middle-drag and right-drag control presets and recognizes custom p
 
 test('normalizes unsupported values and rejects unusable control profiles', () => {
   assert.deepEqual(normalizeControlSettings({
+    centerMode: 'sideways',
     middleDragAction: 'pan',
     rightDragAction: 'pan',
     wheelAction: 'spin',
@@ -101,6 +109,7 @@ test('normalizes unsupported values and rejects unusable control profiles', () =
     flagKey: 'Digit4',
     resetKey: 'Enter',
   }), {
+    centerMode: 'fixed',
     middleDragAction: 'rotate',
     rightDragAction: 'rotate',
     wheelAction: 'zoom',
@@ -170,6 +179,42 @@ test('normalizes unsupported values and rejects unusable control profiles', () =
     ctrlWheelAction: 'none',
   });
   assert.equal(rightOnlyZoom.valid, true);
+
+  assert.equal(effectiveRightDragAction(CONTROL_PRESETS.classic), 'rotate');
+  assert.equal(effectiveRightDragAction({
+    ...CONTROL_PRESETS.classic,
+    centerMode: 'fixed',
+    rightDragAction: 'zoom',
+  }), 'zoom');
+  assert.equal(effectiveRightDragAction({
+    ...CONTROL_PRESETS.classic,
+    centerMode: 'movable',
+  }), 'pan');
+
+  const movableWithMiddleRotation = validateControlSettings({
+    ...CONTROL_PRESETS.classic,
+    centerMode: 'movable',
+  });
+  assert.equal(movableWithMiddleRotation.valid, true);
+
+  const movableWithoutAlternativeRotation = validateControlSettings({
+    ...CONTROL_PRESETS.rightOrbit,
+    centerMode: 'movable',
+  });
+  assert.equal(movableWithoutAlternativeRotation.valid, false);
+  assert.deepEqual(movableWithoutAlternativeRotation.errors, ['missingRotation']);
+
+  const repairedMovableProfile = settingsWithCenterMode(CONTROL_PRESETS.rightOrbit, 'movable');
+  assert.deepEqual(repairedMovableProfile, {
+    ...CONTROL_PRESETS.rightOrbit,
+    centerMode: 'movable',
+    middleDragAction: 'rotate',
+  });
+  assert.equal(validateControlSettings(repairedMovableProfile).valid, true);
+  assert.deepEqual(
+    settingsWithCenterMode(CONTROL_PRESETS.modeling, 'movable'),
+    { ...CONTROL_PRESETS.modeling, centerMode: 'movable' },
+  );
 });
 
 test('persists only valid profiles and safely falls back when storage is bad', () => {
@@ -186,6 +231,15 @@ test('persists only valid profiles and safely falls back when storage is bad', (
   assert.deepEqual(storage.writes, [[CONTROL_STORAGE_KEY, JSON.stringify(profile)]]);
   assert.deepEqual(loadControlSettings(storage), profile);
 
+  const movableProfile = {
+    ...profile,
+    centerMode: 'movable',
+    middleDragAction: 'rotate',
+  };
+  const movableStorage = memoryStorage();
+  assert.equal(saveControlSettings(movableProfile, movableStorage).valid, true);
+  assert.deepEqual(loadControlSettings(movableStorage), movableProfile);
+
   const writesBeforeInvalidSave = storage.writes.length;
   const invalidSave = saveControlSettings({ ...profile, flagKey: 'KeyQ' }, storage);
   assert.equal(invalidSave.valid, false);
@@ -201,6 +255,13 @@ test('persists only valid profiles and safely falls back when storage is bad', (
     [CONTROL_STORAGE_KEY]: JSON.stringify(legacyProfile),
   });
   assert.deepEqual(loadControlSettings(legacyStorage), { ...CONTROL_PRESETS.classic });
+
+  const legacyCenterProfile = { ...CONTROL_PRESETS.modeling };
+  delete legacyCenterProfile.centerMode;
+  const legacyCenterStorage = memoryStorage({
+    [CONTROL_STORAGE_KEY]: JSON.stringify(legacyCenterProfile),
+  });
+  assert.deepEqual(loadControlSettings(legacyCenterStorage), { ...CONTROL_PRESETS.modeling, centerMode: 'fixed' });
 
   const invalidStoredProfile = memoryStorage({
     [CONTROL_STORAGE_KEY]: JSON.stringify({ ...CONTROL_PRESETS.classic, flagKey: 'KeyD' }),

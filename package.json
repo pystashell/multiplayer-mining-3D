@@ -1,6 +1,6 @@
 {
   "name": "3d-multiplayer-mining",
-  "version": "1.0.0",
+  "version": "3.1.0",
   "description": "",
   "private": true,
   "engines": {
@@ -11,8 +11,12 @@
     "start": "wrangler dev",
     "vendor:sync": "node scripts/sync-vendor-assets.mjs",
     "vendor:check": "node scripts/sync-vendor-assets.mjs --check",
-    "test": "npm run vendor:check && node --test tests/*.test.js",
+    "version": "node scripts/sync-release-version.mjs",
+    "version:check": "node scripts/check-release.mjs",
+    "release:check": "node scripts/check-release.mjs",
+    "test": "npm run vendor:check && npm run version:check && node --test tests/*.test.js",
     "test:live": "node tests/live-room-smoke.js",
+    "verify:live-version": "node scripts/verify-live-version.mjs",
     "deploy:dry": "wrangler deploy --dry-run",
     "deploy": "npm test && wrangler deploy"
   },

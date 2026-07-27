@@ -18,7 +18,13 @@ test('development, validation, and live-smoke scripts remain available', () => {
   assert.equal(packageJson.scripts.dev, 'wrangler dev');
   assert.equal(packageJson.scripts['vendor:sync'], 'node scripts/sync-vendor-assets.mjs');
   assert.equal(packageJson.scripts['vendor:check'], 'node scripts/sync-vendor-assets.mjs --check');
-  assert.equal(packageJson.scripts.test, 'npm run vendor:check && node --test tests/*.test.js');
+  assert.equal(packageJson.scripts.version, 'node scripts/sync-release-version.mjs');
+  assert.equal(packageJson.scripts['version:check'], 'node scripts/check-release.mjs');
+  assert.equal(
+    packageJson.scripts.test,
+    'npm run vendor:check && npm run version:check && node --test tests/*.test.js',
+  );
   assert.equal(packageJson.scripts['test:live'], 'node tests/live-room-smoke.js');
+  assert.equal(packageJson.scripts['verify:live-version'], 'node scripts/verify-live-version.mjs');
   assert.equal(packageJson.scripts['deploy:dry'], 'wrangler deploy --dry-run');
 });
