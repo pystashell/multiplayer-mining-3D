@@ -221,14 +221,14 @@ function campaignScene(taskMission = 'easy') {
   };
 }
 
-test('routes every campaign chapter and multiplayer to its own score', () => {
+test('routes the lobby, every campaign chapter, and multiplayer to its own score', () => {
   const campaign = (taskMission, width, mineCount) => musicTrackForGame({
     inRoom: true,
     gameMode: 'solo',
     taskMission,
     config: { width, height: width, depth: width, mineCount, campaign: true },
   });
-  assert.equal(musicTrackForGame({ inRoom: false, gameMode: 'solo' }), null);
+  assert.equal(musicTrackForGame({ inRoom: false, gameMode: 'solo' }), 'lobby');
   assert.equal(campaign('easy', 3, 3), 'easy');
   assert.equal(campaign('medium', 5, 10), 'medium');
   assert.equal(campaign('hard', 7, 30), 'hard');
@@ -254,8 +254,8 @@ test('free and custom boards follow their real matrix scale', () => {
   assert.equal(freeTrack(9, 60), 'ultimate');
 });
 
-test('all five original score profiles have distinct composition signatures', () => {
-  assert.deepEqual(Object.keys(SCI_FI_TRACKS), ['easy', 'medium', 'hard', 'ultimate', 'squad']);
+test('all six original score profiles have distinct composition signatures', () => {
+  assert.deepEqual(Object.keys(SCI_FI_TRACKS), ['lobby', 'easy', 'medium', 'hard', 'ultimate', 'squad']);
   const profiles = Object.values(SCI_FI_TRACKS);
   const signatures = profiles.map((profile) => JSON.stringify({
     bpm: profile.bpm,
@@ -267,7 +267,7 @@ test('all five original score profiles have distinct composition signatures', ()
     noiseSteps: profile.noiseSteps,
   }));
   assert.equal(new Set(signatures).size, profiles.length);
-  assert.deepEqual(profiles.map((profile) => profile.bpm), [72, 92, 116, 132, 104]);
+  assert.deepEqual(profiles.map((profile) => profile.bpm), [82, 72, 92, 116, 132, 104]);
   for (const profile of profiles) {
     assert.ok(Object.isFrozen(profile));
     assert.equal(profile.melody.length, 16);
@@ -328,8 +328,8 @@ test('normalizes and persists independent music and sound-effect volumes', () =>
   assert.equal(loadSfxEnabled(storage), false);
 });
 
-test('doubles the score master while keeping sound effects independent', () => {
-  assert.equal(DEFAULT_MUSIC_MASTER_VOLUME, 0.24);
+test('doubles the score master again while keeping sound effects independent', () => {
+  assert.equal(DEFAULT_MUSIC_MASTER_VOLUME, 0.48);
   const scope = {
     document: { hidden: false, addEventListener() {} },
     addEventListener() {},
@@ -338,7 +338,7 @@ test('doubles the score master while keeping sound effects independent', () => {
     scope,
     storage: { getItem: () => null, setItem() {} },
   });
-  assert.equal(director.masterVolume, 0.24);
+  assert.equal(director.masterVolume, 0.48);
   assert.equal(new SciFiMusicDirector({
     scope,
     storage: { getItem: () => null, setItem() {} },
@@ -466,12 +466,12 @@ test('changes a running music graph volume without restarting its track', async 
   const storage = { getItem: () => null, setItem() {} };
   const director = new SciFiMusicDirector({ scope: harness.scope, storage, volume: 1 });
   assert.equal(await director.unlock(), true);
-  assert.equal(director.master.gain.value, 0.24);
+  assert.equal(director.master.gain.value, 0.48);
   director.setScene(campaignScene('easy'));
   const session = director.activeSession;
   await director.setVolume(0.25);
   assert.equal(director.volume, 0.25);
-  assert.equal(director.master.gain.value, 0.06);
+  assert.equal(director.master.gain.value, 0.12);
   assert.equal(director.activeSession, session);
   director.stop();
   harness.flushTimeouts();
@@ -482,6 +482,7 @@ test('integrates the score with shared Safari-safe audio, room state, and lobby 
   assert.match(appSource, /getSharedAudioContext/);
   assert.match(appSource, /resumeSharedAudioContext/);
   assert.match(appSource, /new SciFiMusicDirector\(\{ scope: window \}\)/);
+  assert.match(appSource, /new SciFiMusicDirector\(\{ scope: window \}\);\s*music\.setScene\(\{ inRoom: false \}\)/);
   assert.match(appSource, /btn-start-task[\s\S]*void music\.unlock\(\)/);
   assert.match(appSource, /btn-join-room[\s\S]*void music\.unlock\(\)/);
   assert.match(appSource, /btn-create-room[\s\S]*void music\.unlock\(\)/);

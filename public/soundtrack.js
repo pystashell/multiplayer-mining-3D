@@ -6,7 +6,7 @@ const SFX_VOLUME_STORAGE_KEY = 'holo-sweeper.sfx-volume';
 // The score voices are intentionally mixed with plenty of headroom. Keep that
 // balance intact and lift only the final music bus; sound effects use a
 // separate master and are not affected by this value.
-export const DEFAULT_MUSIC_MASTER_VOLUME = 0.24;
+export const DEFAULT_MUSIC_MASTER_VOLUME = 0.48;
 
 export function normalizeAudioVolume(value, fallback = 1) {
   const parsed = Number(value);
@@ -77,6 +77,15 @@ function freezeTrack(profile) {
 // pulse, harmonic loop, rhythm, tempo, and synth colour; no samples or external
 // music files are used.
 export const SCI_FI_TRACKS = Object.freeze({
+  lobby: freezeTrack({
+    id: 'lobby', title: 'Zero Domain // Login Signal', bpm: 82, rootMidi: 48,
+    pulseWave: 'sine', bassWave: 'triangle', padWave: 'sine', filterHz: 2300,
+    swing: 0.055, pulseGain: 0.05, bassGain: 0.046, padGain: 0.021, noiseGain: 0.011,
+    melody: [0, null, 7, 10, null, 12, 7, null, 3, null, 10, 7, 15, null, 12, null],
+    bass: [0, null, null, 0, -5, null, null, -5, 3, null, null, 3, -2, null, -5, null],
+    chords: [[0, 3, 7], [-5, 0, 5], [3, 7, 10], [-2, 3, 7]],
+    noiseSteps: [5, 13],
+  }),
   easy: freezeTrack({
     id: 'easy', title: 'Phantom Port // Cold Boot', bpm: 72, rootMidi: 50,
     pulseWave: 'sine', bassWave: 'triangle', padWave: 'sine', filterHz: 2100,
@@ -130,7 +139,7 @@ function numeric(value, fallback = 0) {
 }
 
 export function musicTrackForGame({ inRoom = false, gameMode = 'solo', taskMission = 'easy', config = null } = {}) {
-  if (!inRoom) return null;
+  if (!inRoom) return 'lobby';
   if (gameMode === 'squad') return 'squad';
 
   const largestSide = Math.max(

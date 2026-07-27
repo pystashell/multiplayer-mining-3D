@@ -1,5 +1,26 @@
 # Changelog
 
+## [3.2.0] - 2026-07-27
+
+### Added
+
+- A sixth original procedural score, `Zero Domain // Login Signal`, for the
+  Lobby and main screen.
+- English and Chinese soundtrack composition briefs preserving the shared
+  musical language for future tracks.
+
+### Changed
+
+- Background-music output is doubled from `0.24` to `0.48`; synthesized sound
+  effects are unchanged and both volume sliders remain independently
+  adjustable.
+
+### Verification
+
+- Soundtrack routing, profile, volume, lifecycle, and UI integration tests.
+- Complete local regression suite and Wrangler deployment dry run.
+- Cloudflare live-version and live multiplayer smoke checks.
+
 ## [3.1.0] - Unreleased
 
 ### Added

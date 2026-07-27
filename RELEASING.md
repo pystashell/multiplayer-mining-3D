@@ -10,7 +10,7 @@
 - `package.json`
 - `package-lock.json`
 - `public/version.json`
-- 浏览器缓存参数，例如 `?v=3.1.0`
+- 浏览器缓存参数，例如 `?v=3.2.0`
 - Git 标签与 GitHub Release；标签在版本号前增加 `v`
 
 开始下一个版本时，从最新的 `main` 建立分支，然后执行：
@@ -43,8 +43,8 @@ Durable Object migration、网络协议、存档格式、回放格式和第三�
 ```powershell
 git switch main
 git pull --ff-only
-git tag -a v3.1.0 -m "Zero Domain Protocol v3.1.0"
-git push origin v3.1.0
+git tag -a v3.2.0 -m "Zero Domain Protocol v3.2.0"
+git push origin v3.2.0
 ```
 
 推送标签会启动 `.github/workflows/release.yml`。它会：
