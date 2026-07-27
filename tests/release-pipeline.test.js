@@ -28,7 +28,8 @@ function requireOrder(source, commands) {
 }
 
 test('CI runs complete tests before the Cloudflare deployment dry run', () => {
-  assert.match(ciWorkflow, /push:/);
+  assert.match(ciWorkflow, /push:\s+branches:\s+- "\*\*"/s);
+  assert.doesNotMatch(ciWorkflow, /push:\s+tags:/s);
   assert.match(ciWorkflow, /pull_request:/);
   assert.match(ciWorkflow, /workflow_dispatch:/);
   assert.match(ciWorkflow, /permissions:\s+contents: read/s);
@@ -37,8 +38,11 @@ test('CI runs complete tests before the Cloudflare deployment dry run', () => {
   assert.match(ciWorkflow, /actions\/setup-node@[0-9a-f]{40} # v6/);
 });
 
-test('release workflow deploys only semantic tags from the exact tagged commit', () => {
-  assert.match(releaseWorkflow, /tags:\s+- "v\*\.\*\.\*"/s);
+test('release workflow deploys only unsuffixed semantic tags from the exact tagged commit', () => {
+  assert.match(
+    releaseWorkflow,
+    /tags:\s+- "v\*\.\*\.\*"\s+- "!v\*\.\*\.\*-\*"/s,
+  );
   assert.match(releaseWorkflow, /ref: \$\{\{ github\.ref_name \}\}/);
   assert.match(releaseWorkflow, /git merge-base --is-ancestor "\$GITHUB_SHA" origin\/main/);
   assert.match(releaseWorkflow, /environment: production/);
