@@ -18,6 +18,7 @@
 ### Verification
 
 - Soundtrack routing, profile, volume, lifecycle, and UI integration tests.
+- Windows-safe live-version verification that exits naturally after success.
 - Complete local regression suite and Wrangler deployment dry run.
 - Cloudflare live-version and live multiplayer smoke checks.
 

@@ -23,6 +23,7 @@ const expected = assertReleaseMetadata({
 
 const attempts = 10;
 let lastError;
+let verified = false;
 
 for (let attempt = 1; attempt <= attempts; attempt += 1) {
   try {
@@ -40,7 +41,8 @@ for (let attempt = 1; attempt <= attempts; attempt += 1) {
       releaseTag: expected.tag,
     });
     console.log(`LIVE_RELEASE_VERSION=PASS url=${baseUrl} tag=${expected.tag}`);
-    process.exit(0);
+    verified = true;
+    break;
   } catch (error) {
     lastError = error;
     if (attempt < attempts) {
@@ -49,6 +51,8 @@ for (let attempt = 1; attempt <= attempts; attempt += 1) {
   }
 }
 
-throw new Error(
-  `Live deployment did not report ${expected.tag} after ${attempts} attempts: ${lastError?.message}`,
-);
+if (!verified) {
+  throw new Error(
+    `Live deployment did not report ${expected.tag} after ${attempts} attempts: ${lastError?.message}`,
+  );
+}

@@ -13,6 +13,10 @@ const releaseWorkflow = readFileSync(
   new URL('../.github/workflows/release.yml', import.meta.url),
   'utf8',
 );
+const liveVersionScript = readFileSync(
+  new URL('../scripts/verify-live-version.mjs', import.meta.url),
+  'utf8',
+);
 
 function requireOrder(source, commands) {
   let cursor = -1;
@@ -63,4 +67,10 @@ test('package scripts keep local deployment and release verification gates avail
   assert.equal(packageJson.scripts['release:check'], 'node scripts/check-release.mjs');
   assert.equal(packageJson.scripts['verify:live-version'], 'node scripts/verify-live-version.mjs');
   assert.equal(packageJson.scripts.deploy, 'npm test && wrangler deploy');
+});
+
+test('live-version verification exits naturally after success on Windows', () => {
+  assert.match(liveVersionScript, /let verified = false/);
+  assert.match(liveVersionScript, /verified = true;\s*break;/);
+  assert.doesNotMatch(liveVersionScript, /process\.exit\(/);
 });
