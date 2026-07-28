@@ -13,6 +13,10 @@ const releaseWorkflow = readFileSync(
   new URL('../.github/workflows/release.yml', import.meta.url),
   'utf8',
 );
+const manualFinalizeWorkflow = readFileSync(
+  new URL('../.github/workflows/finalize-manual-release.yml', import.meta.url),
+  'utf8',
+);
 const liveVersionScript = readFileSync(
   new URL('../scripts/verify-live-version.mjs', import.meta.url),
   'utf8',
@@ -70,6 +74,33 @@ test('release remains draft until deploy and live verification both succeed', ()
   assert.match(releaseWorkflow, /CLOUDFLARE_API_TOKEN/);
   assert.match(releaseWorkflow, /CLOUDFLARE_ACCOUNT_ID/);
   assert.match(releaseWorkflow, /permissions:\s+contents: write/s);
+});
+
+test('manual release recovery only publishes an existing tag after live verification', () => {
+  assert.match(
+    manualFinalizeWorkflow,
+    /branches:\s+- "codex\/v\*\.\*\.\*-\*"/s,
+  );
+  assert.match(
+    manualFinalizeWorkflow,
+    /if: contains\(github\.event\.head_commit\.message, '\[finalize-release\]'\)/,
+  );
+  assert.match(
+    manualFinalizeWorkflow,
+    /release_commit="\$\(git rev-parse "\$\{release_tag\}\^\{commit\}"\)"/,
+  );
+  assert.match(
+    manualFinalizeWorkflow,
+    /git merge-base --is-ancestor "\$release_commit" "\$GITHUB_SHA"/,
+  );
+  assert.doesNotMatch(manualFinalizeWorkflow, /wrangler deploy/);
+  requireOrder(manualFinalizeWorkflow, [
+    'npm run release:check -- "$RELEASE_TAG"',
+    'npm test',
+    'npm run verify:live-version',
+    'npm run test:live',
+    'gh release edit "$RELEASE_TAG" --draft=false --latest',
+  ]);
 });
 
 test('package scripts keep local deployment and release verification gates available', () => {
