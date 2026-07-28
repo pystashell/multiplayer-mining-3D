@@ -14,7 +14,7 @@ same musical language instead of being generated as unrelated audio overlays.
 
 ```text
 Create an original procedural science-fiction soundtrack for Zero Domain
-Protocol, a neon purple/cyan cyber-hacking puzzle game.
+Protocol, a neon purple/cyan spatial-cartography puzzle game.
 
 The score must feel like one coherent album. Do not imitate an existing game
 soundtrack, do not use copyrighted melodies, and do not use external samples or
@@ -38,16 +38,18 @@ Every track must use the same shared musical grammar:
 Each track must be recognizable without breaking the album:
 
 1. Beginner / Phantom Port:
-   airy cold boot, slow and reassuring, sparse sine pulses.
+   airy first bearing, slow and reassuring, sparse sine pulses.
 2. Intermediate / Handshake Maze:
-   network packet motion, syncopated triangle pulses, more forward momentum.
+   shifting coordinate beacons, syncopated triangle pulses, more forward
+   momentum.
 3. Advanced / Final Protocol:
-   low, tense and pressurized, square/saw colours, tighter rhythm.
-4. Hidden stage / Echo Black Box:
-   high-density glitch arpeggios, fastest tempo, unstable but still musical.
+   low, tense core convergence, square/saw colours, tighter rhythm.
+4. Hidden stage / Echo Matrix:
+   high-density recursive-survey arpeggios, fastest tempo, unstable but still
+   musical.
 5. Multiplayer / Squad Link:
-   cooperative call-and-response, alternating left/right voices.
-6. Lobby / Login Signal:
+   cooperative survey call-and-response, alternating left/right voices.
+6. Lobby / Survey Signal:
    poised between Beginner and Intermediate; welcoming but mysterious,
    immediately identifiable as the entry point to the same system.
 
@@ -64,11 +66,11 @@ different envelopes, effects, synthesis architecture or phrase timing.
 
 | Scene | BPM | Root | Pulse | Bass | Pad | Musical role |
 | --- | ---: | ---: | --- | --- | --- | --- |
-| Beginner | 72 | D3 | sine | triangle | sine | airy cold boot |
-| Intermediate | 92 | A2 | triangle | sawtooth | triangle | packet chase |
-| Advanced | 116 | C♯2 | square | sawtooth | triangle | root pressure |
-| Hidden stage | 132 | D2 | sawtooth | square | sawtooth | glitch trojan run |
-| Multiplayer | 104 | G2 | triangle | square | sine | stereo squad link |
+| Beginner | 72 | D3 | sine | triangle | sine | airy first bearing |
+| Intermediate | 92 | A2 | triangle | sawtooth | triangle | perspective trace |
+| Advanced | 116 | C♯2 | square | sawtooth | triangle | core convergence |
+| Hidden stage | 132 | D2 | sawtooth | square | sawtooth | recursive survey |
+| Multiplayer | 104 | G2 | triangle | square | sine | stereo squad survey |
 
 The exact existing profiles remain the source of truth in
 `public/soundtrack.js`.
@@ -95,7 +97,7 @@ The sixth track approved for the Lobby uses this profile:
 ```js
 lobby: freezeTrack({
   id: 'lobby',
-  title: 'Zero Domain // Login Signal',
+  title: 'Zero Domain // Survey Signal',
   bpm: 82,
   rootMidi: 48,
   pulseWave: 'sine',

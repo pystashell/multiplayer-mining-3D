@@ -7,6 +7,10 @@ import {
   translate,
   translateForInput,
 } from '../public/i18n.js';
+import { guideCharacterText } from '../public/guide-character.js';
+
+const zhGuide = guideCharacterText('zh');
+const enGuide = guideCharacterText('en');
 
 const publicCopySource = [
   readFileSync(new URL('../public/i18n.js', import.meta.url), 'utf8'),
@@ -26,8 +30,8 @@ test('selects Chinese only for Chinese browser language tags', () => {
 });
 
 test('uses the Sector Purge version title', () => {
-  assert.equal(translate('zh', 'document.title'), '零域协议：区块清除 | 银狼任务');
-  assert.equal(translate('en', 'document.title'), 'Zero Domain Protocol: Sector Purge | Silver Wolf');
+  assert.equal(translate('zh', 'document.title'), `零域协议：区块清除 | ${zhGuide.name}任务`);
+  assert.equal(translate('en', 'document.title'), `Zero Domain Protocol: Sector Purge | ${enGuide.codename}`);
   assert.match(translate('zh', 'purge.tutorialMessage'), /实体孤岛.*正确标雷.*重算周围所有数字/);
   assert.equal(translate('zh', 'purge.tutorialFact'), '错误标记不会触发区块清除。');
   assert.match(translate('en', 'purge.tutorialMessage'), /solid island.*correctly flagged mine.*recalculate every affected clue/i);
@@ -39,8 +43,8 @@ test('explains the campaign, hidden Ultimate chapter, and independent Free Mode 
   assert.equal(translate('zh', 'settings.hardMeta'), '7x7x7 (30雷)');
   assert.equal(translate('en', 'settings.mediumMeta'), '5x5x5 (10 mines)');
   assert.equal(translate('en', 'settings.hardMeta'), '7x7x7 (30 mines)');
-  assert.match(translate('zh', 'task.hard.brief.1'), /三十个反制节点/);
-  assert.match(translate('en', 'task.hard.brief.1'), /thirty countermeasures/i);
+  assert.match(translate('zh', 'task.hard.brief.1'), /三十个异常节点.*坐标.*漂移/);
+  assert.match(translate('en', 'task.hard.brief.1'), /thirty anomaly nodes.*coordinates.*drifting/i);
   assert.match(translate('zh', 'lobby.task.easyMeta'), /经典扫描/);
   assert.match(translate('zh', 'lobby.task.mediumMeta'), /孤立区块清除/);
   assert.match(translate('zh', 'lobby.task.hardMeta'), /熵域压缩/);
@@ -51,16 +55,16 @@ test('explains the campaign, hidden Ultimate chapter, and independent Free Mode 
   assert.equal(translate('zh', 'lobby.task.startFreeplay'), '进入自由模式');
   assert.equal(translate('en', 'lobby.task.startFreeplay'), 'Enter Free Mode');
   assert.equal(translate('zh', 'lobby.task.freeplayBadge'), 'FREE MODE');
-  assert.match(translate('zh', 'task.hard.complete.2'), /基础扫描.*区块清除.*熵域压缩.*权限表之外.*回声/);
-  assert.match(translate('en', 'task.hard.complete.2'), /Classic Scan.*Sector Purge.*Entropy-Field Compression.*echo.*permission table/i);
-  assert.match(translate('zh', 'task.hard.brief.2'), /权限窗口.*管理员.*外围.*七层矩阵.*核心/);
+  assert.match(translate('zh', 'task.hard.complete.2'), /基础扫描.*区块清除.*熵域压缩.*导航网之外.*回声/);
+  assert.match(translate('en', 'task.hard.complete.2'), /Classic Scan.*Sector Purge.*Entropy-Field Compression.*echo.*navigation grid/i);
+  assert.match(translate('zh', 'task.hard.brief.2'), /稳定窗口.*外围.*七层矩阵.*证据链.*核心/);
   assert.doesNotMatch(translate('zh', 'task.hard.brief.2'), /直接.*消除|不需要插旗|左右键|双击/);
-  assert.match(translate('en', 'task.hard.brief.2'), /root-access window.*admin.*perimeter.*seven-layer matrix.*core/i);
+  assert.match(translate('en', 'task.hard.brief.2'), /stability window.*perimeter.*evidence chain.*core/i);
   assert.doesNotMatch(translate('en', 'task.hard.brief.2'), /remove it directly|no flag|mouse buttons|double-tap/i);
   assert.match(translate('zh', 'task.ultimate.brief.fact'), /9×9×9.*729 节点.*60 雷.*无大厅入口/);
   assert.match(translate('en', 'task.ultimate.brief.fact'), /9×9×9.*729 NODES.*60 MINES.*NO LOBBY ENTRY/i);
-  assert.match(translate('zh', 'task.ultimate.complete.2'), /战役.*真正结束.*成功路线.*自由模式.*终极骇客/);
-  assert.match(translate('en', 'task.ultimate.complete.2'), /campaign.*complete.*successful route.*Free Mode.*Ultimate Hacker Trojan/i);
+  assert.match(translate('zh', 'task.ultimate.complete.2'), new RegExp(`战役.*真正结束.*成功路线.*自由模式.*${zhGuide.computation}`));
+  assert.match(translate('en', 'task.ultimate.complete.2'), new RegExp(`campaign.*complete.*successful route.*Free Mode.*${enGuide.computation}`, 'i'));
   assert.match(translate('zh', 'lobby.task.freeplayBrief'), /选择矩阵规模.*经典扫描.*始终启用.*两个 Add-on.*默认全开.*游戏后.*调整/);
   assert.match(translate('en', 'lobby.task.freeplayBrief'), /Choose a matrix size.*Classic Scan.*active.*both add-ons.*enabled.*adjust.*in-game/i);
 
@@ -75,11 +79,11 @@ test('explains the campaign, hidden Ultimate chapter, and independent Free Mode 
 
   assert.equal(
     translate('zh', 'tutorial.completionFact', { time: '01:23' }),
-    '攻略用时：01:23  //  解密进度：100%',
+    '测绘用时：01:23  //  测绘进度：100%',
   );
   assert.equal(
     translate('en', 'tutorial.completionFact', { time: '01:23' }),
-    'BREACH TIME: 01:23  //  DECRYPTION: 100%',
+    'SURVEY TIME: 01:23  //  MAPPING: 100%',
   );
   assert.match(translate('en', 'reduction.tutorialMessage'), /seven-layer matrix.*Entropy-Field Compression.*unopened cell.*remove it directly.*remaining mine counts/i);
   assert.match(translate('en', 'reduction.tutorialFact'), /both mouse buttons.*double-tap any unopened cell.*flagged one.*Dig or Flag Mode.*wrong deduction.*update automatically.*zero recursively opens/i);
@@ -146,8 +150,8 @@ test('builds localized computer-themed nicknames from random parts', () => {
 });
 
 test('localizes semantic room activities independently for each client', () => {
-  assert.equal(translate('zh', 'activity.dug', { name: '银狼' }), '银狼 挖开了空间方块');
-  assert.equal(translate('en', 'activity.dug', { name: 'silver wolf' }), 'silver wolf excavated a spatial cell');
+  assert.equal(translate('zh', 'activity.dug', { name: '阿岭' }), '阿岭 挖开了空间方块');
+  assert.equal(translate('en', 'activity.dug', { name: 'Avery' }), 'Avery excavated a spatial cell');
 });
 
 test('distinguishes 3D neighbor positions from the beginner number ceiling', () => {
@@ -247,8 +251,8 @@ test('teaches exact medium hint deductions and labels guesses honestly', () => {
   assert.equal(translate('en', 'solver.collapse'), 'Collapse reasoning explanation');
   assert.equal(translate('en', 'solver.expand'), 'Expand reasoning explanation');
   assert.equal(translate('en', 'solver.buttonActive'), 'Exit Reasoning Mode');
-  assert.equal(translate('zh', 'solver.panelLabel'), '银狼任务提示终端');
-  assert.equal(translate('en', 'solver.panelLabel'), 'Silver Wolf mission hint terminal');
+  assert.equal(translate('zh', 'solver.panelLabel'), `${zhGuide.name}任务提示终端`);
+  assert.equal(translate('en', 'solver.panelLabel'), `${enGuide.name} mission hint terminal`);
   assert.match(translate('zh', 'solver.reason.first-move', { x: 5, y: 5, z: 5 }), /不会踩雷.*青色箭头.*坐标只用于核对/);
   assert.match(translate('en', 'solver.reason.first-move', { x: 5, y: 5, z: 5 }), /protected.*cyan arrow.*coordinate.*double-check/i);
   assert.equal(translate('zh', 'stats.mines'), '🚩 已标记 / 剩余地雷');
@@ -373,7 +377,7 @@ test('uses a single rewind action for solo mission failure', () => {
   assert.equal(translate('zh', 'task.result.lostTitle'), '任务演算失败');
   assert.equal(translate('zh', 'task.result.rewind'), '↺ 回溯');
   assert.doesNotMatch(translate('zh', 'task.result.lostMessage'), /广告/);
-  assert.equal(translate('zh', 'task.result.lostMessage'), '银狼已保存失败前的数据。点击回溯，重新演算当前任务。');
+  assert.equal(translate('zh', 'task.result.lostMessage'), `${zhGuide.name}已保存失败前的数据。点击回溯，重新演算当前任务。`);
   assert.equal(translate('zh', 'action.restart'), '重新初始化雷区');
   assert.equal(translate('zh', 'result.restart'), '重新初始化雷区');
   assert.equal(translate('en', 'task.result.rewind'), '↺ REWIND');

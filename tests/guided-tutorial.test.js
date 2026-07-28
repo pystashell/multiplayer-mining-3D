@@ -54,7 +54,7 @@ test('keeps slice controls available without proactively teaching or highlightin
   assert.doesNotMatch(styleSource, /(?:slicing-panel|btn-mobile-slices|btn-reset-slices)\.tutorial-target/);
 });
 
-test('continuously derives and locks beginner actions to Silver Wolf’s certain solver target', () => {
+test('continuously derives and locks beginner actions to the guide’s certain solver target', () => {
   assert.match(appSource, /beginGuidedTutorial\(\)/);
   assert.doesNotMatch(appSource, /BEGINNER_TUTORIAL_ROUTE/);
   assert.match(appSource, /solveMinesweeperHint\(\{[\s\S]*?revealed: snapshot\.revealed[\s\S]*?flags: snapshot\.flags/);
@@ -112,8 +112,8 @@ test('pauses the beginner route after the first visible number and teaches neigh
   assert.doesNotMatch(mediumDialogue, /task\.medium\.upgrade\.scan|tutorial\.inspectTitle|action: 'scan'|action: 'inspect'/);
 });
 
-test('keeps Silver Wolf dialogue centered and moves the guided callout outside the board', () => {
-  assert.match(appSource, /showSilverWolfDialogue\(steps, \{ allowSkip = false, allowReplay = false, onComplete = null \} = \{\}\)/);
+test('keeps guide dialogue centered and moves the guided callout outside the board', () => {
+  assert.match(appSource, /showGuideDialogue\(steps, \{ allowSkip = false, allowReplay = false, onComplete = null \} = \{\}\)/);
   assert.doesNotMatch(appSource, /avoidBoard|board-clear/);
   assert.doesNotMatch(styleSource, /board-clear/);
   assert.match(indexSource, /id="guided-cell-leader"/);
@@ -136,7 +136,7 @@ test('shows the auto-reveal lesson once, only in intermediate after a new flag c
   assert.match(appSource, /this\.mediumChordTipShown = true/);
   assert.match(appSource, /this\.mediumChordObjectiveActive = true/);
   assert.match(appSource, /this\.setMediumChordObjectiveTarget\(clue\)/);
-  assert.match(appSource, /this\.updateMissionGuide\(\);\s*this\.closeMobilePanels\(\);\s*this\.showSilverWolfDialogue/);
+  assert.match(appSource, /this\.updateMissionGuide\(\);\s*this\.closeMobilePanels\(\);\s*this\.showGuideDialogue/);
   assert.match(appSource, /chordTipTitle'/);
   assert.match(appSource, /buttonKey: 'tutorial\.tryChord'/);
   assert.match(appSource, /maybeCompleteMediumChordObjective\(snapshot, previous\)/);

@@ -1,5 +1,42 @@
 # Changelog
 
+## [4.0.0] - 2026-07-28
+
+### Added
+
+- A single guide-character configuration for Chinese and English names,
+  codename, role, derived squad labels, and every story-art slot.
+- Original zero-domain cartography story copy built around perspective,
+  coordinate evidence, route surveying, and anomaly-node clearance.
+- Dedicated artwork for the new guide across campaign, dialogue, hidden, and
+  multiplayer scenes.
+- Automated bilingual parity, guide-template, retired-vocabulary, and artwork
+  coverage tests.
+
+### Changed
+
+- Replaced the previous character and franchise-derived story layer with the
+  original cartographer and tactical navigator.
+- Renamed the former automated protocol internally and publicly to Automated
+  Survey, including Worker state, client UI, tests, and soundtrack language.
+- Rewrote Chinese and English mission, tutorial, multiplayer, result, music,
+  and release copy around the new story.
+- Replaced advanced and multiplayer illustrations containing retired system
+  terminology with clean zero-domain mapping scenes.
+
+### Removed
+
+- All previous character artwork and runtime references.
+- Retired franchise names, locations, organizations, terminology, and
+  character-specific structural identifiers.
+
+### Verification
+
+- Complete 299-test local regression suite.
+- Retired-vocabulary scan across runtime code, documentation, and filenames.
+- Chinese/English browser review and story-art visual audit.
+- Wrangler deployment dry run.
+
 ## [3.2.0] - 2026-07-27
 
 ### Added
@@ -27,7 +64,7 @@
 ### Added
 
 - Five original procedural science-fiction soundtracks for beginner,
-  intermediate, advanced, Ultimate Hacker, and multiplayer play.
+  intermediate, advanced, Automated Survey, and multiplayer play.
 - Independent music and sound-effect switches, volume controls, and local
   preference persistence.
 - Optional movable matrix center.

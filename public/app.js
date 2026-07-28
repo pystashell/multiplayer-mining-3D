@@ -1,11 +1,12 @@
 import * as THREE from './vendor/three-0.150.0/build/three.module.js';
 import { OrbitControls } from './vendor/three-0.150.0/examples/jsm/controls/OrbitControls.js';
-import { HybridRoomClient } from './local-room-client.js?v=3.2.0';
-import { initialLanguage, randomNickname, translateForInput } from './i18n.js?v=3.2.0';
+import { HybridRoomClient } from './local-room-client.js?v=4.0.0';
+import { initialLanguage, randomNickname, translateForInput } from './i18n.js?v=4.0.0';
+import { GUIDE_ART } from './guide-character.js';
 import {
   detectInitialInputMode,
   inputModeFromPointerType,
-} from './input-mode.js?v=3.2.0';
+} from './input-mode.js?v=4.0.0';
 import {
   interruptedGesturePatch,
   recenterCameraKeepingOffset,
@@ -13,14 +14,14 @@ import {
   shouldStartMousePan,
   shouldStartTouchPan,
   touchHoldDecision,
-} from './camera-gestures.js?v=3.2.0';
+} from './camera-gestures.js?v=4.0.0';
 import { solveMinesweeperHint } from './minesweeper-solver.js';
 import {
   chordOpportunityAt,
   findChordOpportunity,
   findNewChordOpportunity,
   isNewSuccessfulChord,
-} from './tutorial-triggers.js?v=3.2.0';
+} from './tutorial-triggers.js?v=4.0.0';
 import { chooseFloatingAxisPlacement, chooseGuidedCalloutPlacement } from './guided-callout.js';
 import {
   BOARD_ANIMATION_TIMING,
@@ -48,7 +49,7 @@ import {
   settingsWithCenterMode,
   validateControlSettings,
   wheelActionForEvent,
-} from './control-settings.js?v=3.2.0';
+} from './control-settings.js?v=4.0.0';
 import {
   SciFiMusicDirector,
   getSharedAudioContext,
@@ -58,7 +59,7 @@ import {
   persistSfxEnabled,
   persistSfxVolume,
   resumeSharedAudioContext,
-} from './soundtrack.js?v=3.2.0';
+} from './soundtrack.js?v=4.0.0';
 
 const TASK_MISSIONS = Object.freeze({
   easy: Object.freeze({ width: 3, height: 3, depth: 3, mineCount: 3, ruleset: 'classic', autoPurge: false, reduction: false, campaign: true }),
@@ -79,42 +80,13 @@ const CONFIG_KEYS = Object.freeze([
 ]);
 
 const LOBBY_ENTRY_TIMEOUT_MS = 25000;
+const NICKNAME_STORAGE_KEY = 'holo-sweeper.nickname.v2';
 
 function rulesetForFeatures(autoPurge, reduction) {
   if (reduction) return 'reduction';
   if (autoPurge) return 'sector';
   return 'classic';
 }
-
-const STORY_ART = Object.freeze({
-  easy: 'assets/silver-wolf-quantum-pathfinder.png',
-  medium: 'assets/silver-wolf-neighbor-hack.png',
-  hard: 'assets/silver-wolf-final-protocol.png',
-  ultimate: 'assets/silver-wolf-final-protocol.png',
-  squad: 'assets/silver-wolf-squad-link.png',
-});
-
-const DIALOGUE_ART = Object.freeze({
-  easy: Object.freeze({
-    main: STORY_ART.easy,
-    neighbors: 'assets/silver-wolf-easy-neighbors.webp',
-    scan: 'assets/silver-wolf-easy-scan.webp',
-    finish: 'assets/silver-wolf-easy-finish.webp',
-  }),
-  medium: Object.freeze({
-    main: STORY_ART.medium,
-    tip: 'assets/silver-wolf-medium-tip.webp',
-    scan: 'assets/silver-wolf-medium-scan.webp',
-    inspect: 'assets/silver-wolf-medium-inspect.webp',
-    ready: 'assets/silver-wolf-medium-ready.webp',
-  }),
-  hard: Object.freeze({
-    main: STORY_ART.hard,
-  }),
-  ultimate: Object.freeze({
-    main: STORY_ART.ultimate,
-  }),
-});
 
 // -------------------------------------------------------------
 // 1. 音效合成器模块 (Web Audio API)
@@ -498,9 +470,9 @@ class HoloSweeperGame {
     this.successReplay = null;
     this.successReplayTimer = null;
     this.pendingReplaySnapshot = null;
-    this.ultimateHackClient = null;
-    this.ultimateHackStepTimer = null;
-    this.ultimateHackStartPending = false;
+    this.autoSurveyClient = null;
+    this.autoSurveyStepTimer = null;
+    this.autoSurveyStartPending = false;
     this.automatedFlagKeys = new Set();
     this.lastSectorPurgeId = null;
     this.sectorPurgeBannerTimer = null;
@@ -618,7 +590,7 @@ class HoloSweeperGame {
     // Lobby UI
     const readNickname = () => document.getElementById('input-nickname').value.trim();
     const persistNickname = (nickname) => {
-      try { localStorage.setItem('holo-sweeper.nickname', nickname); } catch {}
+      try { localStorage.setItem(NICKNAME_STORAGE_KEY, nickname); } catch {}
     };
     document.getElementById('btn-lobby-task').addEventListener('click', () => this.selectLobbyMode('solo'));
     document.getElementById('btn-lobby-multiplayer').addEventListener('click', () => this.selectLobbyMode('squad'));
@@ -629,14 +601,14 @@ class HoloSweeperGame {
     document.getElementById('btn-task-campaign').addEventListener('click', () => this.selectTaskFlow('campaign'));
     document.getElementById('btn-task-freeplay').addEventListener('click', () => this.selectTaskFlow('freeplay'));
     document.getElementById('btn-random-nickname').addEventListener('click', () => this.rollNickname());
-    document.getElementById('btn-tutorial-next').addEventListener('click', () => this.advanceSilverWolfDialogue());
+    document.getElementById('btn-tutorial-next').addEventListener('click', () => this.advanceGuideDialogue());
     document.getElementById('btn-skip-tutorial').addEventListener('click', () => this.skipTutorial());
     document.getElementById('btn-tutorial-replay').addEventListener('click', () => this.startSuccessReplay());
     document.getElementById('btn-modal-replay').addEventListener('click', () => this.startSuccessReplay());
     document.getElementById('btn-replay-pause').addEventListener('click', () => this.toggleSuccessReplayPause());
     document.getElementById('btn-replay-exit').addEventListener('click', () => this.stopSuccessReplay());
-    document.getElementById('btn-ultimate-hack-start').addEventListener('click', () => this.startUltimateHack());
-    document.getElementById('btn-ultimate-hack-cancel').addEventListener('click', () => this.cancelUltimateHack());
+    document.getElementById('btn-auto-survey-start').addEventListener('click', () => this.startAutoSurvey());
+    document.getElementById('btn-auto-survey-cancel').addEventListener('click', () => this.cancelAutoSurvey());
     const guidedPointer = document.getElementById('guided-cell-pointer');
     guidedPointer.addEventListener('click', () => this.activateGuidedTarget('primary'));
     guidedPointer.addEventListener('contextmenu', (event) => {
@@ -662,7 +634,7 @@ class HoloSweeperGame {
         && !this.currentDialogueRequiresExplicitAction()
       ) {
         event.preventDefault();
-        this.advanceSilverWolfDialogue();
+        this.advanceGuideDialogue();
       }
     });
 
@@ -739,11 +711,7 @@ class HoloSweeperGame {
 
     const nicknameInput = document.getElementById('input-nickname');
     let savedNickname = null;
-    try { savedNickname = localStorage.getItem('holo-sweeper.nickname'); } catch {}
-    if (savedNickname && ['银狼', 'silver wolf'].includes(savedNickname.trim().toLowerCase())) {
-      try { localStorage.removeItem('holo-sweeper.nickname'); } catch {}
-      savedNickname = null;
-    }
+    try { savedNickname = localStorage.getItem(NICKNAME_STORAGE_KEY); } catch {}
     nicknameInput.value = savedNickname || this.generatedNickname;
     document.getElementById('input-room').addEventListener('input', (event) => {
       event.target.value = event.target.value.toUpperCase().replace(/[^A-HJ-NP-Z2-9]/g, '').slice(0, 6);
@@ -864,7 +832,7 @@ class HoloSweeperGame {
       this.applyControlBindings();
       if (wasMovable && nextCenterMode === 'fixed') this.centerCameraTarget();
       this.updateControlCopy();
-      if (this.dialogueState && !this.waitingTutorialAction) this.renderSilverWolfDialogue();
+      if (this.dialogueState && !this.waitingTutorialAction) this.renderGuideDialogue();
       if (this.waitingTutorialAction) this.setTutorialActionHint(this.waitingTutorialAction);
       this.setControlSettingsStatus('controls.saved', true);
     });
@@ -992,7 +960,7 @@ class HoloSweeperGame {
     this.applyControlBindings();
     if (wasMovable && this.controlSettings.centerMode === 'fixed') this.centerCameraTarget();
     this.updateControlCopy();
-    if (this.dialogueState && !this.waitingTutorialAction) this.renderSilverWolfDialogue();
+    if (this.dialogueState && !this.waitingTutorialAction) this.renderGuideDialogue();
     if (this.waitingTutorialAction) this.setTutorialActionHint(this.waitingTutorialAction);
     this.setControlSettingsStatus('controls.saved', true);
     window.setTimeout(() => this.closeControlSettings(), 180);
@@ -1235,20 +1203,23 @@ class HoloSweeperGame {
 
   storyArtKey(mode = this.gameMode, mission = this.taskMission) {
     if (mode === 'squad') return 'squad';
-    return STORY_ART[mission] ? mission : 'easy';
+    return GUIDE_ART.story[mission] ? mission : 'easy';
   }
 
   applyStoryArt(mode = this.gameMode, mission = this.taskMission) {
     const artKey = this.storyArtKey(mode, mission);
-    const source = STORY_ART[artKey];
+    const source = GUIDE_ART.story[artKey];
     document.body.dataset.storyArt = artKey;
+    document.getElementById('lobby-modal')?.style.setProperty('--story-lobby-art', `url("${source}")`);
     const missionArt = document.getElementById('mission-art');
     if (missionArt?.getAttribute('src') !== source) missionArt?.setAttribute('src', source);
     if (!this.dialogueState) this.setTutorialArt('main', artKey);
   }
 
   setTutorialArt(artKey = 'main', mission = this.taskMission) {
-    const source = DIALOGUE_ART[mission]?.[artKey] ?? STORY_ART[mission] ?? STORY_ART.easy;
+    const source = GUIDE_ART.dialogue[mission]?.[artKey]
+      ?? GUIDE_ART.story[mission]
+      ?? GUIDE_ART.story.easy;
     const tutorialArt = document.getElementById('tutorial-art');
     if (!tutorialArt) return;
     if (tutorialArt.getAttribute('src') !== source) tutorialArt.setAttribute('src', source);
@@ -1257,7 +1228,7 @@ class HoloSweeperGame {
 
   // 难度预设选择
   selectPreset(element) {
-    if (this.successReplay || this.ultimateHackRunning()) return;
+    if (this.successReplay || this.autoSurveyRunning()) return;
     const me = this.roomSnapshot?.players?.find((player) => player.id === this.currentPlayerId);
     if (me && !me.isHost) return;
     document.querySelectorAll('.btn-preset').forEach(btn => btn.classList.remove('active'));
@@ -1280,7 +1251,7 @@ class HoloSweeperGame {
   }
 
   toggleGameFeature(feature) {
-    if (this.successReplay || this.ultimateHackRunning()) return;
+    if (this.successReplay || this.autoSurveyRunning()) return;
     const me = this.roomSnapshot?.players?.find((player) => player.id === this.currentPlayerId);
     if (me && !me.isHost) return;
     if (feature === 'autoPurge') this.autoPurgeEnabled = !this.autoPurgeEnabled;
@@ -1303,7 +1274,7 @@ class HoloSweeperGame {
 
   // 设置操作模式 (挖矿/插旗)
   setMode(mode) {
-    if (this.ultimateHackRunning()) return;
+    if (this.autoSurveyRunning()) return;
     this.activeMode = mode;
     document.getElementById('btn-mode-dig').classList.toggle('active', mode === 'dig');
     document.getElementById('btn-mode-flag').classList.toggle('active', mode === 'flag');
@@ -1355,7 +1326,7 @@ class HoloSweeperGame {
       clearInterval(this.revivalTimer);
       clearTimeout(this.guidedCorrectionTimer);
       clearTimeout(this.successReplayTimer);
-      clearTimeout(this.ultimateHackStepTimer);
+      clearTimeout(this.autoSurveyStepTimer);
       clearTimeout(this.sectorPurgeBannerTimer);
       clearTimeout(this.touchHoldTimer);
       clearTimeout(this.lastMobileCellTap?.timer);
@@ -1365,7 +1336,7 @@ class HoloSweeperGame {
       this.revivalTimer = null;
       this.guidedCorrectionTimer = null;
       this.successReplayTimer = null;
-      this.ultimateHackStepTimer = null;
+      this.autoSurveyStepTimer = null;
       this.sectorPurgeBannerTimer = null;
       this.touchHoldTimer = null;
       this.lastMobileCellTap = null;
@@ -1387,17 +1358,17 @@ class HoloSweeperGame {
           this.controls.autoRotateSpeed = replayState.previousAutoRotateSpeed;
         }
       }
-      const hackClient = this.ultimateHackClient;
-      if (hackClient && this.controls) {
-        this.controls.autoRotate = hackClient.previousAutoRotate;
-        if (Number.isFinite(hackClient.previousAutoRotateSpeed)) {
-          this.controls.autoRotateSpeed = hackClient.previousAutoRotateSpeed;
+      const surveyClient = this.autoSurveyClient;
+      if (surveyClient && this.controls) {
+        this.controls.autoRotate = surveyClient.previousAutoRotate;
+        if (Number.isFinite(surveyClient.previousAutoRotateSpeed)) {
+          this.controls.autoRotateSpeed = surveyClient.previousAutoRotateSpeed;
         }
       }
       this.successReplay = null;
       this.pendingReplaySnapshot = null;
-      this.ultimateHackClient = null;
-      this.ultimateHackStartPending = false;
+      this.autoSurveyClient = null;
+      this.autoSurveyStartPending = false;
 
       this.stopGuidedTutorial();
       this.dialogueState = null;
@@ -1424,11 +1395,11 @@ class HoloSweeperGame {
       for (const id of ['modal-overlay', 'ad-modal-overlay', 'tutorial-overlay']) {
         document.getElementById(id)?.classList.add('hidden');
       }
-      for (const id of ['replay-hud', 'ultimate-hack-hud', 'sector-purge-banner']) {
+      for (const id of ['replay-hud', 'auto-survey-hud', 'sector-purge-banner']) {
         document.getElementById(id)?.classList.add('hidden');
       }
-      document.body.classList.remove('in-room', 'replay-active', 'ultimate-hack-active', 'mobile-panel-active');
-      delete document.body.dataset.ultimateHackStrategy;
+      document.body.classList.remove('in-room', 'replay-active', 'auto-survey-active', 'mobile-panel-active');
+      delete document.body.dataset.autoSurveyStrategy;
       document.getElementById('room-code-display').textContent = this.t('players.roomCode', { code: '-' });
       document.getElementById('btn-copy-invite').style.display = 'none';
       if (departingMode === 'squad' && departingCode) {
@@ -1548,7 +1519,7 @@ class HoloSweeperGame {
   refreshInputModeCopy() {
     this.localizeDocumentElements();
     this.updateControlCopy();
-    if (this.dialogueState && !this.waitingTutorialAction) this.renderSilverWolfDialogue();
+    if (this.dialogueState && !this.waitingTutorialAction) this.renderGuideDialogue();
     if (this.waitingTutorialAction) this.setTutorialActionHint(this.waitingTutorialAction);
     else this.setTutorialActionHint();
     if (this.guidedTutorialTarget) this.renderGuidedHint();
@@ -1570,7 +1541,7 @@ class HoloSweeperGame {
     }
     this.generatedNickname = next;
     input.value = next;
-    try { localStorage.removeItem('holo-sweeper.nickname'); } catch {}
+    try { localStorage.removeItem(NICKNAME_STORAGE_KEY); } catch {}
     input.focus();
     input.select();
   }
@@ -1598,7 +1569,7 @@ class HoloSweeperGame {
 
     const nicknameInput = document.getElementById('input-nickname');
     let savedNickname = null;
-    try { savedNickname = localStorage.getItem('holo-sweeper.nickname'); } catch {}
+    try { savedNickname = localStorage.getItem(NICKNAME_STORAGE_KEY); } catch {}
     if (!savedNickname && (initializing || !nicknameInput.value || nicknameInput.value === previousGeneratedNickname)) {
       if (!initializing || !this.generatedNickname) this.generatedNickname = randomNickname(language);
       nicknameInput.value = this.generatedNickname;
@@ -1626,7 +1597,7 @@ class HoloSweeperGame {
     this.selectTaskFlow(this.taskFlow);
     this.updateMissionGuide();
     this.updateControlCopy();
-    if (this.dialogueState && !this.waitingTutorialAction) this.renderSilverWolfDialogue();
+    if (this.dialogueState && !this.waitingTutorialAction) this.renderGuideDialogue();
     if (this.waitingTutorialAction) this.setTutorialActionHint(this.waitingTutorialAction);
     if (this.guidedTutorialActive) this.updateGuidedTutorial(this.roomSnapshot);
     if (this.solverHint) this.renderSolverHint(this.solverHint);
@@ -1635,8 +1606,8 @@ class HoloSweeperGame {
       this.updateSuccessReplayControls();
       this.updateSuccessReplayProgress();
     }
-    if (this.ultimateHackRunning()) this.updateUltimateHackHUD(this.roomSnapshot);
-    this.updateUltimateHackLaunchAvailability(this.roomSnapshot);
+    if (this.autoSurveyRunning()) this.updateAutoSurveyHUD(this.roomSnapshot);
+    this.updateAutoSurveyLaunchAvailability(this.roomSnapshot);
   }
 
   // -------------------------------------------------------------
@@ -1809,8 +1780,8 @@ class HoloSweeperGame {
 
     const desiredFlags = new Set((snapshot.flags || []).map(point => `${point.x}:${point.y}:${point.z}`));
     const previousFlags = new Set((previous?.flags || []).map(point => `${point.x}:${point.y}:${point.z}`));
-    const automatedScanActive = snapshot.ultimateHack?.status === 'running'
-      && (snapshot.ultimateHack?.strategy === 'scan' || snapshot.config?.reduction === false);
+    const automatedScanActive = snapshot.autoSurvey?.status === 'running'
+      && (snapshot.autoSurvey?.strategy === 'scan' || snapshot.config?.reduction === false);
     for (let x = 0; x < this.width; x++) for (let y = 0; y < this.height; y++) for (let z = 0; z < this.depth; z++) {
       if (this.grid[x][y][z].isPurged) continue;
       const key = `${x}:${y}:${z}`;
@@ -1916,7 +1887,7 @@ class HoloSweeperGame {
     this.isFirstClick = snapshot.phase === 'ready';
     this.isGameOver = snapshot.phase === 'lost' || (this.gameMode === 'solo' && snapshot.phase === 'revive');
     this.isGameWon = snapshot.phase === 'won';
-    this.isInteractionLocked = this.ultimateHackRunning(snapshot)
+    this.isInteractionLocked = this.autoSurveyRunning(snapshot)
       || ['revive', 'lost', 'won'].includes(snapshot.phase);
     this.syncServerTimer(
       snapshot.startedAt,
@@ -1963,7 +1934,7 @@ class HoloSweeperGame {
     this.maybeCompleteMediumChordObjective(snapshot, previous);
     this.syncSuccessReplayAvailability(snapshot);
     this.updateStats();
-    this.syncUltimateHack(snapshot, previous);
+    this.syncAutoSurvey(snapshot, previous);
     this.updateSolverHintVisibility(snapshot);
     if (this.guidedTutorialActive) this.updateGuidedTutorial(snapshot);
     if (this.gameMode === 'solo') {
@@ -1999,11 +1970,11 @@ class HoloSweeperGame {
     ) return;
     this.taskExperienceStarted = true;
     if (this.taskMission === 'easy') {
-      this.startSilverWolfTutorial();
+      this.startGuideTutorial();
       return;
     }
     if (this.taskMission === 'medium') {
-      this.showSilverWolfDialogue([
+      this.showGuideDialogue([
         { artKey: 'main', titleKey: 'task.medium.chapterTitle', messageKey: 'task.medium.brief.1', buttonKey: 'tutorial.next' },
         { artKey: 'tip', titleKey: 'purge.tutorialTitle', messageKey: 'purge.tutorialMessage', factKey: 'purge.tutorialFact', buttonKey: 'tutorial.next' },
         { artKey: 'tip', titleKey: 'task.medium.upgradeTitle', messageKey: 'task.medium.upgrade.1', factKey: 'task.medium.upgrade.fact', buttonKey: 'tutorial.next' },
@@ -2012,8 +1983,8 @@ class HoloSweeperGame {
       return;
     }
     if (this.taskMission === 'ultimate') {
-      if (snapshot.ultimateHack?.status === 'running') return;
-      this.showSilverWolfDialogue([
+      if (snapshot.autoSurvey?.status === 'running') return;
+      this.showGuideDialogue([
         {
           artKey: 'main',
           titleKey: 'task.ultimate.chapterTitle',
@@ -2023,7 +1994,7 @@ class HoloSweeperGame {
         },
         {
           artKey: 'main',
-          titleKey: 'task.ultimate.trojanTitle',
+          titleKey: 'task.ultimate.fixedProtocolTitle',
           messageKey: 'task.ultimate.brief.2',
           buttonKey: 'tutorial.next',
         },
@@ -2034,10 +2005,10 @@ class HoloSweeperGame {
           buttonKey: 'task.ultimate.installButton',
           requiresExplicit: true,
         },
-      ], { onComplete: () => this.startUltimateHack() });
+      ], { onComplete: () => this.startAutoSurvey() });
       return;
     }
-    this.showSilverWolfDialogue([
+    this.showGuideDialogue([
       { artKey: 'main', titleKey: `task.${this.taskMission}.chapterTitle`, messageKey: `task.${this.taskMission}.brief.1`, buttonKey: 'tutorial.next' },
       { artKey: 'main', titleKey: 'reduction.tutorialTitle', messageKey: 'reduction.tutorialMessage', factKey: 'reduction.tutorialFact', buttonKey: 'tutorial.next' },
       { artKey: 'main', titleKey: `task.${this.taskMission}.chapterTitle`, messageKey: `task.${this.taskMission}.brief.2`, factKey: `task.${this.taskMission}.brief.fact`, buttonKey: 'tutorial.startMission' },
@@ -2066,7 +2037,7 @@ class HoloSweeperGame {
     this.setMediumChordObjectiveTarget(clue);
     this.updateMissionGuide();
     this.closeMobilePanels();
-    this.showSilverWolfDialogue([
+    this.showGuideDialogue([
       {
         artKey: 'tip',
         titleKey: 'task.medium.chordTipTitle',
@@ -2158,29 +2129,29 @@ class HoloSweeperGame {
     this.ensureMediumChordObjectiveMarker();
   }
 
-  startSilverWolfTutorial() {
-    // Keep the board inert until Silver Wolf hands control to the guided route,
+  startGuideTutorial() {
+    // Keep the board inert until the guide hands control to the guided route,
     // so an early click cannot initialize a different minefield.
     this.beginnerBoardInputLocked = true;
-    this.showSilverWolfDialogue([
+    this.showGuideDialogue([
       { artKey: 'main', titleKey: 'tutorial.speaker', messageKey: 'tutorial.intro', factKey: 'tutorial.controlsNote', buttonKey: 'tutorial.next' },
       { artKey: 'neighbors', titleKey: 'tutorial.neighborsTitle', messageKey: 'tutorial.neighbors', factKey: 'tutorial.neighborsFact', buttonKey: 'tutorial.understood' },
       { artKey: 'scan', titleKey: 'tutorial.guidedTitle', messageKey: 'tutorial.guided', factKey: 'tutorial.guidedFact', buttonKey: 'tutorial.followMe' },
     ], { allowSkip: true, onComplete: () => this.beginGuidedTutorial() });
   }
 
-  showSilverWolfDialogue(steps, { allowSkip = false, allowReplay = false, onComplete = null } = {}) {
+  showGuideDialogue(steps, { allowSkip = false, allowReplay = false, onComplete = null } = {}) {
     this.dialogueState = { steps, index: 0, allowSkip, allowReplay, onComplete };
     this.waitingTutorialAction = null;
     this.setTutorialActionHint();
-    this.renderSilverWolfDialogue();
+    this.renderGuideDialogue();
   }
 
-  renderSilverWolfDialogue() {
+  renderGuideDialogue() {
     const state = this.dialogueState;
     if (!state) return;
     if (state.index >= state.steps.length) {
-      this.finishSilverWolfDialogue();
+      this.finishGuideDialogue();
       return;
     }
     const step = state.steps[state.index];
@@ -2210,7 +2181,7 @@ class HoloSweeperGame {
     return Boolean(state?.steps?.[state.index]?.requiresExplicit);
   }
 
-  advanceSilverWolfDialogue() {
+  advanceGuideDialogue() {
     const state = this.dialogueState;
     if (!state) return;
     const step = state.steps[state.index];
@@ -2222,10 +2193,10 @@ class HoloSweeperGame {
       return;
     }
     state.index += 1;
-    this.renderSilverWolfDialogue();
+    this.renderGuideDialogue();
   }
 
-  finishSilverWolfDialogue() {
+  finishGuideDialogue() {
     const onComplete = this.dialogueState?.onComplete;
     document.getElementById('tutorial-overlay').classList.add('hidden');
     this.dialogueState = null;
@@ -2261,7 +2232,7 @@ class HoloSweeperGame {
     this.waitingTutorialAction = null;
     this.setTutorialActionHint();
     this.dialogueState.index += 1;
-    setTimeout(() => this.renderSilverWolfDialogue(), 240);
+    setTimeout(() => this.renderGuideDialogue(), 240);
   }
 
   renderTutorialActionHint(message = '') {
@@ -2370,7 +2341,7 @@ class HoloSweeperGame {
       this.guidedInspectLessonActive = true;
       this.beginnerBoardInputLocked = true;
       this.clearGuidedTarget();
-      this.showSilverWolfDialogue([
+      this.showGuideDialogue([
         {
           artKey: 'neighbors',
           titleKey: 'tutorial.beginnerInspectTitle',
@@ -2452,7 +2423,7 @@ class HoloSweeperGame {
     if (target.action === 'flag' && !this.guidedFlagModeExplained) {
       this.guidedFlagModeExplained = true;
       this.clearGuidedTarget();
-      this.showSilverWolfDialogue([
+    this.showGuideDialogue([
         { artKey: 'scan', titleKey: 'tutorial.flagModeTitle', messageKey: 'tutorial.flagMode', factKey: 'tutorial.flagModeFact', buttonKey: 'tutorial.tryFlag' },
       ], { allowSkip: true, onComplete: () => this.updateGuidedTutorial(this.roomSnapshot) });
       return;
@@ -2479,7 +2450,7 @@ class HoloSweeperGame {
   }
 
   showGuidedRecoveryDialogue() {
-    this.showSilverWolfDialogue([{
+    this.showGuideDialogue([{
       artKey: 'scan',
       titleKey: 'tutorial.guided.reseedTitle',
       messageKey: 'tutorial.guided.reseedMessage',
@@ -3028,7 +2999,7 @@ class HoloSweeperGame {
       && ['medium', 'hard'].includes(this.taskMission)
       && snapshot
       && ['ready', 'playing'].includes(snapshot.phase)
-      && !this.ultimateHackRunning(snapshot);
+      && !this.autoSurveyRunning(snapshot);
     panel.classList.toggle('hidden', !visible);
     if (!visible) this.clearSolverHint();
   }
@@ -3309,16 +3280,16 @@ class HoloSweeperGame {
     }
   }
 
-  ultimateHackRunning(snapshot = this.roomSnapshot) {
-    return snapshot?.ultimateHack?.status === 'running';
+  autoSurveyRunning(snapshot = this.roomSnapshot) {
+    return snapshot?.autoSurvey?.status === 'running';
   }
 
-  ultimateHackStrategy(snapshot = this.roomSnapshot) {
-    if (snapshot?.ultimateHack?.strategy === 'scan') return 'scan';
+  autoSurveyStrategy(snapshot = this.roomSnapshot) {
+    if (snapshot?.autoSurvey?.strategy === 'scan') return 'scan';
     return snapshot?.config?.reduction === false ? 'scan' : 'entropy';
   }
 
-  startUltimateHack() {
+  startAutoSurvey() {
     const snapshot = this.roomSnapshot;
     const allowedSurface = this.gameMode === 'solo' && (
       this.taskFlow === 'freeplay'
@@ -3328,56 +3299,56 @@ class HoloSweeperGame {
       !allowedSurface
       || !snapshot
       || !['ready', 'playing'].includes(snapshot.phase)
-      || this.ultimateHackRunning(snapshot)
-      || this.ultimateHackStartPending
+      || this.autoSurveyRunning(snapshot)
+      || this.autoSurveyStartPending
       || this.successReplay
     ) return;
 
-    this.ultimateHackStartPending = true;
+    this.autoSurveyStartPending = true;
     this.clearSolverHint();
     this.closeMobilePanels();
-    this.updateUltimateHackLaunchAvailability(snapshot);
-    this.roomClient.send({ op: 'ultimate_hack_start' }).catch((error) => {
-      this.ultimateHackStartPending = false;
-      this.updateUltimateHackLaunchAvailability(this.roomSnapshot);
+    this.updateAutoSurveyLaunchAvailability(snapshot);
+    this.roomClient.send({ op: 'auto_survey_start' }).catch((error) => {
+      this.autoSurveyStartPending = false;
+      this.updateAutoSurveyLaunchAvailability(this.roomSnapshot);
       this.handleRoomError(error);
     });
   }
 
-  cancelUltimateHack() {
-    const hack = this.roomSnapshot?.ultimateHack;
-    const client = this.ultimateHackClient;
-    if (hack?.status !== 'running' || !hack.runId || client?.cancelPending) return;
+  cancelAutoSurvey() {
+    const survey = this.roomSnapshot?.autoSurvey;
+    const client = this.autoSurveyClient;
+    if (survey?.status !== 'running' || !survey.runId || client?.cancelPending) return;
     client.cancelPending = true;
-    clearTimeout(this.ultimateHackStepTimer);
-    this.ultimateHackStepTimer = null;
+    clearTimeout(this.autoSurveyStepTimer);
+    this.autoSurveyStepTimer = null;
     client.scheduledStepKey = null;
-    this.updateUltimateHackHUD(this.roomSnapshot);
-    this.roomClient.send({ op: 'ultimate_hack_cancel', runId: hack.runId }).catch((error) => {
-      if (this.ultimateHackClient?.runId === hack.runId) {
-        this.ultimateHackClient.cancelPending = false;
-        this.scheduleUltimateHackStep(this.roomSnapshot);
-        this.updateUltimateHackHUD(this.roomSnapshot);
+    this.updateAutoSurveyHUD(this.roomSnapshot);
+    this.roomClient.send({ op: 'auto_survey_cancel', runId: survey.runId }).catch((error) => {
+      if (this.autoSurveyClient?.runId === survey.runId) {
+        this.autoSurveyClient.cancelPending = false;
+        this.scheduleAutoSurveyStep(this.roomSnapshot);
+        this.updateAutoSurveyHUD(this.roomSnapshot);
       }
       this.handleRoomError(error);
     });
   }
 
-  beginUltimateHackClient(hack, snapshot) {
-    clearTimeout(this.ultimateHackStepTimer);
-    this.ultimateHackStepTimer = null;
-    this.ultimateHackStartPending = false;
-    this.ultimateHackClient = {
-      runId: hack.runId,
+  beginAutoSurveyClient(survey, snapshot) {
+    clearTimeout(this.autoSurveyStepTimer);
+    this.autoSurveyStepTimer = null;
+    this.autoSurveyStartPending = false;
+    this.autoSurveyClient = {
+      runId: survey.runId,
       lastRequestedStepKey: null,
       scheduledStepKey: null,
       cancelPending: false,
       previousAutoRotate: Boolean(this.controls?.autoRotate),
       previousAutoRotateSpeed: this.controls?.autoRotateSpeed,
     };
-    document.body.classList.add('ultimate-hack-active');
-    document.body.dataset.ultimateHackStrategy = this.ultimateHackStrategy(snapshot);
-    document.getElementById('ultimate-hack-hud')?.classList.remove('hidden');
+    document.body.classList.add('auto-survey-active');
+    document.body.dataset.autoSurveyStrategy = this.autoSurveyStrategy(snapshot);
+    document.getElementById('auto-survey-hud')?.classList.remove('hidden');
     document.getElementById('tutorial-overlay')?.classList.add('hidden');
     this.closeMobilePanels();
     this.clearSolverHint();
@@ -3389,15 +3360,15 @@ class HoloSweeperGame {
     }
   }
 
-  endUltimateHackClient(snapshot = this.roomSnapshot) {
-    const client = this.ultimateHackClient;
-    clearTimeout(this.ultimateHackStepTimer);
-    this.ultimateHackStepTimer = null;
-    this.ultimateHackStartPending = false;
-    this.ultimateHackClient = null;
-    document.body.classList.remove('ultimate-hack-active');
-    delete document.body.dataset.ultimateHackStrategy;
-    document.getElementById('ultimate-hack-hud')?.classList.add('hidden');
+  endAutoSurveyClient(snapshot = this.roomSnapshot) {
+    const client = this.autoSurveyClient;
+    clearTimeout(this.autoSurveyStepTimer);
+    this.autoSurveyStepTimer = null;
+    this.autoSurveyStartPending = false;
+    this.autoSurveyClient = null;
+    document.body.classList.remove('auto-survey-active');
+    delete document.body.dataset.autoSurveyStrategy;
+    document.getElementById('auto-survey-hud')?.classList.add('hidden');
     if (client && this.controls) {
       this.controls.autoRotate = client.previousAutoRotate;
       if (Number.isFinite(client.previousAutoRotateSpeed)) {
@@ -3407,90 +3378,90 @@ class HoloSweeperGame {
     this.isInteractionLocked = ['revive', 'lost', 'won'].includes(snapshot?.phase);
   }
 
-  syncUltimateHack(snapshot, previous = null) {
-    const hack = snapshot?.ultimateHack;
-    const running = hack?.status === 'running' && Boolean(hack.runId);
+  syncAutoSurvey(snapshot, previous = null) {
+    const survey = snapshot?.autoSurvey;
+    const running = survey?.status === 'running' && Boolean(survey.runId);
     if (!running) {
-      if (this.ultimateHackClient) this.endUltimateHackClient(snapshot);
-      this.updateUltimateHackLaunchAvailability(snapshot);
+      if (this.autoSurveyClient) this.endAutoSurveyClient(snapshot);
+      this.updateAutoSurveyLaunchAvailability(snapshot);
       return;
     }
 
-    if (this.ultimateHackClient?.runId !== hack.runId) {
-      if (this.ultimateHackClient) this.endUltimateHackClient(snapshot);
-      this.beginUltimateHackClient(hack, snapshot);
+    if (this.autoSurveyClient?.runId !== survey.runId) {
+      if (this.autoSurveyClient) this.endAutoSurveyClient(snapshot);
+      this.beginAutoSurveyClient(survey, snapshot);
     }
     this.isInteractionLocked = true;
-    document.body.dataset.ultimateHackStrategy = this.ultimateHackStrategy(snapshot);
-    this.updateUltimateHackHUD(snapshot);
-    this.updateUltimateHackLaunchAvailability(snapshot);
+    document.body.dataset.autoSurveyStrategy = this.autoSurveyStrategy(snapshot);
+    this.updateAutoSurveyHUD(snapshot);
+    this.updateAutoSurveyLaunchAvailability(snapshot);
 
-    const previousHack = previous?.ultimateHack;
-    const stepChanged = previousHack?.runId !== hack.runId || previousHack?.step !== hack.step;
-    if (stepChanged || !this.ultimateHackClient.lastRequestedStepKey) {
-      this.scheduleUltimateHackStep(snapshot);
+    const previousSurvey = previous?.autoSurvey;
+    const stepChanged = previousSurvey?.runId !== survey.runId || previousSurvey?.step !== survey.step;
+    if (stepChanged || !this.autoSurveyClient.lastRequestedStepKey) {
+      this.scheduleAutoSurveyStep(snapshot);
     }
   }
 
-  updateUltimateHackLaunchAvailability(snapshot = this.roomSnapshot) {
-    const launch = document.getElementById('ultimate-hack-launch');
-    const button = document.getElementById('btn-ultimate-hack-start');
-    const label = document.getElementById('btn-ultimate-hack-start-label');
+  updateAutoSurveyLaunchAvailability(snapshot = this.roomSnapshot) {
+    const launch = document.getElementById('auto-survey-launch');
+    const button = document.getElementById('btn-auto-survey-start');
+    const label = document.getElementById('btn-auto-survey-start-label');
     if (!launch || !button) return;
     const visible = this.gameMode === 'solo' && this.taskFlow === 'freeplay';
     const enabled = visible
       && snapshot
       && ['ready', 'playing'].includes(snapshot.phase)
-      && !this.ultimateHackRunning(snapshot)
-      && !this.ultimateHackStartPending
+      && !this.autoSurveyRunning(snapshot)
+      && !this.autoSurveyStartPending
       && !this.successReplay;
     launch.classList.toggle('hidden', !visible);
     button.disabled = !enabled;
-    if (label) label.textContent = this.t(this.ultimateHackStartPending ? 'ultimateHack.launchPending' : 'ultimateHack.launch');
+    if (label) label.textContent = this.t(this.autoSurveyStartPending ? 'autoSurvey.launchPending' : 'autoSurvey.launch');
   }
 
-  updateUltimateHackHUD(snapshot = this.roomSnapshot) {
-    const hack = snapshot?.ultimateHack;
-    if (!hack || hack.status !== 'running') return;
-    const strategy = this.ultimateHackStrategy(snapshot);
-    const numericStep = Number(hack.step);
+  updateAutoSurveyHUD(snapshot = this.roomSnapshot) {
+    const survey = snapshot?.autoSurvey;
+    if (!survey || survey.status !== 'running') return;
+    const strategy = this.autoSurveyStrategy(snapshot);
+    const numericStep = Number(survey.step);
     const step = Number.isFinite(numericStep) ? Math.max(0, numericStep) : 0;
     const progress = this.currentBoardProgress(snapshot).percent;
-    document.getElementById('ultimate-hack-stage').textContent = this.t(`ultimateHack.stage.${strategy}`);
-    document.getElementById('ultimate-hack-step').textContent = this.t('ultimateHack.step', { step });
-    document.getElementById('ultimate-hack-progress').textContent = this.t('ultimateHack.progress', { progress });
-    const cancel = document.getElementById('btn-ultimate-hack-cancel');
+    document.getElementById('auto-survey-stage').textContent = this.t(`autoSurvey.stage.${strategy}`);
+    document.getElementById('auto-survey-step').textContent = this.t('autoSurvey.step', { step });
+    document.getElementById('auto-survey-progress').textContent = this.t('autoSurvey.progress', { progress });
+    const cancel = document.getElementById('btn-auto-survey-cancel');
     if (cancel) {
-      cancel.disabled = Boolean(this.ultimateHackClient?.cancelPending);
-      cancel.textContent = this.t(cancel.disabled ? 'ultimateHack.cancelPending' : 'ultimateHack.cancel');
+      cancel.disabled = Boolean(this.autoSurveyClient?.cancelPending);
+      cancel.textContent = this.t(cancel.disabled ? 'autoSurvey.cancelPending' : 'autoSurvey.cancel');
     }
   }
 
-  scheduleUltimateHackStep(snapshot = this.roomSnapshot) {
-    const hack = snapshot?.ultimateHack;
-    const client = this.ultimateHackClient;
+  scheduleAutoSurveyStep(snapshot = this.roomSnapshot) {
+    const survey = snapshot?.autoSurvey;
+    const client = this.autoSurveyClient;
     if (
       !client
       || client.cancelPending
-      || hack?.status !== 'running'
-      || hack.runId !== client.runId
+      || survey?.status !== 'running'
+      || survey.runId !== client.runId
       || !['ready', 'playing'].includes(snapshot.phase)
     ) return;
-    const stepKey = `${hack.runId}:${String(hack.step ?? 0)}`;
+    const stepKey = `${survey.runId}:${String(survey.step ?? 0)}`;
     if (client.lastRequestedStepKey === stepKey || client.scheduledStepKey === stepKey) return;
-    clearTimeout(this.ultimateHackStepTimer);
+    clearTimeout(this.autoSurveyStepTimer);
     client.scheduledStepKey = stepKey;
 
     const sendWhenSettled = () => {
-      const liveHack = this.roomSnapshot?.ultimateHack;
-      const liveClient = this.ultimateHackClient;
+      const liveSurvey = this.roomSnapshot?.autoSurvey;
+      const liveClient = this.autoSurveyClient;
       if (
         !liveClient
         || liveClient.cancelPending
-        || liveClient.runId !== hack.runId
-        || liveHack?.status !== 'running'
-        || liveHack.runId !== hack.runId
-        || `${liveHack.runId}:${String(liveHack.step ?? 0)}` !== stepKey
+        || liveClient.runId !== survey.runId
+        || liveSurvey?.status !== 'running'
+        || liveSurvey.runId !== survey.runId
+        || `${liveSurvey.runId}:${String(liveSurvey.step ?? 0)}` !== stepKey
       ) {
         if (liveClient?.scheduledStepKey === stepKey) liveClient.scheduledStepKey = null;
         return;
@@ -3499,22 +3470,22 @@ class HoloSweeperGame {
       const revealStillRunning = this.cellRevealAnimations.length > 0
         || performance.now() < this.revealAnimationEndsAt;
       if (revealStillRunning || this.sectorPurgeAnimations.length > 0) {
-        this.ultimateHackStepTimer = window.setTimeout(sendWhenSettled, 80);
+        this.autoSurveyStepTimer = window.setTimeout(sendWhenSettled, 80);
         return;
       }
 
       liveClient.scheduledStepKey = null;
       liveClient.lastRequestedStepKey = stepKey;
-      this.ultimateHackStepTimer = null;
+      this.autoSurveyStepTimer = null;
       this.roomClient.send({
-        op: 'ultimate_hack_step',
-        runId: hack.runId,
-        expectedStep: Number(hack.step),
+        op: 'auto_survey_step',
+        runId: survey.runId,
+        expectedStep: Number(survey.step),
       }).catch((error) => {
-        if (this.ultimateHackClient?.runId === hack.runId) {
-          this.ultimateHackClient.lastRequestedStepKey = null;
-          this.ultimateHackStepTimer = window.setTimeout(
-            () => this.scheduleUltimateHackStep(this.roomSnapshot),
+        if (this.autoSurveyClient?.runId === survey.runId) {
+          this.autoSurveyClient.lastRequestedStepKey = null;
+          this.autoSurveyStepTimer = window.setTimeout(
+            () => this.scheduleAutoSurveyStep(this.roomSnapshot),
             650,
           );
         }
@@ -3523,12 +3494,12 @@ class HoloSweeperGame {
     };
 
     const revealWait = Math.max(0, Math.ceil(this.revealAnimationEndsAt - performance.now()));
-    this.ultimateHackStepTimer = window.setTimeout(sendWhenSettled, Math.max(120, revealWait));
+    this.autoSurveyStepTimer = window.setTimeout(sendWhenSettled, Math.max(120, revealWait));
   }
 
   showTaskCompletion() {
     if (this.taskFlow === 'freeplay') {
-      this.showSilverWolfDialogue([{
+      this.showGuideDialogue([{
         artKey: 'main',
         titleKey: 'freeplay.completeTitle',
         messageKey: 'freeplay.completeMessage',
@@ -3539,7 +3510,7 @@ class HoloSweeperGame {
     }
     const mission = this.taskMission;
     if (mission === 'ultimate') {
-      this.showSilverWolfDialogue([
+    this.showGuideDialogue([
         {
           artKey: 'main',
           titleKey: 'task.ultimate.completeTitle',
@@ -3573,7 +3544,7 @@ class HoloSweeperGame {
     const nextMission = mission === 'easy'
       ? 'medium'
       : (mission === 'medium' ? 'hard' : (mission === 'hard' ? 'ultimate' : null));
-    this.showSilverWolfDialogue(steps, {
+    this.showGuideDialogue(steps, {
       allowReplay: true,
       onComplete: nextMission ? () => this.advanceTaskMission(nextMission) : null,
     });
@@ -3637,7 +3608,7 @@ class HoloSweeperGame {
     this.applyStoryArt(this.gameMode, this.taskMission);
     this.updateSoloGuide();
     this.updateMissionGuide();
-    this.updateUltimateHackLaunchAvailability(this.roomSnapshot);
+    this.updateAutoSurveyLaunchAvailability(this.roomSnapshot);
   }
 
   renderPlayers(players) {
@@ -4415,7 +4386,7 @@ class HoloSweeperGame {
     this.applyRoomSnapshot(snapshot, true);
     if (snapshot.phase !== 'won' && this.dialogueState?.allowReplay) this.dialogueState = null;
     if (snapshot.phase === 'won' && returnSurface === 'dialogue' && this.dialogueState) {
-      this.renderSilverWolfDialogue();
+      this.renderGuideDialogue();
     } else if (snapshot.phase === 'won' && returnSurface === 'modal') {
       document.getElementById('modal-overlay').classList.remove('hidden');
     }
@@ -4434,11 +4405,11 @@ class HoloSweeperGame {
         this.toggleFlagLocal(action.data.x, action.data.y, action.data.z);
         break;
       case 'trigger_mine':
-        this.appendChatMessage({ system: true, message: `[系统] 🚨 ${name} 踩到了反物质地雷！全体警报！` });
+        this.appendChatMessage({ system: true, message: `[系统] 🚨 ${name} 踩到了异常地雷！全体警报！` });
         this.triggerMineLocal(action.data.x, action.data.y, action.data.z);
         break;
       case 'watch_ad':
-        this.appendChatMessage({ system: true, message: `[系统] 📺 ${name} 选择了观看广告，全员进入量子回溯状态...` });
+        this.appendChatMessage({ system: true, message: `[系统] 📺 ${name} 选择了观看广告，全员进入坐标回溯状态...` });
         this.startAdRevivalLocal();
         break;
       case 'end_game':
@@ -4607,7 +4578,7 @@ class HoloSweeperGame {
       color: 0xff174d,
       side: THREE.DoubleSide,
     });
-    automatedFlagGroup.userData.ultimateHackAutomated = true;
+    automatedFlagGroup.userData.autoSurveyAutomated = true;
     this.geometries.automatedFlag = automatedFlagGroup;
 
     // 初始化重用材质
@@ -5081,7 +5052,7 @@ class HoloSweeperGame {
   // 5. 游戏引擎：扫雷核心算法
   // -------------------------------------------------------------
   startNewGame() {
-    if (this.successReplay || this.ultimateHackRunning()) return;
+    if (this.successReplay || this.autoSurveyRunning()) return;
     // Invalidate every delayed reveal / victory callback as soon as restart is
     // requested. Waiting for the authoritative snapshot leaves a network-sized
     // window where effects from the previous board could enter the new game.
@@ -6025,7 +5996,7 @@ class HoloSweeperGame {
 
     // 数字颜色映射表
     const colorMap = {
-      1: '#29e7ff', // 量子青
+      1: '#29e7ff', // 零域青
       2: '#39ff14', // 绿
       3: '#ff3366', // 鲜红
       4: '#b026ff', // 紫
@@ -6112,7 +6083,7 @@ class HoloSweeperGame {
         btnAd.innerText = `广告播放中 (${countdown})...`;
       } else {
         clearInterval(interval);
-        // 复活成功：量子回溯，恢复刚才踩中的方块
+        // 复活成功：坐标回溯，恢复刚才踩中的方块
         if (this.pendingGameOver) {
           const { x, y, z } = this.pendingGameOver;
           const cell = this.grid[x][y][z];
@@ -6299,7 +6270,7 @@ class HoloSweeperGame {
         }, 400);
       }, waveAnimationWait);
 
-      // 任务模式由银狼亲自给出章节结算；多人模式保留战绩弹窗
+      // 任务模式由引导角色给出章节结算；多人模式保留战绩弹窗
       if (this.gameMode === 'solo') {
         setTimeout(() => {
           if (this.boardAnimationGeneration === animationGeneration) this.showTaskCompletion();
@@ -6333,7 +6304,7 @@ class HoloSweeperGame {
   // 10. 本地切片视图
   // -------------------------------------------------------------
   handleSliceChange(axis, type) {
-    if (this.ultimateHackRunning()) return;
+    if (this.autoSurveyRunning()) return;
     const minElement = document.getElementById(`slice-${axis}-min`);
     const maxElement = document.getElementById(`slice-${axis}-max`);
     let minValue = Number.parseInt(minElement.value, 10);

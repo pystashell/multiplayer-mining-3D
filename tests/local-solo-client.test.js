@@ -162,7 +162,7 @@ test('a local solo board restores after refresh and continues with a monotonic s
   }
 });
 
-test('local solo preserves rewind, Ultimate Hacker, and the successful replay tape', async () => {
+test('local solo preserves rewind, automated survey, and the successful replay tape', async () => {
   const harness = installBrowserHarness();
   try {
     let snapshot = null;
@@ -182,18 +182,18 @@ test('local solo preserves rewind, Ultimate Hacker, and the successful replay ta
     assert.equal(snapshot.phase, 'playing');
 
     await client.send({ op: 'restart', config: ULTIMATE });
-    await client.send({ op: 'ultimate_hack_start' });
+    await client.send({ op: 'auto_survey_start' });
     let steps = 0;
-    while (snapshot.ultimateHack?.status === 'running' && steps < 800) {
+    while (snapshot.autoSurvey?.status === 'running' && steps < 800) {
       await client.send({
-        op: 'ultimate_hack_step',
-        runId: snapshot.ultimateHack.runId,
-        expectedStep: snapshot.ultimateHack.step,
+        op: 'auto_survey_step',
+        runId: snapshot.autoSurvey.runId,
+        expectedStep: snapshot.autoSurvey.step,
       });
       steps += 1;
     }
     assert.equal(snapshot.phase, 'won');
-    assert.equal(snapshot.ultimateHack.status, 'completed');
+    assert.equal(snapshot.autoSurvey.status, 'completed');
     assert.ok(snapshot.replay?.steps?.length > 0);
     assert.ok(steps < 800);
   } finally {

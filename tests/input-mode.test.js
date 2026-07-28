@@ -6,6 +6,7 @@ import {
   inputScopedTranslationKey,
 } from '../public/input-mode.js';
 import { hasTranslation, translateForInput } from '../public/i18n.js';
+import { guideCharacterText } from '../public/guide-character.js';
 
 test('detects the initial input mode from pointer capability instead of viewport size', () => {
   assert.equal(detectInitialInputMode({ matchMedia: () => ({ matches: true }) }), 'touch');
@@ -30,7 +31,10 @@ test('selects same-language input copy, replaces params, and falls back to the b
   assert.doesNotMatch(translateForInput('zh', 'tutorial.actionHint.chord', 'touch', { number: 2 }), /电脑|鼠标|左右键/);
   assert.match(translateForInput('en', 'tutorial.actionHint.chord', 'mouse', { number: 3 }), /clue 3.*both mouse buttons/i);
   assert.match(translateForInput('en', 'tutorial.actionHint.chord', 'touch', { number: 3 }), /clue 3.*double-tap/i);
-  assert.equal(translateForInput('en', 'document.title', 'touch'), 'Zero Domain Protocol: Sector Purge | Silver Wolf');
+  assert.equal(
+    translateForInput('en', 'document.title', 'touch'),
+    `Zero Domain Protocol: Sector Purge | ${guideCharacterText('en').codename}`,
+  );
 });
 
 test('keeps all gameplay instruction variants complete in Chinese and English', () => {

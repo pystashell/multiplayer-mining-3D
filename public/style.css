@@ -326,7 +326,7 @@ body.in-room .return-lobby-button { display: flex; }
   box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
 }
 
-.silver-wolf-comms {
+.guide-comms {
   position: relative;
   display: grid;
   grid-template-columns: 104px 1fr;
@@ -461,7 +461,7 @@ body[data-game-mode="multiplayer"] #chat-messages { min-height:128px; }
     pointer-events: none;
   }
   body[data-game-mode="task"] #social-panel::before,
-  body[data-game-mode="task"] #social-panel > .silver-wolf-comms,
+  body[data-game-mode="task"] #social-panel > .guide-comms,
   body[data-game-mode="task"] #social-panel > .guide-section { display: none; }
   body[data-game-mode="task"] #social-panel:hover { border: 0; background: transparent; box-shadow: none; }
   body[data-game-mode="task"] #social-panel > .mission-floating-panel {
@@ -633,7 +633,7 @@ body[data-game-mode="multiplayer"] #chat-messages { min-height:128px; }
 .feature-toggle.active .feature-toggle-copy small { color:#bfefff; }
 .feature-toggle:disabled { opacity:.48; cursor:not-allowed; }
 .feature-toggle:disabled:hover { border-color:rgba(255,255,255,.09); background:rgba(255,255,255,.025); }
-.ultimate-hack-launch {
+.auto-survey-launch {
   display:grid;
   gap:9px;
   margin-top:10px;
@@ -645,12 +645,12 @@ body[data-game-mode="multiplayer"] #chat-messages { min-height:128px; }
     linear-gradient(135deg, rgba(109,93,252,.11), rgba(8,5,25,.68));
   box-shadow:inset 0 0 22px rgba(109,93,252,.08), 0 0 18px rgba(255,79,216,.06);
 }
-.ultimate-hack-launch.hidden { display:none !important; }
-.ultimate-hack-launch-copy { min-width:0; display:grid; gap:3px; }
-.ultimate-hack-launch-copy > span { color:var(--neon-magenta); font:7px var(--font-mono); letter-spacing:1.35px; }
-.ultimate-hack-launch-copy > strong { color:#fff; font:800 12px var(--font-logo); letter-spacing:.7px; }
-.ultimate-hack-launch-copy > small { color:#aaa3d2; font:8px/1.45 var(--font-ui); }
-.btn-ultimate-hack-start {
+.auto-survey-launch.hidden { display:none !important; }
+.auto-survey-launch-copy { min-width:0; display:grid; gap:3px; }
+.auto-survey-launch-copy > span { color:var(--neon-magenta); font:7px var(--font-mono); letter-spacing:1.35px; }
+.auto-survey-launch-copy > strong { color:#fff; font:800 12px var(--font-logo); letter-spacing:.7px; }
+.auto-survey-launch-copy > small { color:#aaa3d2; font:8px/1.45 var(--font-ui); }
+.btn-auto-survey-start {
   min-height:42px;
   display:flex;
   align-items:center;
@@ -664,12 +664,12 @@ body[data-game-mode="multiplayer"] #chat-messages { min-height:128px; }
   box-shadow:0 0 18px rgba(255,79,216,.12), inset 0 0 16px rgba(41,231,255,.05);
   cursor:pointer;
 }
-.btn-ultimate-hack-start > span { color:var(--neon-cyan); font:18px var(--font-mono); }
-.btn-ultimate-hack-start > strong { font:800 10px var(--font-ui); letter-spacing:.4px; }
-.btn-ultimate-hack-start:hover { border-color:#fff; box-shadow:0 0 24px rgba(255,79,216,.24), inset 0 0 18px rgba(41,231,255,.08); }
-.btn-ultimate-hack-start:disabled { opacity:.48; cursor:not-allowed; }
-body[data-task-flow="campaign"] .ultimate-hack-launch,
-body[data-game-mode="multiplayer"] .ultimate-hack-launch { display:none !important; }
+.btn-auto-survey-start > span { color:var(--neon-cyan); font:18px var(--font-mono); }
+.btn-auto-survey-start > strong { font:800 10px var(--font-ui); letter-spacing:.4px; }
+.btn-auto-survey-start:hover { border-color:#fff; box-shadow:0 0 24px rgba(255,79,216,.24), inset 0 0 18px rgba(41,231,255,.08); }
+.btn-auto-survey-start:disabled { opacity:.48; cursor:not-allowed; }
+body[data-task-flow="campaign"] .auto-survey-launch,
+body[data-game-mode="multiplayer"] .auto-survey-launch { display:none !important; }
 body[data-game-mode="task"][data-task-flow="campaign"] .settings-section { display:none; }
 
 /* 自定义输入区 */
@@ -1253,8 +1253,8 @@ body[data-game-mode="task"][data-task-flow="campaign"] .settings-section { displ
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.silver-lobby {
-  --story-lobby-art: url("assets/silver-wolf-quantum-pathfinder.png");
+.guide-lobby {
+  --story-lobby-art: none;
   max-width: calc(100vw - 20px);
   max-height: calc(100vh - 24px);
   padding: clamp(22px, 3.2dvh, 40px) 40px !important;
@@ -1271,11 +1271,6 @@ body[data-game-mode="task"][data-task-flow="campaign"] .settings-section { displ
   box-shadow: 0 24px 80px rgba(0,0,0,.85), 0 0 42px rgba(109, 93, 252, .18), inset 0 0 45px rgba(255,79,216,.06);
 }
 
-body[data-story-art="medium"] .silver-lobby { --story-lobby-art: url("assets/silver-wolf-neighbor-hack.png"); }
-body[data-story-art="hard"] .silver-lobby { --story-lobby-art: url("assets/silver-wolf-final-protocol.png"); }
-body[data-story-art="ultimate"] .silver-lobby { --story-lobby-art: url("assets/silver-wolf-final-protocol.png"); }
-body[data-story-art="squad"] .silver-lobby { --story-lobby-art: url("assets/silver-wolf-squad-link.png"); }
-
 body[data-story-art="medium"] .comms-art,
 body[data-story-art="medium"] .tutorial-portrait img { object-position: 50% 34%; }
 body[data-story-art="hard"] .comms-art,
@@ -1285,20 +1280,20 @@ body[data-story-art="ultimate"] .tutorial-portrait img { object-position: 46% 32
 body[data-story-art="squad"] .comms-art,
 body[data-story-art="squad"] .tutorial-portrait img { object-position: 48% 29%; }
 
-.silver-lobby::before {
+.guide-lobby::before {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
   background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(41,231,255,.025) 4px);
 }
-.silver-lobby::-webkit-scrollbar { width: 3px; }
-.silver-lobby::-webkit-scrollbar-track { background: transparent; }
-.silver-lobby::-webkit-scrollbar-thumb {
+.guide-lobby::-webkit-scrollbar { width: 3px; }
+.guide-lobby::-webkit-scrollbar-track { background: transparent; }
+.guide-lobby::-webkit-scrollbar-thumb {
   background: linear-gradient(rgba(41,231,255,.24), rgba(255,79,216,.2));
   border-radius: 999px;
 }
-.silver-lobby::-webkit-scrollbar-thumb:hover {
+.guide-lobby::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(rgba(41,231,255,.44), rgba(255,79,216,.38));
 }
 
@@ -1307,7 +1302,7 @@ body[data-story-art="squad"] .tutorial-portrait img { object-position: 48% 29%; 
   font: 9px var(--font-mono);
   letter-spacing: 2px;
 }
-.silver-lobby .lobby-icon {
+.guide-lobby .lobby-icon {
   width: clamp(58px, 8dvh, 80px);
   height: clamp(58px, 8dvh, 80px);
   margin-bottom: 0;
@@ -1460,9 +1455,9 @@ body[data-story-art="squad"] .tutorial-portrait img { object-position: 48% 29%; 
 }
 .lobby-room-actions { display: flex; gap: 10px; }
 .lobby-room-actions button { flex: 1; padding: 11px; font-size: 13px; }
-.silver-lobby > .input-row { margin-bottom: clamp(2px, .8dvh, 10px) !important; }
-.silver-lobby > #lobby-status:empty { display: none; }
-.silver-lobby > #lobby-status:not(:empty) { margin-top: 8px !important; }
+.guide-lobby > .input-row { margin-bottom: clamp(2px, .8dvh, 10px) !important; }
+.guide-lobby > #lobby-status:empty { display: none; }
+.guide-lobby > #lobby-status:not(:empty) { margin-top: 8px !important; }
 .nickname-input-wrap { display:flex; align-items:stretch; gap:8px; }
 .nickname-input-wrap #input-nickname { flex:1; width:auto; min-width:0; }
 .nickname-random-button { flex:0 0 44px; width:44px; min-width:44px; padding:0; font-size:17px; }
@@ -1709,7 +1704,7 @@ body[data-story-art="squad"] .tutorial-portrait img { object-position: 48% 29%; 
   from { opacity:0; transform:translate(-50%, -10px) scale(.97); }
   to { opacity:1; transform:translate(-50%, 0) scale(1); }
 }
-.ultimate-hack-hud {
+.auto-survey-hud {
   position:fixed;
   z-index:214;
   top:max(16px, env(safe-area-inset-top));
@@ -1732,16 +1727,16 @@ body[data-story-art="squad"] .tutorial-portrait img { object-position: 48% 29%; 
   -webkit-backdrop-filter:blur(16px);
   animation:replay-hud-enter .24s ease-out both;
 }
-.ultimate-hack-hud.hidden { display:none !important; }
-.ultimate-hack-hud-copy { min-width:0; display:grid; gap:3px; }
-.ultimate-hack-hud-copy > span { overflow:hidden; color:var(--neon-magenta); font:8px var(--font-mono); letter-spacing:1.55px; text-overflow:ellipsis; white-space:nowrap; }
-.ultimate-hack-hud-copy > strong { overflow:hidden; color:#fff; font:800 13px var(--font-logo); letter-spacing:.75px; text-overflow:ellipsis; white-space:nowrap; text-shadow:0 0 12px rgba(41,231,255,.58); }
-.ultimate-hack-hud-metrics { display:flex; align-items:stretch; border-left:1px solid rgba(255,255,255,.09); border-right:1px solid rgba(255,255,255,.09); }
-.ultimate-hack-hud-metrics > span { min-width:82px; display:grid; justify-items:center; gap:2px; padding:3px 11px; }
-.ultimate-hack-hud-metrics > span + span { border-left:1px solid rgba(255,255,255,.09); }
-.ultimate-hack-hud-metrics small { color:#aaa3d2; font:7px var(--font-ui); }
-.ultimate-hack-hud-metrics strong { color:var(--neon-cyan); font:700 11px var(--font-mono); text-shadow:0 0 10px rgba(41,231,255,.68); }
-.ultimate-hack-cancel {
+.auto-survey-hud.hidden { display:none !important; }
+.auto-survey-hud-copy { min-width:0; display:grid; gap:3px; }
+.auto-survey-hud-copy > span { overflow:hidden; color:var(--neon-magenta); font:8px var(--font-mono); letter-spacing:1.55px; text-overflow:ellipsis; white-space:nowrap; }
+.auto-survey-hud-copy > strong { overflow:hidden; color:#fff; font:800 13px var(--font-logo); letter-spacing:.75px; text-overflow:ellipsis; white-space:nowrap; text-shadow:0 0 12px rgba(41,231,255,.58); }
+.auto-survey-hud-metrics { display:flex; align-items:stretch; border-left:1px solid rgba(255,255,255,.09); border-right:1px solid rgba(255,255,255,.09); }
+.auto-survey-hud-metrics > span { min-width:82px; display:grid; justify-items:center; gap:2px; padding:3px 11px; }
+.auto-survey-hud-metrics > span + span { border-left:1px solid rgba(255,255,255,.09); }
+.auto-survey-hud-metrics small { color:#aaa3d2; font:7px var(--font-ui); }
+.auto-survey-hud-metrics strong { color:var(--neon-cyan); font:700 11px var(--font-mono); text-shadow:0 0 10px rgba(41,231,255,.68); }
+.auto-survey-cancel {
   min-height:44px;
   padding:8px 13px;
   border:1px solid rgba(255,79,216,.62);
@@ -1751,23 +1746,23 @@ body[data-story-art="squad"] .tutorial-portrait img { object-position: 48% 29%; 
   font:700 10px var(--font-ui);
   cursor:pointer;
 }
-.ultimate-hack-cancel:hover { border-color:#fff; background:rgba(255,79,216,.2); box-shadow:0 0 18px rgba(255,79,216,.18); }
-.ultimate-hack-cancel:disabled { opacity:.52; cursor:wait; }
-body.ultimate-hack-active #tutorial-overlay,
-body.ultimate-hack-active #modal-overlay,
-body.ultimate-hack-active #ad-modal-overlay,
-body.ultimate-hack-active .floating-assist-stack,
-body.ultimate-hack-active #guided-cell-pointer,
-body.ultimate-hack-active #guided-cell-leader { display:none !important; }
-body.ultimate-hack-active #control-panel button,
-body.ultimate-hack-active #control-panel input,
-body.ultimate-hack-active #control-panel [role="switch"],
-body.ultimate-hack-active #slicing-panel button,
-body.ultimate-hack-active #slicing-panel input { pointer-events:none !important; }
-body.ultimate-hack-active #control-panel #btn-sound-toggle,
-body.ultimate-hack-active #control-panel #btn-music-toggle,
-body.ultimate-hack-active #control-panel #sound-volume,
-body.ultimate-hack-active #control-panel #music-volume,
+.auto-survey-cancel:hover { border-color:#fff; background:rgba(255,79,216,.2); box-shadow:0 0 18px rgba(255,79,216,.18); }
+.auto-survey-cancel:disabled { opacity:.52; cursor:wait; }
+body.auto-survey-active #tutorial-overlay,
+body.auto-survey-active #modal-overlay,
+body.auto-survey-active #ad-modal-overlay,
+body.auto-survey-active .floating-assist-stack,
+body.auto-survey-active #guided-cell-pointer,
+body.auto-survey-active #guided-cell-leader { display:none !important; }
+body.auto-survey-active #control-panel button,
+body.auto-survey-active #control-panel input,
+body.auto-survey-active #control-panel [role="switch"],
+body.auto-survey-active #slicing-panel button,
+body.auto-survey-active #slicing-panel input { pointer-events:none !important; }
+body.auto-survey-active #control-panel #btn-sound-toggle,
+body.auto-survey-active #control-panel #btn-music-toggle,
+body.auto-survey-active #control-panel #sound-volume,
+body.auto-survey-active #control-panel #music-volume,
 body.replay-active #control-panel #btn-sound-toggle,
 body.replay-active #control-panel #btn-music-toggle,
 body.replay-active #control-panel #sound-volume,
@@ -1775,10 +1770,10 @@ body.replay-active #control-panel #music-volume {
   pointer-events:auto !important;
   opacity:1;
 }
-body.ultimate-hack-active #control-panel .dimension-settings,
-body.ultimate-hack-active #control-panel .mode-controls,
-body.ultimate-hack-active #control-panel #btn-restart,
-body.ultimate-hack-active #slicing-panel { opacity:.42; }
+body.auto-survey-active #control-panel .dimension-settings,
+body.auto-survey-active #control-panel .mode-controls,
+body.auto-survey-active #control-panel #btn-restart,
+body.auto-survey-active #slicing-panel { opacity:.42; }
 body.replay-active #tutorial-overlay,
 body.replay-active #modal-overlay,
 body.replay-active #ad-modal-overlay,
@@ -2273,7 +2268,7 @@ body.replay-active #slicing-panel {
   .center-camera-button strong { display:none; }
   body.in-room.mobile-panel-active .center-camera-button,
   body.replay-active .center-camera-button,
-  body.ultimate-hack-active .center-camera-button,
+  body.auto-survey-active .center-camera-button,
   body:has(#tutorial-action-hint:not(.hidden)) .center-camera-button {
     display:none !important;
     pointer-events:none !important;
@@ -2470,7 +2465,7 @@ body.replay-active #slicing-panel {
     -webkit-overflow-scrolling: touch;
   }
 
-  .silver-wolf-comms { grid-template-columns: 128px 1fr; }
+  .guide-comms { grid-template-columns: 128px 1fr; }
 
   .modal-overlay { padding: 8px; }
 
@@ -2490,7 +2485,7 @@ body.replay-active #slicing-panel {
   #game-modal .modal-buttons { flex-wrap:wrap; }
   #btn-modal-replay:not(.hidden) { flex-basis:100% !important; }
 
-  .silver-lobby {
+  .guide-lobby {
     width: min(420px, calc(100vw - 16px)) !important;
     max-width: calc(100vw - 16px);
     max-height: calc(100dvh - 16px);
@@ -2498,7 +2493,7 @@ body.replay-active #slicing-panel {
     gap: clamp(6px, 1.25dvh, 12px);
   }
 
-  .silver-lobby .lobby-icon {
+  .guide-lobby .lobby-icon {
     width: clamp(44px, 7.6dvh, 50px);
     height: clamp(44px, 7.6dvh, 50px);
     font-size: clamp(28px, 4.7dvh, 31px);
@@ -2588,7 +2583,7 @@ body.replay-active #slicing-panel {
     display:none !important;
   }
 
-  .ultimate-hack-hud {
+  .auto-survey-hud {
     top:calc(8px + env(safe-area-inset-top));
     width:calc(100vw - 16px);
     grid-template-columns:minmax(0, 1fr) auto;
@@ -2596,19 +2591,19 @@ body.replay-active #slicing-panel {
     padding:9px 9px 9px 12px;
     border-radius:12px;
   }
-  .ultimate-hack-hud-copy > span { font-size:6px; letter-spacing:1px; }
-  .ultimate-hack-hud-copy > strong { font-size:11px; }
-  .ultimate-hack-hud-metrics {
+  .auto-survey-hud-copy > span { font-size:6px; letter-spacing:1px; }
+  .auto-survey-hud-copy > strong { font-size:11px; }
+  .auto-survey-hud-metrics {
     grid-column:1;
     min-width:0;
     border:0;
   }
-  .ultimate-hack-hud-metrics > span { min-width:0; display:flex; align-items:center; gap:5px; padding:0 10px 0 0; }
-  .ultimate-hack-hud-metrics > span + span { padding-left:10px; border-left:1px solid rgba(255,255,255,.09); }
-  .ultimate-hack-hud-metrics small { font-size:6px; }
-  .ultimate-hack-hud-metrics strong { font-size:9px; }
-  .ultimate-hack-cancel { grid-column:2; grid-row:1 / span 2; min-height:44px; padding:8px 10px; font-size:9px; }
-  body.ultimate-hack-active .return-lobby-button {
+  .auto-survey-hud-metrics > span { min-width:0; display:flex; align-items:center; gap:5px; padding:0 10px 0 0; }
+  .auto-survey-hud-metrics > span + span { padding-left:10px; border-left:1px solid rgba(255,255,255,.09); }
+  .auto-survey-hud-metrics small { font-size:6px; }
+  .auto-survey-hud-metrics strong { font-size:9px; }
+  .auto-survey-cancel { grid-column:2; grid-row:1 / span 2; min-height:44px; padding:8px 10px; font-size:9px; }
+  body.auto-survey-active .return-lobby-button {
     top:auto;
     bottom:calc(10px + env(safe-area-inset-bottom));
     left:10px;
@@ -2617,16 +2612,16 @@ body.replay-active #slicing-panel {
     min-height:44px;
     padding:7px 10px;
   }
-  body.ultimate-hack-active .sector-purge-banner {
+  body.auto-survey-active .sector-purge-banner {
     top:calc(112px + env(safe-area-inset-top));
   }
-  body.ultimate-hack-active .mobile-statusbar,
-  body.ultimate-hack-active #mobile-control-dock,
-  body.ultimate-hack-active #mobile-panel-backdrop,
-  body.ultimate-hack-active #control-panel,
-  body.ultimate-hack-active #social-panel,
-  body.ultimate-hack-active #slicing-panel,
-  body.ultimate-hack-active .solver-hint-panel {
+  body.auto-survey-active .mobile-statusbar,
+  body.auto-survey-active #mobile-control-dock,
+  body.auto-survey-active #mobile-panel-backdrop,
+  body.auto-survey-active #control-panel,
+  body.auto-survey-active #social-panel,
+  body.auto-survey-active #slicing-panel,
+  body.auto-survey-active .solver-hint-panel {
     display:none !important;
   }
 
@@ -2683,16 +2678,16 @@ body.replay-active #slicing-panel {
 }
 
 @media (max-width: 900px) and (max-height: 620px) {
-  .silver-lobby {
+  .guide-lobby {
     padding: 14px !important;
     gap: 6px;
   }
-  .silver-lobby .lobby-icon {
+  .guide-lobby .lobby-icon {
     width: 44px;
     height: 44px;
     font-size: 28px;
   }
-  .silver-lobby > .input-row { margin-bottom: 2px !important; }
+  .guide-lobby > .input-row { margin-bottom: 2px !important; }
   .task-flow-switch { margin: 5px 0; }
   .task-mission-picker { gap: 4px; margin-top: 5px; }
   .lobby-main-action { margin-top: 10px; }
@@ -2701,9 +2696,9 @@ body.replay-active #slicing-panel {
   .mobile-dock-buttons button { min-height: 44px; }
   #control-panel,
   #social-panel { top: calc(52px + env(safe-area-inset-top)) !important; bottom: calc(62px + env(safe-area-inset-bottom)) !important; }
-  .ultimate-hack-hud-copy > strong { max-width:46vw; }
-  .ultimate-hack-hud { gap:4px 7px; }
-  .ultimate-hack-cancel { min-width:82px; }
+  .auto-survey-hud-copy > strong { max-width:46vw; }
+  .auto-survey-hud { gap:4px 7px; }
+  .auto-survey-cancel { min-width:82px; }
 }
 
 @media (max-width: 900px) {

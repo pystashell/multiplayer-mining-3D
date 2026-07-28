@@ -497,7 +497,7 @@ test('keeps music independently controllable on desktop and in the mobile contro
   assert.match(indexSource, /id="btn-music-toggle"[^>]*aria-pressed="true"[^>]*data-i18n-title="action\.musicTitle"/);
   assert.match(styleSource, /\.utility-buttons\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 1fr\)/s);
   assert.match(styleSource, /\.utility-buttons #btn-reset-camera\s*\{\s*grid-column:\s*1 \/ -1/);
-  assert.match(styleSource, /ultimate-hack-active[\s\S]*#btn-music-toggle[\s\S]*replay-active[\s\S]*#btn-music-toggle[\s\S]*pointer-events:auto !important/s);
+  assert.match(styleSource, /auto-survey-active[\s\S]*#btn-music-toggle[\s\S]*replay-active[\s\S]*#btn-music-toggle[\s\S]*pointer-events:auto !important/s);
   assert.equal(translate('zh', 'action.musicOn'), '🎵 音乐:开');
   assert.equal(translate('zh', 'action.musicOff'), '🎵 音乐:关');
   assert.equal(translate('zh', 'action.musicTitle'), '切换背景音乐');
@@ -525,7 +525,7 @@ test('offers persistent live volume sliders for music and every synthesized soun
   assert.match(sfxSource, /subGain\.connect\(this\.master\)/);
   assert.match(sfxSource, /const nextValue = this\.enabled \? this\.volume : 0/);
   assert.match(styleSource, /\.audio-volume-controls\s*\{[^}]*grid-column:\s*1 \/ -1/s);
-  assert.match(styleSource, /ultimate-hack-active[\s\S]*#sound-volume[\s\S]*#music-volume[\s\S]*replay-active/s);
+  assert.match(styleSource, /auto-survey-active[\s\S]*#sound-volume[\s\S]*#music-volume[\s\S]*replay-active/s);
 
   assert.equal(translate('zh', 'action.audioLevels'), '音频音量');
   assert.equal(translate('zh', 'action.soundVolume'), '音效音量');

@@ -116,7 +116,7 @@ test('progresses campaign features from classic to auto purge to the combined to
 
 test('keeps every campaign chapter open and moves free play configuration into the game', () => {
   const pickerStart = indexSource.indexOf('id="ruleset-picker"');
-  const pickerEnd = indexSource.indexOf('id="ultimate-hack-launch"', pickerStart);
+  const pickerEnd = indexSource.indexOf('id="auto-survey-launch"', pickerStart);
   const pickerSource = indexSource.slice(pickerStart, pickerEnd);
   assert.match(indexSource, /id="btn-task-freeplay"/);
   assert.match(indexSource, /data-mission="easy"[\s\S]*data-mission="medium"[\s\S]*data-mission="hard"/);

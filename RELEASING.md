@@ -3,6 +3,15 @@
 本仓库采用“每个产品版本一个分支”，不采用“每个 commit 一个分支”。
 同一个版本分支在测试期间可以包含多次聚焦的小提交。
 
+## 版本号规则
+
+版本号使用 `MAJOR.MINOR.PATCH`：
+
+- `MAJOR`：产品身份、完整故事线、核心交互或兼容边界的整体重构，例如
+  `3.x` 升级为 `4.0.0`。
+- `MINOR`：在同一产品基础上加入一组中等规模的新功能，例如 `4.1.0`。
+- `PATCH`：修复、文案、素材或局部体验调整，例如 `4.0.1`、`4.0.2`。
+
 ## 统一版本号
 
 同一个 SemVer 版本必须同时出现在：
@@ -10,14 +19,15 @@
 - `package.json`
 - `package-lock.json`
 - `public/version.json`
-- 浏览器缓存参数，例如 `?v=3.2.0`
+- 浏览器缓存参数，例如 `?v=4.0.0`
 - Git 标签与 GitHub Release；标签在版本号前增加 `v`
 
-开始下一个版本时，从最新的 `main` 建立分支，然后执行：
+常规版本从最新的 `main` 建立分支。大型角色或故事替换可以按发布计划从指定的
+已验证归档版本建立独立分支，不隐式合并 `main`。分支名称必须以正式标签开头：
 
 ```powershell
-git switch -c v3.2-short-description
-npm version 3.2.0 --no-git-tag-version
+git switch -c codex/v4.0.0-short-description
+npm version 4.0.0 --no-git-tag-version
 npm test
 ```
 
@@ -38,19 +48,20 @@ Durable Object migration、网络协议、存档格式、回放格式和第三�
 
 ## 发布正式版本
 
-版本分支通过 CI 并合并到 `main` 后执行：
+先推送版本分支并等待 CI 通过。常规版本可以合并到 `main`；明确要求保持独立的
+大型版本无需合并，但分支必须严格匹配 `codex/<tag>-*`。随后在经过验证的提交上
+创建正式标签：
 
 ```powershell
-git switch main
-git pull --ff-only
-git tag -a v3.2.0 -m "Zero Domain Protocol v3.2.0"
-git push origin v3.2.0
+git tag -a v4.0.0 -m "Zero Domain Protocol v4.0.0"
+git push origin v4.0.0
 ```
 
 推送标签会启动 `.github/workflows/release.yml`。它会：
 
 1. 检出标签对应的精确提交。
-2. 确认该提交已经进入 `main`。
+2. 确认该提交已经进入 `main`，或位于与标签严格对应的
+   `codex/v4.0.0-*` 远端发布分支。
 3. 检查标签、package、公开版本和缓存版本完全一致。
 4. 运行全部测试和 Wrangler dry-run。
 5. 建立 GitHub Release 草稿。

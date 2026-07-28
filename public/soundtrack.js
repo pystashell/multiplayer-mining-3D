@@ -78,7 +78,7 @@ function freezeTrack(profile) {
 // music files are used.
 export const SCI_FI_TRACKS = Object.freeze({
   lobby: freezeTrack({
-    id: 'lobby', title: 'Zero Domain // Login Signal', bpm: 82, rootMidi: 48,
+    id: 'lobby', title: 'Zero Domain // Survey Signal', bpm: 82, rootMidi: 48,
     pulseWave: 'sine', bassWave: 'triangle', padWave: 'sine', filterHz: 2300,
     swing: 0.055, pulseGain: 0.05, bassGain: 0.046, padGain: 0.021, noiseGain: 0.011,
     melody: [0, null, 7, 10, null, 12, 7, null, 3, null, 10, 7, 15, null, 12, null],
@@ -87,7 +87,7 @@ export const SCI_FI_TRACKS = Object.freeze({
     noiseSteps: [5, 13],
   }),
   easy: freezeTrack({
-    id: 'easy', title: 'Phantom Port // Cold Boot', bpm: 72, rootMidi: 50,
+    id: 'easy', title: 'Phantom Port // First Bearing', bpm: 72, rootMidi: 50,
     pulseWave: 'sine', bassWave: 'triangle', padWave: 'sine', filterHz: 2100,
     swing: 0.02, pulseGain: 0.055, bassGain: 0.052, padGain: 0.024, noiseGain: 0.009,
     melody: [0, null, 7, null, 10, null, 7, 3, 0, null, 12, null, 10, 7, 3, null],
@@ -96,7 +96,7 @@ export const SCI_FI_TRACKS = Object.freeze({
     noiseSteps: [6, 14],
   }),
   medium: freezeTrack({
-    id: 'medium', title: 'Handshake Maze // Packet Chase', bpm: 92, rootMidi: 45,
+    id: 'medium', title: 'Handshake Maze // Perspective Trace', bpm: 92, rootMidi: 45,
     pulseWave: 'triangle', bassWave: 'sawtooth', padWave: 'triangle', filterHz: 2450,
     swing: 0.07, pulseGain: 0.052, bassGain: 0.046, padGain: 0.019, noiseGain: 0.013,
     melody: [0, 7, null, 10, 3, null, 12, 7, 0, null, 15, 12, 10, 7, null, 3],
@@ -105,7 +105,7 @@ export const SCI_FI_TRACKS = Object.freeze({
     noiseSteps: [2, 6, 10, 14],
   }),
   hard: freezeTrack({
-    id: 'hard', title: 'Final Protocol // Root Pressure', bpm: 116, rootMidi: 37,
+    id: 'hard', title: 'Final Protocol // Core Convergence', bpm: 116, rootMidi: 37,
     pulseWave: 'square', bassWave: 'sawtooth', padWave: 'triangle', filterHz: 1750,
     swing: 0.025, pulseGain: 0.038, bassGain: 0.05, padGain: 0.017, noiseGain: 0.017,
     melody: [0, 1, 7, null, 0, 10, 7, 1, 12, 10, 7, null, 13, 12, 10, 7],
@@ -114,7 +114,7 @@ export const SCI_FI_TRACKS = Object.freeze({
     noiseSteps: [0, 3, 6, 8, 11, 14],
   }),
   ultimate: freezeTrack({
-    id: 'ultimate', title: 'Echo Black Box // Trojan Run', bpm: 132, rootMidi: 38,
+    id: 'ultimate', title: 'Echo Matrix // Recursive Survey', bpm: 132, rootMidi: 38,
     pulseWave: 'sawtooth', bassWave: 'square', padWave: 'sawtooth', filterHz: 3100,
     swing: 0.045, pulseGain: 0.034, bassGain: 0.043, padGain: 0.013, noiseGain: 0.019,
     melody: [0, 7, 13, 10, 1, 12, 15, 7, 0, 19, 13, 10, 3, 15, 12, 7],
@@ -123,7 +123,7 @@ export const SCI_FI_TRACKS = Object.freeze({
     noiseSteps: [0, 2, 4, 6, 8, 10, 12, 14, 15],
   }),
   squad: freezeTrack({
-    id: 'squad', title: 'Squad Link // Co-op Breach', bpm: 104, rootMidi: 43,
+    id: 'squad', title: 'Squad Link // Co-op Survey', bpm: 104, rootMidi: 43,
     pulseWave: 'triangle', bassWave: 'square', padWave: 'sine', filterHz: 2650,
     swing: 0.09, pulseGain: 0.048, bassGain: 0.044, padGain: 0.02, noiseGain: 0.014,
     melody: [0, null, 7, 10, null, 14, 10, 7, 3, 7, null, 12, 10, null, 7, 5],

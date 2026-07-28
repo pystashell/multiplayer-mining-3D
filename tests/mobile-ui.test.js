@@ -17,7 +17,7 @@ test('suppresses native mobile selection without blocking form text selection', 
 test('keeps the lobby at its 420px design width until the viewport is genuinely narrower', () => {
   assert.match(
     styleSource,
-    /\.silver-lobby\s*\{[^}]*width:\s*min\(420px,\s*calc\(100vw - 16px\)\)\s*!important[^}]*max-width:\s*calc\(100vw - 16px\)/s,
+    /\.guide-lobby\s*\{[^}]*width:\s*min\(420px,\s*calc\(100vw - 16px\)\)\s*!important[^}]*max-width:\s*calc\(100vw - 16px\)/s,
   );
 });
 
@@ -69,7 +69,7 @@ test('keeps center locking independent from camera presets and exposes recenter 
   assert.match(appSource, /rightDragSelect\.disabled = movable[\s\S]*controls\.center\.rightDragOverride/);
   assert.match(styleSource, /body\.in-room \.mobile-statusbar\s*\{[^}]*left:\s*60px[^}]*right:\s*60px/s);
   assert.match(styleSource, /\.center-camera-button\s*\{[^}]*position:\s*fixed[^}]*top:[^}]*right:\s*10px[^}]*width:\s*42px[^}]*height:\s*42px/s);
-  assert.match(styleSource, /body\.in-room\.mobile-panel-active \.center-camera-button,[\s\S]*body\.replay-active \.center-camera-button,[\s\S]*body\.ultimate-hack-active \.center-camera-button[\s\S]*display:\s*none\s*!important/s);
+  assert.match(styleSource, /body\.in-room\.mobile-panel-active \.center-camera-button,[\s\S]*body\.replay-active \.center-camera-button,[\s\S]*body\.auto-survey-active \.center-camera-button[\s\S]*display:\s*none\s*!important/s);
 });
 
 test('uses a stationary mobile long-press for matrix pan and cleans up every interrupted gesture', () => {
@@ -120,10 +120,10 @@ test('stacks the tutorial action above the solver hint and mobile dock', () => {
   assert.match(styleSource, /\.solver-hint-panel\s*\{[^}]*position:\s*relative/s);
 });
 
-test('keeps mobile drawer actions clear of the Silver Wolf hint panel', () => {
+test('keeps mobile drawer actions clear of the guide hint panel', () => {
   const customStart = indexSource.indexOf('id="custom-toggle"');
   const pickerStart = indexSource.indexOf('id="ruleset-picker"');
-  const ultimateStart = indexSource.indexOf('id="ultimate-hack-launch"');
+  const ultimateStart = indexSource.indexOf('id="auto-survey-launch"');
   const actionStart = indexSource.indexOf('class="panel-section action-section"');
   assert.ok(customStart >= 0 && customStart < pickerStart && pickerStart < ultimateStart && ultimateStart < actionStart);
   assert.match(appSource, /panel\.classList\.add\('mobile-open'\);\s*document\.body\.classList\.add\('mobile-panel-active'\)/s);

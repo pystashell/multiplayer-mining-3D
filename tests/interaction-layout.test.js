@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 const appSource = readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
 const indexSource = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
 const styleSource = readFileSync(new URL('../public/style.css', import.meta.url), 'utf8');
+const guideConfigSource = readFileSync(new URL('../public/guide-character.js', import.meta.url), 'utf8');
 
 test('lets players lock or pan the matrix center while camera bindings remain runtime-configurable', () => {
   assert.match(appSource, /this\.controls\.enablePan\s*=\s*false/);
@@ -29,7 +30,7 @@ test('lets players lock or pan the matrix center while camera bindings remain ru
 });
 
 test('keeps view controls discoverable without making rotation a beginner task', () => {
-  assert.match(appSource, /startSilverWolfTutorial\(\)[\s\S]*messageKey: 'tutorial\.intro'[\s\S]*factKey: 'tutorial\.controlsNote'/);
+  assert.match(appSource, /startGuideTutorial\(\)[\s\S]*messageKey: 'tutorial\.intro'[\s\S]*factKey: 'tutorial\.controlsNote'/);
   assert.doesNotMatch(appSource, /action: 'observe'|hasObservedMatrix|recordCameraRotation|completeTutorialAction\('observe'\)|tutorial\.actionHint\.observe/);
   assert.match(appSource, /blockBeginnerBoardInput\(\)[\s\S]*this\.setTutorialActionHint\(this\.waitingTutorialAction\)/);
   assert.match(indexSource, /id="btn-control-settings"[\s\S]*data-i18n="controls\.open"/);
@@ -46,17 +47,17 @@ test('keeps control-setting actions inside the dialog and themes its scrollbar',
 });
 
 test('keeps the lobby compact and makes its fallback scrollbar unobtrusive', () => {
-  assert.match(styleSource, /\.silver-lobby\s*\{[^}]*padding:\s*clamp\(22px,\s*3\.2dvh,\s*40px\)\s*40px\s*!important[^}]*gap:\s*clamp\(6px,\s*1\.25dvh,\s*12px\)[^}]*scrollbar-width:\s*thin[^}]*scrollbar-color:\s*rgba\(109,\s*93,\s*252,\s*\.28\)\s*transparent/s);
-  assert.match(styleSource, /\.silver-lobby::-webkit-scrollbar\s*\{\s*width:\s*3px/s);
-  assert.match(styleSource, /\.silver-lobby::-webkit-scrollbar-track\s*\{\s*background:\s*transparent/s);
-  assert.match(styleSource, /\.silver-lobby::-webkit-scrollbar-thumb\s*\{[^}]*rgba\(41,231,255,\.24\)[^}]*rgba\(255,79,216,\.2\)/s);
-  assert.match(styleSource, /\.silver-lobby\s*>\s*\.input-row\s*\{\s*margin-bottom:\s*clamp\(2px,\s*\.8dvh,\s*10px\)\s*!important/s);
-  assert.match(styleSource, /\.silver-lobby\s*>\s*#lobby-status:empty\s*\{\s*display:\s*none/s);
+  assert.match(styleSource, /\.guide-lobby\s*\{[^}]*padding:\s*clamp\(22px,\s*3\.2dvh,\s*40px\)\s*40px\s*!important[^}]*gap:\s*clamp\(6px,\s*1\.25dvh,\s*12px\)[^}]*scrollbar-width:\s*thin[^}]*scrollbar-color:\s*rgba\(109,\s*93,\s*252,\s*\.28\)\s*transparent/s);
+  assert.match(styleSource, /\.guide-lobby::-webkit-scrollbar\s*\{\s*width:\s*3px/s);
+  assert.match(styleSource, /\.guide-lobby::-webkit-scrollbar-track\s*\{\s*background:\s*transparent/s);
+  assert.match(styleSource, /\.guide-lobby::-webkit-scrollbar-thumb\s*\{[^}]*rgba\(41,231,255,\.24\)[^}]*rgba\(255,79,216,\.2\)/s);
+  assert.match(styleSource, /\.guide-lobby\s*>\s*\.input-row\s*\{\s*margin-bottom:\s*clamp\(2px,\s*\.8dvh,\s*10px\)\s*!important/s);
+  assert.match(styleSource, /\.guide-lobby\s*>\s*#lobby-status:empty\s*\{\s*display:\s*none/s);
   assert.match(styleSource, /\.lobby-main-action\s*\{[^}]*margin-top:\s*clamp\(10px,\s*2dvh,\s*18px\)/s);
   assert.match(styleSource, /\.task-flow-switch\s*\{[^}]*margin:\s*clamp\(5px,\s*1dvh,\s*9px\)\s*0/s);
   assert.match(styleSource, /\.task-mission-picker\s*\{[^}]*gap:\s*clamp\(4px,\s*\.7dvh,\s*6px\)[^}]*margin-top:\s*clamp\(5px,\s*1dvh,\s*9px\)/s);
-  assert.match(styleSource, /@media\s*\(max-width:\s*900px\)[\s\S]*?\.silver-lobby\s*\{[^}]*padding:\s*clamp\(14px,\s*2\.8dvh,\s*24px\)\s*14px\s*!important[^}]*gap:\s*clamp\(6px,\s*1\.25dvh,\s*12px\)/s);
-  assert.match(styleSource, /@media\s*\(max-width:\s*900px\)\s*and\s*\(max-height:\s*620px\)[\s\S]*?\.silver-lobby\s*\{[^}]*padding:\s*14px\s*!important[^}]*gap:\s*6px[^}]*\}[\s\S]*?\.lobby-main-action\s*\{\s*margin-top:\s*10px/s);
+  assert.match(styleSource, /@media\s*\(max-width:\s*900px\)[\s\S]*?\.guide-lobby\s*\{[^}]*padding:\s*clamp\(14px,\s*2\.8dvh,\s*24px\)\s*14px\s*!important[^}]*gap:\s*clamp\(6px,\s*1\.25dvh,\s*12px\)/s);
+  assert.match(styleSource, /@media\s*\(max-width:\s*900px\)\s*and\s*\(max-height:\s*620px\)[\s\S]*?\.guide-lobby\s*\{[^}]*padding:\s*14px\s*!important[^}]*gap:\s*6px[^}]*\}[\s\S]*?\.lobby-main-action\s*\{\s*margin-top:\s*10px/s);
 });
 
 test('keeps the beginner flag step reachable and visibly raises its flag', () => {
@@ -130,7 +131,7 @@ test('renders practical verification inside the current task panel', () => {
   assert.match(styleSource, /\.mission-action-hint\s*\{[^}]*border-left:2px solid var\(--neon-cyan\)[^}]*text-align:left/s);
   assert.match(styleSource, /\.solo-guide-steps\s*\{[^}]*grid-template-columns:\s*1fr/s);
   assert.match(styleSource, /\.solo-guide-steps li\s*\{[^}]*border-radius:\s*0[^}]*background:\s*transparent/s);
-  assert.match(styleSource, /body\[data-game-mode="task"\] #social-panel > \.silver-wolf-comms,[\s\S]*#social-panel > \.guide-section\s*\{\s*display:\s*none/s);
+  assert.match(styleSource, /body\[data-game-mode="task"\] #social-panel > \.guide-comms,[\s\S]*#social-panel > \.guide-section\s*\{\s*display:\s*none/s);
   assert.match(appSource, /renderTutorialActionHint\(message = ''\)[\s\S]*mission-action-hint[\s\S]*tutorial-action-hint/);
   assert.match(appSource, /renderGuidedHint\(correction = false[\s\S]*this\.renderTutorialActionHint\(message\)/);
 });
@@ -154,10 +155,11 @@ test('plays the squad mine sound once when a player gives up revival', () => {
 });
 
 test('keeps the illustrated background inside the dialogue frame without covering text', () => {
-  assert.match(appSource, /easy: Object\.freeze\(\{[\s\S]*?main: STORY_ART\.easy,[\s\S]*?neighbors: 'assets\/silver-wolf-easy-neighbors\.webp'/);
-  assert.match(appSource, /medium: Object\.freeze\(\{[\s\S]*?main: STORY_ART\.medium,[\s\S]*?tip: 'assets\/silver-wolf-medium-tip\.webp'/);
-  assert.doesNotMatch(appSource, /assets\/silver-wolf-[^'\n]*-cutout-v2\.webp/);
-  assert.match(indexSource, /id="tutorial-art" src="assets\/silver-wolf-quantum-pathfinder\.png"/);
+  assert.match(guideConfigSource, /easy: Object\.freeze\(\{[\s\S]*?main: 'assets\/guide-zero-domain-cartographer\.png'[\s\S]*?neighbors: 'assets\/parallax-easy-neighbors\.webp'/);
+  assert.match(guideConfigSource, /medium: Object\.freeze\(\{[\s\S]*?main: 'assets\/parallax-neighbor-perspective\.png'[\s\S]*?tip: 'assets\/parallax-medium-tip\.webp'/);
+  assert.doesNotMatch(appSource, /assets\/parallax-[^'\n]*-cutout-v2\.webp/);
+  assert.match(indexSource, /id="tutorial-art"/);
+  assert.doesNotMatch(indexSource, /id="tutorial-art"[^>]*\ssrc=/);
   assert.doesNotMatch(indexSource, /id="tutorial-art"[^>]*class="is-cutout"/);
   assert.match(appSource, /tutorialArt\.classList\.toggle\('is-cutout', source\.includes\('-cutout-'\)\)/);
   assert.match(styleSource, /\.tutorial-dialog\s*\{[^}]*grid-template-columns:\s*180px minmax\(0, 560px\)[^}]*overflow:\s*hidden[^}]*background:\s*rgba\(11,7,30,\.94\)/s);

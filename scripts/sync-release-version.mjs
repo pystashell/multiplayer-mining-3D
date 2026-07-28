@@ -14,7 +14,7 @@ const tag = releaseTagFor(version);
 await writeFile(
   path.join(root, 'public/version.json'),
   `${JSON.stringify({
-    name: 'Zero Domain Protocol: Sector Purge',
+    name: 'Zero Domain Protocol: Cartography Rebuild',
     version,
     release: tag,
   }, null, 2)}\n`,

@@ -38,13 +38,19 @@ test('CI runs complete tests before the Cloudflare deployment dry run', () => {
   assert.match(ciWorkflow, /actions\/setup-node@[0-9a-f]{40} # v6/);
 });
 
-test('release workflow deploys only unsuffixed semantic tags from the exact tagged commit', () => {
+test('release workflow deploys only unsuffixed semantic tags from an approved branch', () => {
   assert.match(
     releaseWorkflow,
     /tags:\s+- "v\*\.\*\.\*"\s+- "!v\*\.\*\.\*-\*"/s,
   );
   assert.match(releaseWorkflow, /ref: \$\{\{ github\.ref_name \}\}/);
-  assert.match(releaseWorkflow, /git merge-base --is-ancestor "\$GITHUB_SHA" origin\/main/);
+  assert.match(
+    releaseWorkflow,
+    /release_commit="\$\(git rev-parse "\$\{GITHUB_SHA\}\^\{commit\}"\)"/,
+  );
+  assert.match(releaseWorkflow, /git merge-base --is-ancestor "\$release_commit" origin\/main/);
+  assert.match(releaseWorkflow, /origin\/codex\/\$\{GITHUB_REF_NAME\}-/);
+  assert.match(releaseWorkflow, /git for-each-ref[\s\S]+--contains "\$release_commit"/);
   assert.match(releaseWorkflow, /environment: production/);
   assert.match(releaseWorkflow, /actions\/checkout@[0-9a-f]{40} # v6/);
   assert.match(releaseWorkflow, /actions\/setup-node@[0-9a-f]{40} # v6/);

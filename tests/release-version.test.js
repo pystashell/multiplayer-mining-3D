@@ -28,23 +28,23 @@ test('release identity is synchronized across package, lockfile, and public meta
     publicRelease: publicVersion.release,
   });
 
-  assert.equal(release.version, '3.2.0');
-  assert.equal(release.tag, 'v3.2.0');
+  assert.equal(release.version, '4.0.0');
+  assert.equal(release.tag, 'v4.0.0');
 });
 
 test('release tags use semantic versions and reject mismatches', () => {
-  assert.equal(releaseTagFor('3.2.0'), 'v3.2.0');
+  assert.equal(releaseTagFor('4.0.0'), 'v4.0.0');
   assert.throws(() => releaseTagFor('version-three'), /Invalid semantic version/);
   assert.throws(
     () => assertReleaseMetadata({
-      packageVersion: '3.2.0',
-      lockVersion: '3.2.0',
-      lockRootVersion: '3.2.0',
-      publicVersion: '3.2.0',
-      publicRelease: 'v3.2.0',
-      releaseTag: 'v3.3.0',
+      packageVersion: '4.0.0',
+      lockVersion: '4.0.0',
+      lockRootVersion: '4.0.0',
+      publicVersion: '4.0.0',
+      publicRelease: 'v4.0.0',
+      releaseTag: 'v4.0.1',
     }),
-    /release tag v3\.3\.0 != v3\.2\.0/,
+    /release tag v4\.0\.1 != v4\.0\.0/,
   );
 });
 
@@ -66,7 +66,7 @@ test('release check accepts the matching tag and rejects a different tag', () =>
   const root = new URL('..', import.meta.url);
   const success = spawnSync(
     process.execPath,
-    ['scripts/check-release.mjs', 'v3.2.0'],
+    ['scripts/check-release.mjs', 'v4.0.0'],
     { cwd: root, encoding: 'utf8' },
   );
   assert.equal(success.status, 0, success.stderr);
@@ -74,9 +74,9 @@ test('release check accepts the matching tag and rejects a different tag', () =>
 
   const failure = spawnSync(
     process.execPath,
-    ['scripts/check-release.mjs', 'v3.3.0'],
+    ['scripts/check-release.mjs', 'v4.0.1'],
     { cwd: root, encoding: 'utf8' },
   );
   assert.notEqual(failure.status, 0);
-  assert.match(failure.stderr, /release tag v3\.3\.0 != v3\.2\.0/);
+  assert.match(failure.stderr, /release tag v4\.0\.1 != v4\.0\.0/);
 });

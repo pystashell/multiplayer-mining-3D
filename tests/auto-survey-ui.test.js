@@ -42,72 +42,72 @@ test('routes hard completion into the hidden mission and only ultimate completio
 
   const experienceSource = sourceBetween(appSource, '  maybeStartTaskExperience(snapshot) {', '  maybeShowMediumChordTip(');
   assert.match(experienceSource, /\['ready', 'playing'\]\.includes\(snapshot\.phase\)/);
-  assert.match(experienceSource, /this\.taskMission === 'ultimate'[\s\S]*task\.ultimate\.brief\.1[\s\S]*task\.ultimate\.trojanTitle[\s\S]*requiresExplicit:\s*true[\s\S]*onComplete:\s*\(\) => this\.startUltimateHack\(\)/);
+  assert.match(experienceSource, /this\.taskMission === 'ultimate'[\s\S]*task\.ultimate\.brief\.1[\s\S]*task\.ultimate\.fixedProtocolTitle[\s\S]*requiresExplicit:\s*true[\s\S]*onComplete:\s*\(\) => this\.startAutoSurvey\(\)/);
   assert.match(appSource, /currentDialogueRequiresExplicitAction\(\)[\s\S]*requiresExplicit/);
   assert.match(appSource, /tutorialOverlay\.addEventListener\('pointerdown',[\s\S]*event\.button === 0[\s\S]*event\.isPrimary !== false[\s\S]*event\.target === tutorialOverlay[\s\S]*!this\.currentDialogueRequiresExplicitAction\(\)/);
 });
 
-test('keeps Ultimate Hack separate from Add-ons and exposes a dedicated live HUD', () => {
+test('keeps automated survey separate from Add-ons and exposes a dedicated live HUD', () => {
   const customStart = indexSource.indexOf('id="custom-toggle"');
   const pickerStart = indexSource.indexOf('id="ruleset-picker"');
-  const pickerEnd = indexSource.indexOf('id="ultimate-hack-launch"');
+  const pickerEnd = indexSource.indexOf('id="auto-survey-launch"');
   const launchEnd = indexSource.indexOf('class="panel-section action-section"');
   assert.ok(customStart >= 0 && pickerStart > customStart && pickerEnd > pickerStart && launchEnd > pickerEnd);
   const pickerSource = indexSource.slice(pickerStart, pickerEnd);
   assert.equal((pickerSource.match(/data-feature=/g) || []).length, 2);
-  assert.match(indexSource.slice(pickerEnd, launchEnd), /id="btn-ultimate-hack-start"/);
+  assert.match(indexSource.slice(pickerEnd, launchEnd), /id="btn-auto-survey-start"/);
   assert.doesNotMatch(indexSource.slice(pickerEnd, launchEnd), /data-feature=/);
 
   for (const id of [
-    'ultimate-hack-hud',
-    'ultimate-hack-stage',
-    'ultimate-hack-step',
-    'ultimate-hack-progress',
-    'btn-ultimate-hack-cancel',
+    'auto-survey-hud',
+    'auto-survey-stage',
+    'auto-survey-step',
+    'auto-survey-progress',
+    'btn-auto-survey-cancel',
   ]) assert.match(indexSource, new RegExp(`id="${id}"`));
 
-  assert.match(appSource, /ultimateHackStrategy\(snapshot[\s\S]*strategy === 'scan'[\s\S]*config\?\.reduction === false \? 'scan' : 'entropy'/);
-  assert.match(appSource, /ultimateHack\.stage\.\$\{strategy\}/);
+  assert.match(appSource, /autoSurveyStrategy\(snapshot[\s\S]*strategy === 'scan'[\s\S]*config\?\.reduction === false \? 'scan' : 'entropy'/);
+  assert.match(appSource, /autoSurvey\.stage\.\$\{strategy\}/);
   assert.match(appSource, /currentBoardProgress\(snapshot\)\.percent/);
 });
 
 test('starts only on supported solo surfaces and uses the authoritative three-command protocol', () => {
-  const startSource = sourceBetween(appSource, '  startUltimateHack() {', '  cancelUltimateHack() {');
+  const startSource = sourceBetween(appSource, '  startAutoSurvey() {', '  cancelAutoSurvey() {');
   assert.match(startSource, /this\.gameMode === 'solo'/);
   assert.match(startSource, /this\.taskFlow === 'freeplay'[\s\S]*this\.taskFlow === 'campaign' && this\.taskMission === 'ultimate'/);
   assert.match(startSource, /\['ready', 'playing'\]\.includes\(snapshot\.phase\)/);
-  assert.match(startSource, /op:\s*'ultimate_hack_start'/);
+  assert.match(startSource, /op:\s*'auto_survey_start'/);
 
-  const cancelSource = sourceBetween(appSource, '  cancelUltimateHack() {', '  beginUltimateHackClient(');
-  assert.match(cancelSource, /client\.cancelPending = true[\s\S]*clearTimeout\(this\.ultimateHackStepTimer\)[\s\S]*client\.scheduledStepKey = null/);
-  assert.match(cancelSource, /op:\s*'ultimate_hack_cancel',\s*runId:\s*hack\.runId/);
-  assert.match(cancelSource, /catch[\s\S]*cancelPending = false[\s\S]*scheduleUltimateHackStep/);
+  const cancelSource = sourceBetween(appSource, '  cancelAutoSurvey() {', '  beginAutoSurveyClient(');
+  assert.match(cancelSource, /client\.cancelPending = true[\s\S]*clearTimeout\(this\.autoSurveyStepTimer\)[\s\S]*client\.scheduledStepKey = null/);
+  assert.match(cancelSource, /op:\s*'auto_survey_cancel',\s*runId:\s*survey\.runId/);
+  assert.match(cancelSource, /catch[\s\S]*cancelPending = false[\s\S]*scheduleAutoSurveyStep/);
 
-  const scheduleSource = sourceBetween(appSource, '  scheduleUltimateHackStep(', '  showTaskCompletion() {');
-  assert.match(scheduleSource, /op:\s*'ultimate_hack_step'/);
-  assert.match(scheduleSource, /runId:\s*hack\.runId/);
-  assert.match(scheduleSource, /expectedStep:\s*Number\(hack\.step\)/);
+  const scheduleSource = sourceBetween(appSource, '  scheduleAutoSurveyStep(', '  showTaskCompletion() {');
+  assert.match(scheduleSource, /op:\s*'auto_survey_step'/);
+  assert.match(scheduleSource, /runId:\s*survey\.runId/);
+  assert.match(scheduleSource, /expectedStep:\s*Number\(survey\.step\)/);
 });
 
 test('deduplicates each observed step, waits for all live wave animations, and resumes from snapshots', () => {
   const snapshotSource = sourceBetween(appSource, '  applyRoomSnapshot(snapshot, initial = false) {', '  missionFromConfig(config) {');
-  assert.match(snapshotSource, /this\.syncUltimateHack\(snapshot, previous\)/);
+  assert.match(snapshotSource, /this\.syncAutoSurvey\(snapshot, previous\)/);
 
-  const syncSource = sourceBetween(appSource, '  syncUltimateHack(snapshot, previous = null) {', '  updateUltimateHackLaunchAvailability(');
-  assert.match(syncSource, /this\.ultimateHackClient\?\.runId !== hack\.runId[\s\S]*beginUltimateHackClient\(hack, snapshot\)/);
-  assert.match(syncSource, /stepChanged \|\| !this\.ultimateHackClient\.lastRequestedStepKey[\s\S]*scheduleUltimateHackStep\(snapshot\)/);
+  const syncSource = sourceBetween(appSource, '  syncAutoSurvey(snapshot, previous = null) {', '  updateAutoSurveyLaunchAvailability(');
+  assert.match(syncSource, /this\.autoSurveyClient\?\.runId !== survey\.runId[\s\S]*beginAutoSurveyClient\(survey, snapshot\)/);
+  assert.match(syncSource, /stepChanged \|\| !this\.autoSurveyClient\.lastRequestedStepKey[\s\S]*scheduleAutoSurveyStep\(snapshot\)/);
 
-  const scheduleSource = sourceBetween(appSource, '  scheduleUltimateHackStep(', '  showTaskCompletion() {');
-  assert.match(scheduleSource, /const stepKey = `\$\{hack\.runId\}:\$\{String\(hack\.step \?\? 0\)\}`/);
+  const scheduleSource = sourceBetween(appSource, '  scheduleAutoSurveyStep(', '  showTaskCompletion() {');
+  assert.match(scheduleSource, /const stepKey = `\$\{survey\.runId\}:\$\{String\(survey\.step \?\? 0\)\}`/);
   assert.match(scheduleSource, /client\.lastRequestedStepKey === stepKey \|\| client\.scheduledStepKey === stepKey/);
-  assert.match(scheduleSource, /liveHack\?\.status !== 'running'[\s\S]*liveHack\.runId !== hack\.runId[\s\S]*String\(liveHack\.step \?\? 0\)[\s\S]*!== stepKey/);
+  assert.match(scheduleSource, /liveSurvey\?\.status !== 'running'[\s\S]*liveSurvey\.runId !== survey\.runId[\s\S]*String\(liveSurvey\.step \?\? 0\)[\s\S]*!== stepKey/);
   assert.match(scheduleSource, /this\.cellRevealAnimations\.length > 0[\s\S]*performance\.now\(\) < this\.revealAnimationEndsAt[\s\S]*this\.sectorPurgeAnimations\.length > 0/);
   assert.match(scheduleSource, /window\.setTimeout\(sendWhenSettled, 80\)/);
 });
 
 test('distinguishes automated scan flags with a red visual without recoloring manual flags', () => {
   const snapshotSource = sourceBetween(appSource, '  applyRoomSnapshot(snapshot, initial = false) {', '  missionFromConfig(config) {');
-  assert.match(snapshotSource, /automatedScanActive = snapshot\.ultimateHack\?\.status === 'running'[\s\S]*strategy === 'scan'[\s\S]*snapshot\.config\?\.reduction === false/);
+  assert.match(snapshotSource, /automatedScanActive = snapshot\.autoSurvey\?\.status === 'running'[\s\S]*strategy === 'scan'[\s\S]*snapshot\.config\?\.reduction === false/);
   assert.match(snapshotSource, /shouldFlag && \(!previous \|\| !previousFlags\.has\(key\)\)[\s\S]*automatedFlagKeys\.add\(key\)/);
   assert.match(snapshotSource, /setFlagLocal\(x, y, z, shouldFlag, !initial, \{[\s\S]*automated:\s*this\.automatedFlagKeys\.has\(key\)/);
 
@@ -119,26 +119,26 @@ test('distinguishes automated scan flags with a red visual without recoloring ma
 });
 
 test('locks competing mobile controls and keeps a 44px abort target at the top safe area', () => {
-  assert.match(styleSource, /\.ultimate-hack-hud\s*\{[^}]*position:\s*fixed[^}]*top:\s*max\(16px, env\(safe-area-inset-top\)\)/s);
-  assert.match(styleSource, /\.ultimate-hack-cancel\s*\{[^}]*min-height:\s*44px/s);
+  assert.match(styleSource, /\.auto-survey-hud\s*\{[^}]*position:\s*fixed[^}]*top:\s*max\(16px, env\(safe-area-inset-top\)\)/s);
+  assert.match(styleSource, /\.auto-survey-cancel\s*\{[^}]*min-height:\s*44px/s);
   const mobileSource = sourceBetween(styleSource, '@media (max-width: 900px) {', '@media (max-width: 900px) and (max-height: 620px) {');
-  assert.match(mobileSource, /\.ultimate-hack-hud\s*\{[^}]*top:\s*calc\(8px \+ env\(safe-area-inset-top\)\)[^}]*width:\s*calc\(100vw - 16px\)/s);
-  assert.match(mobileSource, /\.ultimate-hack-cancel\s*\{[^}]*min-height:\s*44px/s);
-  assert.match(mobileSource, /body\.ultimate-hack-active \.return-lobby-button\s*\{[^}]*top:auto[^}]*bottom:calc\(10px \+ env\(safe-area-inset-bottom\)\)[^}]*left:10px[^}]*transform:none/s);
-  assert.match(mobileSource, /body\.ultimate-hack-active \.sector-purge-banner\s*\{[^}]*top:calc\(112px \+ env\(safe-area-inset-top\)\)/s);
-  assert.match(mobileSource, /body\.ultimate-hack-active \.mobile-statusbar,[\s\S]*body\.ultimate-hack-active #mobile-control-dock,[\s\S]*body\.ultimate-hack-active #slicing-panel,[\s\S]*body\.ultimate-hack-active \.solver-hint-panel\s*\{[^}]*display:\s*none !important/s);
-  assert.match(appSource, /this\.isInteractionLocked = this\.ultimateHackRunning\(snapshot\)/);
+  assert.match(mobileSource, /\.auto-survey-hud\s*\{[^}]*top:\s*calc\(8px \+ env\(safe-area-inset-top\)\)[^}]*width:\s*calc\(100vw - 16px\)/s);
+  assert.match(mobileSource, /\.auto-survey-cancel\s*\{[^}]*min-height:\s*44px/s);
+  assert.match(mobileSource, /body\.auto-survey-active \.return-lobby-button\s*\{[^}]*top:auto[^}]*bottom:calc\(10px \+ env\(safe-area-inset-bottom\)\)[^}]*left:10px[^}]*transform:none/s);
+  assert.match(mobileSource, /body\.auto-survey-active \.sector-purge-banner\s*\{[^}]*top:calc\(112px \+ env\(safe-area-inset-top\)\)/s);
+  assert.match(mobileSource, /body\.auto-survey-active \.mobile-statusbar,[\s\S]*body\.auto-survey-active #mobile-control-dock,[\s\S]*body\.auto-survey-active #slicing-panel,[\s\S]*body\.auto-survey-active \.solver-hint-panel\s*\{[^}]*display:\s*none !important/s);
+  assert.match(appSource, /this\.isInteractionLocked = this\.autoSurveyRunning\(snapshot\)/);
 });
 
-test('localizes the Ultimate Hack surface and retires the old Reduction brand without touching internal keys', () => {
+test('localizes the automated-survey surface without touching internal protocol keys', () => {
   for (const key of [
-    'ultimateHack.launch',
-    'ultimateHack.hudLabel',
-    'ultimateHack.stage.entropy',
-    'ultimateHack.stage.scan',
-    'ultimateHack.step',
-    'ultimateHack.progress',
-    'ultimateHack.cancel',
+    'autoSurvey.launch',
+    'autoSurvey.hudLabel',
+    'autoSurvey.stage.entropy',
+    'autoSurvey.stage.scan',
+    'autoSurvey.step',
+    'autoSurvey.progress',
+    'autoSurvey.cancel',
     'task.ultimate.chapterTitle',
     'task.ultimate.installButton',
     'task.ultimate.completeTitle',
@@ -149,8 +149,8 @@ test('localizes the Ultimate Hack surface and retires the old Reduction brand wi
   assert.doesNotMatch(indexSource, /动态化简|Dynamic Reduction|\bReduction\b|REDUCTION/);
   assert.match(appSource, /reduction:\s*true/);
   assert.match(i18nSource, /'reduction\.tutorialTitle'/);
-  assert.doesNotMatch(i18nSource, /'task\.ultimate\.(?:trojanFact|installFact)'/);
-  assert.doesNotMatch(appSource, /factKey:\s*'task\.ultimate\.(?:trojanFact|installFact)'/);
+  assert.doesNotMatch(i18nSource, /'task\.ultimate\.(?:fixedProtocolFact|installFact)'/);
+  assert.doesNotMatch(appSource, /factKey:\s*'task\.ultimate\.(?:fixedProtocolFact|installFact)'/);
 });
 
 test('keeps the successful replay entry and lifecycle available after auto-solving', () => {
