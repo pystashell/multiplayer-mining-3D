@@ -3,6 +3,16 @@ import assert from 'node:assert/strict';
 import { TRANSLATIONS } from '../public/i18n.js';
 import { renderGuideTemplate } from '../public/guide-character.js';
 
+const syntheticGuide = Object.freeze({
+  id: 'waypoint',
+  name: Object.freeze({ zh: '测试领航员', en: 'Test Navigator' }),
+  codename: Object.freeze({ zh: '航点', en: 'WAYPOINT' }),
+  role: Object.freeze({
+    zh: '测试角色 · 导航员',
+    en: 'Test Role · Navigator',
+  }),
+});
+
 function parameterNames(template) {
   const withoutGuideTokens = template.replaceAll(/\{\{guide\.[a-zA-Z]+\}\}/g, '');
   return [...withoutGuideTokens.matchAll(/\{([a-zA-Z][a-zA-Z0-9]*)\}/g)]
@@ -24,13 +34,13 @@ test('keeps Chinese and English translation keys and interpolation parameters in
   }
 });
 
-test('resolves every guide token and keeps English copy free of accidental Chinese text', () => {
+test('resolves every guide token with a synthetic profile and keeps English copy language-pure', () => {
   for (const [language, table] of Object.entries(TRANSLATIONS)) {
     for (const [key, template] of Object.entries(table)) {
       assert.equal(typeof template, 'string', `${language}.${key} should be a string`);
       assert.ok(template.trim(), `${language}.${key} should not be empty`);
       assert.doesNotMatch(
-        renderGuideTemplate(language, template),
+        renderGuideTemplate(language, template, syntheticGuide),
         /\{\{guide\./,
         `${language}.${key} contains an unknown guide token`,
       );
@@ -39,21 +49,4 @@ test('resolves every guide token and keeps English copy free of accidental Chine
       }
     }
   }
-});
-
-test('keeps the rewritten campaign centered on original cartography vocabulary', () => {
-  const campaignCopy = Object.entries(TRANSLATIONS)
-    .flatMap(([language, table]) => Object.entries(table)
-      .filter(([key]) => /^(?:mission|task|squad|lobby|tutorial)\./.test(key))
-      .map(([key, value]) => `${language}.${key}: ${value}`))
-    .join('\n');
-
-  assert.doesNotMatch(
-    campaignCopy,
-    /silver.?wolf|银狼|punklorde|朋克洛德|stellaron|星核猎手|elio|艾利欧|star rail|星穹|崩坏|崩铁|honkai|quantum|量子|antimatter|反物质|firewall|防火墙|admin(?:istrator)?|管理员|backdoor|后门|root access|根权限|ultimate.?hack|hacker|trojan/i,
-  );
-  assert.match(campaignCopy, /零域|zero-domain/i);
-  assert.match(campaignCopy, /测绘|survey/i);
-  assert.match(campaignCopy, /坐标|coordinate/i);
-  assert.match(campaignCopy, /异常节点|anomaly nodes/i);
 });

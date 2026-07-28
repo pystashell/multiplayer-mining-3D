@@ -1,0 +1,242 @@
+{
+  "schemaVersion": 1,
+  "checklistVersion": "2026-07-28.1",
+  "digestRoots": [
+    "public"
+  ],
+  "digestFiles": [
+    "config/predeploy-ui-checklist.json"
+  ],
+  "viewportProfiles": {
+    "desktop-wide": {
+      "labelZh": "桌面宽屏",
+      "viewport": "1440 × 900",
+      "input": "鼠标 + 键盘"
+    },
+    "desktop-compact": {
+      "labelZh": "桌面紧凑窗口",
+      "viewport": "1280 × 720",
+      "input": "鼠标 + 键盘"
+    },
+    "mobile-standard": {
+      "labelZh": "手机竖屏",
+      "viewport": "390 × 844",
+      "input": "触摸"
+    },
+    "mobile-small": {
+      "labelZh": "小屏手机",
+      "viewport": "360 × 640",
+      "input": "触摸"
+    }
+  },
+  "requiredScenarios": [
+    {
+      "id": "desktop-lobby-bilingual",
+      "titleZh": "桌面大厅与中英文切换",
+      "purposeZh": "确认大厅结构、当前配置角色的显示文本和双语切换在桌面端可读。",
+      "profiles": [
+        "desktop-wide",
+        "desktop-compact"
+      ],
+      "stepsZh": [
+        "打开本地首页并清空旧会话状态。",
+        "分别切换中文和英文，检查标题、任务说明、按钮、角色姓名、代号与职业。",
+        "缩放窗口到两个指定桌面尺寸并滚动大厅。"
+      ],
+      "expectedZh": [
+        "角色显示值与 public/guide-character.js 当前配置一致，没有未解析模板标记。",
+        "中英文没有混排、截断、重叠或不可达按钮。",
+        "大厅在紧凑高度下仍可滚动，主要操作始终可用。"
+      ],
+      "evidenceZh": "每种语言至少一张完整大厅截图。",
+      "failureActionZh": "检查角色模板、翻译键、容器高度和溢出样式；修复后重跑自动化并重新执行本场景。"
+    },
+    {
+      "id": "story-guide-consistency",
+      "titleZh": "全故事路线的引导角色一致性",
+      "purposeZh": "确认所有剧情与任务插图都使用同一个当前配置角色，不混入旧角色或其他人物设计。",
+      "profiles": [
+        "desktop-wide"
+      ],
+      "stepsZh": [
+        "依次进入初级、中级、高级、终极与多人任务入口。",
+        "触发每条路线可见的主插图和对话插图。",
+        "逐张比较脸型、发型、服装、配色和身份文本。"
+      ],
+      "expectedZh": [
+        "所有人物图都与当前配置角色保持一致，仅允许场景、动作和构图变化。",
+        "没有旧角色、旧作品标志、旧阵营词或错误姓名。",
+        "图片比例和裁切适合对应卡片或对话框。"
+      ],
+      "evidenceZh": "按路线保存截图，文件名包含路线和画面位置。",
+      "failureActionZh": "回到 GUIDE_ART 映射和实际素材核对；替换错误资源后重新验收全部路线，不能只看单张。"
+    },
+    {
+      "id": "desktop-dialogue-readability",
+      "titleZh": "桌面对话框与插图可读性",
+      "purposeZh": "确认插图不会遮挡对白、按钮和关闭提示，长文本仍能阅读。",
+      "profiles": [
+        "desktop-wide",
+        "desktop-compact"
+      ],
+      "stepsZh": [
+        "触发包含主图、提示图和较长文本的多段对话。",
+        "使用鼠标继续、关闭并重新打开对话。",
+        "在紧凑窗口检查滚动、焦点和背景遮罩。"
+      ],
+      "expectedZh": [
+        "文字、人物主体与按钮均不被裁切或互相覆盖。",
+        "点击插图或游戏区域不会误触跳过两段内容。",
+        "关闭后输入焦点和游戏操作恢复正常。"
+      ],
+      "evidenceZh": "至少保存一张长文本和一张带人物插图的对话截图。",
+      "failureActionZh": "检查对话 DOM 层级、object-position、overflow、兼容点击抑制和焦点恢复。"
+    },
+    {
+      "id": "desktop-gameplay-controls",
+      "titleZh": "桌面棋盘、HUD 与相机操作",
+      "purposeZh": "确认桌面端的挖掘、插旗、双键、旋转、平移、缩放、切片和返回大厅可实际操作。",
+      "profiles": [
+        "desktop-wide",
+        "desktop-compact"
+      ],
+      "stepsZh": [
+        "开始单人任务，分别执行挖掘、插旗、双键自动揭示和提示操作。",
+        "执行相机旋转、平移、缩放、锁定中心、重置视角和切片。",
+        "打开设置、通讯和返回大厅控件。"
+      ],
+      "expectedZh": [
+        "点击目标与高亮格一致，不会因镜头角度误选其他格。",
+        "HUD、推理面板和教程提示不遮挡关键棋盘区域。",
+        "所有常用控件可见、可点击且状态反馈明确。"
+      ],
+      "evidenceZh": "保存默认视角与紧凑窗口各一张游戏截图，并记录完成的操作列表。",
+      "failureActionZh": "根据问题检查命中测试、相机手势、布局层级和响应式 CSS；修复后复测全部桌面操作。"
+    },
+    {
+      "id": "mobile-lobby-dialogue",
+      "titleZh": "手机大厅与剧情对话",
+      "purposeZh": "确认手机竖屏上的大厅、角色图、语言切换和对话操作不溢出。",
+      "profiles": [
+        "mobile-standard",
+        "mobile-small"
+      ],
+      "stepsZh": [
+        "以触摸设备模式打开首页，分别检查两个手机尺寸。",
+        "切换语言、选择任务并进入第一段对话。",
+        "滚动长内容并完成对话。"
+      ],
+      "expectedZh": [
+        "页面没有水平滚动、双重滚动锁死或屏幕外按钮。",
+        "角色主体裁切合理，文本与人物图不互相遮挡。",
+        "单次触摸只触发一次动作。"
+      ],
+      "evidenceZh": "两个尺寸各保存大厅和对话截图。",
+      "failureActionZh": "检查移动端媒体查询、安全区、触摸兼容点击和滚动容器；修复后两个尺寸都要重测。"
+    },
+    {
+      "id": "mobile-gameplay-controls",
+      "titleZh": "手机棋盘与触摸控制",
+      "purposeZh": "确认触摸长按、移动操作区、抽屉、提示和安全区在小屏上可用。",
+      "profiles": [
+        "mobile-standard",
+        "mobile-small"
+      ],
+      "stepsZh": [
+        "进入单人棋盘，执行点击挖掘、长按插旗、长按后移动平移和双指操作。",
+        "逐个使用五键操作区、推理提示、退出推理、切片和控制抽屉。",
+        "旋转设备后再返回竖屏，继续一次棋盘操作。"
+      ],
+      "expectedZh": [
+        "长按插旗与长按平移不会串动作，取消手势后不会卡住。",
+        "底部安全区、提示、抽屉和棋盘之间没有不可操作的重叠。",
+        "旋转后布局恢复且当前游戏状态不丢失。"
+      ],
+      "evidenceZh": "至少保存一张操作区完整截图，并记录长按与旋转结果。",
+      "failureActionZh": "检查输入模式、pointer cancel、移动端层级与安全区计算；修复后从进入棋盘开始重测。"
+    },
+    {
+      "id": "multiplayer-two-client",
+      "titleZh": "双客户端多人同步",
+      "purposeZh": "确认两个真实浏览器客户端的大厅邀请、角色故事、行动同步和离开流程一致。",
+      "profiles": [
+        "desktop-wide",
+        "mobile-standard"
+      ],
+      "stepsZh": [
+        "桌面客户端创建房间，手机尺寸客户端通过邀请链接加入。",
+        "两端轮流挖掘、插旗，观察昵称、活动、棋盘和任务状态。",
+        "分别测试一端刷新重连、主动离开和房主转移。"
+      ],
+      "expectedZh": [
+        "两端公开状态一致，操作不会重复执行或丢失。",
+        "中英文客户端可各自本地化相同活动。",
+        "刷新与离开后没有幽灵成员、重复连接或错误房间 URL。"
+      ],
+      "evidenceZh": "保存同一房间的双客户端截图并记录房间码与测试时间；不要记录密钥。",
+      "failureActionZh": "停止发布，检查 WebSocket、ACK/序号、恢复快照、离开协议和 Durable Object 日志。"
+    },
+    {
+      "id": "failure-replay-recovery",
+      "titleZh": "失败、撤回、成功与回放恢复",
+      "purposeZh": "确认关键任务生命周期在视觉和交互上完整，不会把失败状态带入下一局。",
+      "profiles": [
+        "desktop-wide",
+        "mobile-standard"
+      ],
+      "stepsZh": [
+        "在单人任务触发失败，执行撤回或重新开始。",
+        "完成一局并进入成功回放，测试暂停、继续和退出。",
+        "回到大厅后再次开始任务。"
+      ],
+      "expectedZh": [
+        "失败、撤回、成功和回放都有清晰且互不冲突的视觉反馈。",
+        "回放期间普通输入被锁定，退出后恢复最新权威状态。",
+        "新任务没有残留弹窗、提示、音频或旧棋盘状态。"
+      ],
+      "evidenceZh": "记录失败画面、回放 HUD 和重新进入后的画面。",
+      "failureActionZh": "检查任务状态清理、回放缓冲、动画队列、音频会话和大厅返回逻辑。"
+    },
+    {
+      "id": "accessibility-keyboard",
+      "titleZh": "键盘焦点与基本可访问性",
+      "purposeZh": "确认不用鼠标也能遍历主要 HTML 控件，焦点可见且对话语义完整。",
+      "profiles": [
+        "desktop-wide"
+      ],
+      "stepsZh": [
+        "从页面顶部开始只使用 Tab、Shift+Tab、Enter、Space 和 Escape。",
+        "遍历语言、任务、设置、对话关闭、回放和返回大厅控件。",
+        "检查浏览器可访问性树中的按钮名称和对话语义。"
+      ],
+      "expectedZh": [
+        "焦点顺序与画面顺序一致，焦点样式清晰。",
+        "主要控件有可理解名称，不存在键盘陷阱。",
+        "对话打开时焦点不会落到被遮挡的后台控件。"
+      ],
+      "evidenceZh": "记录浏览器、完成的键盘路径和发现的问题；可附可访问性树截图。",
+      "failureActionZh": "检查语义元素、tabindex、aria 属性、焦点圈和对话焦点管理。"
+    },
+    {
+      "id": "console-network-clean",
+      "titleZh": "控制台、资源与网络清洁度",
+      "purposeZh": "确认正常流程没有脚本异常、资源 404、外部运行时依赖或敏感信息泄露。",
+      "profiles": [
+        "desktop-wide",
+        "mobile-standard"
+      ],
+      "stepsZh": [
+        "清空浏览器控制台和网络面板后完整走一遍大厅、任务、对话和返回大厅。",
+        "过滤 failed、404、CORS、WebSocket 和未捕获异常。",
+        "检查字体、脚本、图片和音频均来自预期本地或同源路径。"
+      ],
+      "expectedZh": [
+        "没有未解释的控制台错误、资源失败或持续重连。",
+        "没有依赖未批准的第三方运行时 CDN。",
+        "URL、日志和响应中不出现密钥、令牌或服务端私有雷区。"
+      ],
+      "evidenceZh": "保存控制台与失败请求过滤后的截图；若有已知无害警告，必须在验收备注解释。",
+      "failureActionZh": "任何未知异常或资源失败都阻止发布；定位资源映射、缓存、CSP、安全头或网络协议后重新执行完整场景。"
+    }
+  ]
+}

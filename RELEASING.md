@@ -46,6 +46,10 @@ Durable Object migration、网络协议、存档格式、回放格式和第三�
 
 测试记录位于 GitHub 仓库的 **Actions → CI**。建议在 GitHub 的 `main` 分支保护规则中，把 `Test and deployment dry run` 设为合并前必须通过的检查。
 
+自动化测试的登记、目的、失败处理和有效性边界见
+`docs/AUTOMATED_TEST_CATALOG.md`。CI 的源码级 UI 契约不能替代真人视觉检查；
+正式发布前还必须执行 `docs/PREDEPLOY_UI_MANUAL.md`。
+
 ## 发布正式版本
 
 先推送版本分支并等待 CI 通过。常规版本可以合并到 `main`；明确要求保持独立的
@@ -53,6 +57,10 @@ Durable Object migration、网络协议、存档格式、回放格式和第三�
 创建正式标签：
 
 ```powershell
+npm run dev
+# 按 docs/PREDEPLOY_UI_MANUAL.md 完成人工验收
+npm run ui:approve -- --reviewer "验收人" --browser "浏览器/系统" --evidence "证据路径或链接" --confirm-all
+npm run predeploy
 git tag -a v4.0.0 -m "Zero Domain Protocol v4.0.0"
 git push origin v4.0.0
 ```
@@ -64,11 +72,12 @@ git push origin v4.0.0
    `codex/v4.0.0-*` 远端发布分支。
 3. 检查标签、package、公开版本和缓存版本完全一致。
 4. 运行全部测试和 Wrangler dry-run。
-5. 建立 GitHub Release 草稿。
-6. 将该标签对应的提交部署到 Cloudflare。
-7. 检查线上 `version.json`。
-8. 执行真实多人房间与 WebSocket 冒烟测试。
-9. 全部成功后才公开 GitHub Release。
+5. 确认标签中包含与当前 UI 源码摘要绑定的人工验收记录。
+6. 建立 GitHub Release 草稿。
+7. 将该标签对应的提交部署到 Cloudflare。
+8. 检查线上 `version.json`。
+9. 执行真实多人房间与 WebSocket 冒烟测试。
+10. 全部成功后才公开 GitHub Release。
 
 如果部署或线上测试失败，Release 会保持草稿状态，不会被展示成一个成功版本。
 

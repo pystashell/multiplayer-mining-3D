@@ -5,7 +5,6 @@ import { readFileSync } from 'node:fs';
 const appSource = readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
 const indexSource = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
 const styleSource = readFileSync(new URL('../public/style.css', import.meta.url), 'utf8');
-const guideConfigSource = readFileSync(new URL('../public/guide-character.js', import.meta.url), 'utf8');
 
 test('lets players lock or pan the matrix center while camera bindings remain runtime-configurable', () => {
   assert.match(appSource, /this\.controls\.enablePan\s*=\s*false/);
@@ -155,9 +154,6 @@ test('plays the squad mine sound once when a player gives up revival', () => {
 });
 
 test('keeps the illustrated background inside the dialogue frame without covering text', () => {
-  assert.match(guideConfigSource, /easy: Object\.freeze\(\{[\s\S]*?main: 'assets\/guide-zero-domain-cartographer\.png'[\s\S]*?neighbors: 'assets\/parallax-easy-neighbors\.webp'/);
-  assert.match(guideConfigSource, /medium: Object\.freeze\(\{[\s\S]*?main: 'assets\/parallax-neighbor-perspective\.png'[\s\S]*?tip: 'assets\/parallax-medium-tip\.webp'/);
-  assert.doesNotMatch(appSource, /assets\/parallax-[^'\n]*-cutout-v2\.webp/);
   assert.match(indexSource, /id="tutorial-art"/);
   assert.doesNotMatch(indexSource, /id="tutorial-art"[^>]*\ssrc=/);
   assert.doesNotMatch(indexSource, /id="tutorial-art"[^>]*class="is-cutout"/);

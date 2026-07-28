@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "scan": {
+    "roots": [
+      "public",
+      "worker"
+    ],
+    "extraFiles": [
+      "README.md",
+      "GUIDE_ART_MAPPING.md",
+      "SOUNDTRACK_COMPOSITION_PROMPT.md",
+      "SOUNDTRACK_COMPOSITION_PROMPT.zh-CN.md"
+    ],
+    "textExtensions": [
+      ".css",
+      ".html",
+      ".js",
+      ".json",
+      ".md"
+    ],
+    "excludePrefixes": [
+      "public/vendor/"
+    ],
+    "includeRelativePath": true
+  },
+  "forbiddenRules": [
+    {
+      "id": "retired-franchise-identity",
+      "expression": "silver[\\s._-]?wolf|银狼|silverwolf|punklorde|朋克洛德|stellaron|星核猎手|星河猎手|银河猎手|elio|艾利欧|star[\\s._-]?rail|星穹|崩坏|崩铁|honkai",
+      "flags": "iu",
+      "descriptionZh": "当前产品不得重新出现已退役的第三方角色、阵营或作品身份。",
+      "failureActionZh": "先定位命中文件；若是玩家可见文案、资源名或运行代码，改为当前原创设定。只有经过明确产品决策再次引入时，才允许修改本政策。"
+    },
+    {
+      "id": "retired-hacking-story",
+      "expression": "量子之海|quantum(?:[\\s._-]+sea)?|反物质|antimatter|防火墙|firewall|管理员|admin(?:istrator)?|后门|backdoor|根权限|root[\\s._-]+access|终极骇客|ultimate[\\s._-]*hack|hacker|超级木马|trojan",
+      "flags": "iu",
+      "descriptionZh": "玩家可见故事必须使用零域测绘叙事，不得回退到旧骇客入侵叙事。",
+      "failureActionZh": "确认命中是否为玩家可见内容；若是，改写为测绘、坐标、航道或异常节点语义。若故事方向正式改变，应先更新产品设定，再连同本政策一起评审。"
+    }
+  ],
+  "requiredCampaignConcepts": [
+    {
+      "id": "zero-domain",
+      "expressions": [
+        "零域",
+        "zero[\\s-]?domain"
+      ],
+      "descriptionZh": "任务故事应保持零域世界观。",
+      "failureActionZh": "检查任务、教程和大厅文案是否意外丢失世界观；若是有意重构整个故事，需由产品负责人更新本政策。"
+    },
+    {
+      "id": "cartography",
+      "expressions": [
+        "测绘",
+        "survey|cartograph"
+      ],
+      "descriptionZh": "任务故事应保持测绘与导航语义。",
+      "failureActionZh": "检查中英文关键任务文案；补回测绘语义，或在正式改变职业设定后更新本政策。"
+    },
+    {
+      "id": "coordinates",
+      "expressions": [
+        "坐标",
+        "coordinate"
+      ],
+      "descriptionZh": "任务证据链应继续使用坐标概念。",
+      "failureActionZh": "检查中英文任务目标、失败和完成文案是否仍表达坐标验证。"
+    },
+    {
+      "id": "anomaly-nodes",
+      "expressions": [
+        "异常节点",
+        "anomal(?:y|ies)[\\s-]+nodes?"
+      ],
+      "descriptionZh": "地雷在故事层应继续表现为异常节点。",
+      "failureActionZh": "检查关卡目标和教学文案，避免重新使用旧阵营或入侵术语描述地雷。"
+    }
+  ]
+}

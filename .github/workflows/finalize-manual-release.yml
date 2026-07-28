@@ -63,6 +63,11 @@ jobs:
       - name: Run the complete tagged regression suite
         run: npm test
 
+      - name: Require UI approval for the exact release sources
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
+        run: npm run ui:check -- "$RELEASE_TAG"
+
       - name: Verify the manually deployed version
         env:
           RELEASE_TAG: ${{ steps.release.outputs.release_tag }}

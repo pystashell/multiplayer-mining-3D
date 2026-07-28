@@ -8,6 +8,18 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const appSource = readFileSync(`${root}/public/app.js`, 'utf8');
 const indexSource = readFileSync(`${root}/public/index.html`, 'utf8');
 
+function configuredGuideArtSources() {
+  return new Set([
+    ...Object.values(GUIDE_ART.story),
+    ...Object.values(GUIDE_ART.dialogue)
+      .flatMap((chapter) => Object.values(chapter)),
+  ]);
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 test('ships a configured guide illustration for every story route', () => {
   for (const [route, source] of Object.entries(GUIDE_ART.story)) {
     assert.ok(
@@ -16,7 +28,13 @@ test('ships a configured guide illustration for every story route', () => {
     );
   }
   assert.match(appSource, /import \{ GUIDE_ART \} from '\.\/guide-character\.js'/);
-  assert.doesNotMatch(appSource, /assets\/parallax-|assets\/guide-zero-domain/);
+  for (const source of configuredGuideArtSources()) {
+    assert.doesNotMatch(
+      appSource,
+      new RegExp(escapeRegExp(source)),
+      `${source} must be referenced only through GUIDE_ART`,
+    );
+  }
   assert.match(indexSource, /id="mission-art"/);
   assert.match(indexSource, /id="tutorial-art"/);
   assert.doesNotMatch(indexSource, /id="(?:mission|tutorial)-art"[^>]*\ssrc=/);
@@ -40,5 +58,5 @@ test('reuses the advanced chapter main art for every advanced dialogue', () => {
   assert.equal(GUIDE_ART.dialogue.hard.main, GUIDE_ART.story.hard);
   assert.equal(GUIDE_ART.dialogue.ultimate.main, GUIDE_ART.story.ultimate);
   assert.match(appSource, /hard: \['main', 'main', 'main'\]/);
-  assert.doesNotMatch(appSource, /parallax-hard-commit|artKey: 'commit'/);
+  assert.doesNotMatch(appSource, /artKey: 'commit'/);
 });

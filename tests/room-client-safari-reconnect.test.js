@@ -182,7 +182,7 @@ test('detects literal IPv4 and IPv6 hosts without hedging normal domains', () =>
   assert.equal(isIpLiteralHost('192.168.0.175'), true);
   assert.equal(isIpLiteralHost('127.0.0.1'), true);
   assert.equal(isIpLiteralHost('[fe80::1]'), true);
-  assert.equal(isIpLiteralHost('parallax.local'), false);
+  assert.equal(isIpLiteralHost('game.local'), false);
   assert.equal(isIpLiteralHost('example.com'), false);
   assert.equal(isIpLiteralHost('999.168.0.1'), false);
 });
@@ -281,7 +281,7 @@ test('hedges a stuck IP WebSocket in parallel and joins through the first candid
 });
 
 test('does not kill a slow but healthy Safari welcome at the old 1600ms deadline', async () => {
-  const harness = installBrowserHarness({ url: 'http://parallax.local:8790/' });
+  const harness = installBrowserHarness({ url: 'http://game.local:8790/' });
   try {
     const welcomes = [];
     const client = new RoomClient({ onWelcome: (message) => welcomes.push(message) });

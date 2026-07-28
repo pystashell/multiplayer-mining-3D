@@ -6,7 +6,7 @@ import {
   guideCharacterText,
   renderGuideTemplate,
 } from '../public/guide-character.js';
-import { translate } from '../public/i18n.js';
+import { TRANSLATIONS } from '../public/i18n.js';
 
 const runtimeFiles = [
   '../public/app.js',
@@ -15,18 +15,14 @@ const runtimeFiles = [
   '../public/style.css',
   '../worker/index.js',
   '../worker/room-engine.js',
-  '../README.md',
-  '../GUIDE_ART_MAPPING.md',
-  '../SOUNDTRACK_COMPOSITION_PROMPT.md',
-  '../SOUNDTRACK_COMPOSITION_PROMPT.zh-CN.md',
 ];
 
 const runtimeSource = runtimeFiles
   .map((path) => readFileSync(new URL(path, import.meta.url), 'utf8'))
   .join('\n');
 
-test('renders every guide identity field from one replaceable character profile', () => {
-  const replacement = Object.freeze({
+const replacementProfiles = [
+  Object.freeze({
     id: 'vector',
     name: Object.freeze({ zh: '林岚', en: 'Lin Lan' }),
     codename: Object.freeze({ zh: '折线', en: 'VECTOR' }),
@@ -34,61 +30,91 @@ test('renders every guide identity field from one replaceable character profile'
       zh: '边界测绘师 · 路径分析员',
       en: 'Boundary Cartographer · Route Analyst',
     }),
-  });
-  const zh = guideCharacterText('zh', replacement);
-  const en = guideCharacterText('en', replacement);
+  }),
+  Object.freeze({
+    id: 'wayfinder',
+    name: Object.freeze({ zh: '云岬', en: 'Mira Vale' }),
+    codename: Object.freeze({ zh: '航标', en: 'WAYFINDER' }),
+    role: Object.freeze({
+      zh: '航迹校准员 · 证据领航员',
+      en: 'Route Calibrator · Evidence Navigator',
+    }),
+  }),
+];
 
-  assert.equal(zh.display, '林岚｜VECTOR');
-  assert.equal(zh.squad, '折线测绘小队');
-  assert.equal(zh.computation, '折线演算');
-  assert.equal(en.display, 'LIN LAN | VECTOR');
-  assert.equal(en.squad, 'Vector Survey Squad');
-  assert.equal(en.computation, 'Vector Computation');
-  assert.equal(
-    renderGuideTemplate('zh', '{{guide.display}} · {{guide.role}}', replacement),
-    '林岚｜VECTOR · 边界测绘师 · 路径分析员',
-  );
-  assert.equal(
-    renderGuideTemplate('en', '{{guide.nameUpper}} // {{guide.codename}}', replacement),
-    'LIN LAN // VECTOR',
-  );
-});
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
-test('keeps the current guide identity out of runtime copy and structural names', () => {
-  const current = guideCharacterText('zh');
-  const english = guideCharacterText('en');
-  for (const literal of [
-    GUIDE_CHARACTER.name.zh,
-    GUIDE_CHARACTER.name.en,
-    GUIDE_CHARACTER.codename.en,
-    current.computation,
-    english.computation,
-  ]) {
-    assert.doesNotMatch(runtimeSource, new RegExp(literal));
+test('accepts a complete bilingual guide profile without depending on the current identity', () => {
+  for (const field of ['id', 'name', 'codename', 'role']) {
+    assert.ok(GUIDE_CHARACTER[field], `guide profile should define ${field}`);
   }
-  assert.doesNotMatch(runtimeSource, /Parallax(?:Dialogue|Tutorial)|parallax-(?:lobby|comms)/i);
-  assert.match(runtimeSource, /guide-(?:lobby|comms)|(?:show|render|advance|finish)GuideDialogue/);
-});
-
-test('resolves guide templates in both languages without leaking placeholders', () => {
-  for (const language of ['zh', 'en']) {
-    for (const key of [
-      'document.title',
-      'subtitle',
-      'mission.speaker',
-      'task.guide.title',
-      'players.title',
-      'autoSurvey.launchTitle',
-      'solver.button',
-    ]) {
-      assert.doesNotMatch(translate(language, key), /\{\{guide\./);
+  for (const field of ['name', 'codename', 'role']) {
+    for (const language of ['zh', 'en']) {
+      assert.equal(typeof GUIDE_CHARACTER[field][language], 'string');
+      assert.ok(GUIDE_CHARACTER[field][language].trim());
     }
   }
 });
 
-test('keeps current runtime and project copy free of the retired franchise vocabulary', () => {
-  assert.doesNotMatch(
-    runtimeSource,
-    /silver.?wolf|银狼|silverwolf|punklorde|朋克洛德|stellaron|星核猎手|elio|艾利欧|star rail|星穹|崩坏|崩铁|honkai|量子之海|quantum|量子|antimatter|反物质|ultimate.?hack|hacker|trojan/i,
-  );
+test('derives every displayed identity field from arbitrary replacement profiles', () => {
+  for (const replacement of replacementProfiles) {
+    const zh = guideCharacterText('zh', replacement);
+    const en = guideCharacterText('en', replacement);
+
+    assert.equal(zh.name, replacement.name.zh);
+    assert.equal(zh.codenameLocal, replacement.codename.zh);
+    assert.equal(zh.display, `${replacement.name.zh}｜${replacement.codename.en}`);
+    assert.equal(zh.squad, `${replacement.codename.zh}测绘小队`);
+    assert.equal(zh.computation, `${replacement.codename.zh}演算`);
+    assert.equal(en.name, replacement.name.en);
+    assert.equal(en.codename, replacement.codename.en);
+    assert.equal(
+      en.display,
+      `${replacement.name.en.toUpperCase()} | ${replacement.codename.en}`,
+    );
+    assert.equal(
+      renderGuideTemplate('zh', '{{guide.display}} · {{guide.role}}', replacement),
+      `${replacement.name.zh}｜${replacement.codename.en} · ${replacement.role.zh}`,
+    );
+    assert.equal(
+      renderGuideTemplate('en', '{{guide.nameUpper}} // {{guide.codename}}', replacement),
+      `${replacement.name.en.toUpperCase()} // ${replacement.codename.en}`,
+    );
+  }
+});
+
+test('keeps configured identity literals out of runtime consumers and structural names', () => {
+  for (const literal of [
+    GUIDE_CHARACTER.id,
+    GUIDE_CHARACTER.name.zh,
+    GUIDE_CHARACTER.name.en,
+    GUIDE_CHARACTER.codename.en,
+  ]) {
+    assert.doesNotMatch(runtimeSource, new RegExp(escapeRegExp(literal), 'iu'));
+  }
+  assert.match(runtimeSource, /guide-(?:lobby|comms)|(?:show|render|advance|finish)GuideDialogue/);
+});
+
+test('resolves representative guide templates for every replacement profile and language', () => {
+  for (const replacement of replacementProfiles) {
+    for (const language of ['zh', 'en']) {
+      for (const key of [
+        'document.title',
+        'subtitle',
+        'mission.speaker',
+        'task.guide.title',
+        'players.title',
+        'autoSurvey.launchTitle',
+        'solver.button',
+      ]) {
+        const template = TRANSLATIONS[language][key];
+        assert.doesNotMatch(
+          renderGuideTemplate(language, template, replacement),
+          /\{\{guide\./,
+        );
+      }
+    }
+  }
 });

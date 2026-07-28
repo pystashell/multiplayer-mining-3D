@@ -65,6 +65,7 @@ test('release remains draft until deploy and live verification both succeed', ()
     'npm run release:check -- "$GITHUB_REF_NAME"',
     'npm test',
     'npm run deploy:dry',
+    'npm run ui:check -- "$GITHUB_REF_NAME"',
     'gh release create "$GITHUB_REF_NAME"',
     'npx wrangler deploy',
     'npm run verify:live-version',
@@ -97,6 +98,7 @@ test('manual release recovery only publishes an existing tag after live verifica
   requireOrder(manualFinalizeWorkflow, [
     'npm run release:check -- "$RELEASE_TAG"',
     'npm test',
+    'npm run ui:check -- "$RELEASE_TAG"',
     'npm run verify:live-version',
     'npm run test:live',
     'gh release edit "$RELEASE_TAG" --draft=false --latest',
@@ -107,7 +109,11 @@ test('package scripts keep local deployment and release verification gates avail
   assert.equal(packageJson.scripts['version:check'], 'node scripts/check-release.mjs');
   assert.equal(packageJson.scripts['release:check'], 'node scripts/check-release.mjs');
   assert.equal(packageJson.scripts['verify:live-version'], 'node scripts/verify-live-version.mjs');
-  assert.equal(packageJson.scripts.deploy, 'npm test && wrangler deploy');
+  assert.equal(
+    packageJson.scripts.predeploy,
+    'npm test && npm run deploy:dry && npm run ui:check',
+  );
+  assert.equal(packageJson.scripts.deploy, 'npm run predeploy && wrangler deploy');
 });
 
 test('live-version verification exits naturally after success on Windows', () => {

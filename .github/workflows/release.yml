@@ -76,6 +76,9 @@ jobs:
       - name: Validate the Cloudflare bundle
         run: npm run deploy:dry
 
+      - name: Require UI approval for the exact release sources
+        run: npm run ui:check -- "$GITHUB_REF_NAME"
+
       - name: Prepare a draft GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}

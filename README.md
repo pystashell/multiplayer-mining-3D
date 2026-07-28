@@ -42,6 +42,13 @@ npm run deploy:dry
 
 推送任意分支或建立 Pull Request 后，GitHub Actions 也会自动执行以上检查。测试记录可以在仓库的 **Actions → CI** 中查看。
 
+`npm test` 中的测试是配置驱动的通用契约，不依赖当前角色姓名或素材文件名。
+每个测试的目的、失败处理和有效性边界见
+[自动化测试目录](docs/AUTOMATED_TEST_CATALOG.md)。
+正式发布还必须按 [UI 人工测试手册](docs/PREDEPLOY_UI_MANUAL.md)
+完成真实桌面、手机和双客户端验收；完整门禁见
+[发布前质量流程](docs/PREDEPLOY_PROCESS.md)。
+
 开发服务器运行时，可以执行真实双 WebSocket 测试：
 
 ```bash
@@ -52,8 +59,12 @@ npm run test:live
 
 ```bash
 npx wrangler login
+npm run predeploy
 npm run deploy
 ```
+
+`npm run predeploy` 会运行全部自动化、Wrangler dry-run，并验证与当前源码绑定的
+UI 人工验收记录；`npm run deploy` 会再次执行这套门禁后才部署。
 
 部署后，网页、房间 API 和 WebSocket 共用同一个 `workers.dev` 域名。创建房间后 URL 会自动附加 `?room=六位房间码`，可以直接复制给朋友。
 
