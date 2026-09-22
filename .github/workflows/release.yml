@@ -1,0 +1,110 @@
+name: Release and deploy
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+      - "!v*.*.*-*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Verify, deploy, and publish release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+
+    env:
+      HOLO_SWEEPER_URL: https://3d-multiplayer-mining.pystashell.workers.dev
+      RELEASE_TAG: ${{ github.ref_name }}
+
+    steps:
+      - name: Check out the exact release tag
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "22.13.0"
+          package-manager-cache: false
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Require the tagged commit on main or its matching release branch
+        shell: bash
+        run: |
+          git fetch origin "+refs/heads/*:refs/remotes/origin/*"
+          release_commit="$(git rev-parse "${GITHUB_SHA}^{commit}")"
+          if git merge-base --is-ancestor "$release_commit" origin/main; then
+            echo "Release commit is on main."
+            exit 0
+          fi
+
+          while IFS= read -r branch; do
+            case "$branch" in
+              "origin/codex/${GITHUB_REF_NAME}-"*)
+                echo "Release commit is on matching branch: $branch"
+                exit 0
+                ;;
+            esac
+          done < <(
+            git for-each-ref \
+              --contains "$release_commit" \
+              --format="%(refname:short)" \
+              refs/remotes/origin/codex/
+          )
+
+          echo "::error::Tag $GITHUB_REF_NAME must be on main or origin/codex/${GITHUB_REF_NAME}-*."
+          exit 1
+
+      - name: Match the tag, package, public version, and cache versions
+        run: npm run release:check -- "$GITHUB_REF_NAME"
+
+      - name: Run the complete regression suite
+        run: npm test
+
+      - name: Validate the Cloudflare bundle
+        run: npm run deploy:dry
+
+      - name: Require UI approval for the exact release sources
+        run: npm run ui:check -- "$GITHUB_REF_NAME"
+
+      - name: Prepare a draft GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          if ! gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release create "$GITHUB_REF_NAME" \
+              --verify-tag \
+              --draft \
+              --generate-notes \
+              --title "Zero Domain Protocol $GITHUB_REF_NAME"
+          fi
+
+      - name: Deploy the exact tagged commit to Cloudflare
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy
+
+      - name: Verify the deployed version
+        run: npm run verify:live-version
+
+      - name: Run the live multiplayer smoke test
+        run: npm run test:live
+
+      - name: Publish the verified GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "$GITHUB_REF_NAME" --draft=false --latest

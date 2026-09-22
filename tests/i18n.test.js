@@ -1,7 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { normalizeLanguage, randomNickname, translate } from '../public/i18n.js';
+import {
+  normalizeLanguage,
+  randomNickname,
+  translate,
+  translateForInput,
+} from '../public/i18n.js';
+import { guideCharacterText } from '../public/guide-character.js';
+
+const zhGuide = guideCharacterText('zh');
+const enGuide = guideCharacterText('en');
 
 const publicCopySource = [
   readFileSync(new URL('../public/i18n.js', import.meta.url), 'utf8'),
@@ -21,8 +30,8 @@ test('selects Chinese only for Chinese browser language tags', () => {
 });
 
 test('uses the Sector Purge version title', () => {
-  assert.equal(translate('zh', 'document.title'), '零域协议：区块清除 | 银狼任务');
-  assert.equal(translate('en', 'document.title'), 'Zero Domain Protocol: Sector Purge | Silver Wolf');
+  assert.equal(translate('zh', 'document.title'), `零域协议：区块清除 | ${zhGuide.name}任务`);
+  assert.equal(translate('en', 'document.title'), `Zero Domain Protocol: Sector Purge | ${enGuide.codename}`);
   assert.match(translate('zh', 'purge.tutorialMessage'), /实体孤岛.*正确标雷.*重算周围所有数字/);
   assert.equal(translate('zh', 'purge.tutorialFact'), '错误标记不会触发区块清除。');
   assert.match(translate('en', 'purge.tutorialMessage'), /solid island.*correctly flagged mine.*recalculate every affected clue/i);
@@ -34,8 +43,8 @@ test('explains the campaign, hidden Ultimate chapter, and independent Free Mode 
   assert.equal(translate('zh', 'settings.hardMeta'), '7x7x7 (30雷)');
   assert.equal(translate('en', 'settings.mediumMeta'), '5x5x5 (10 mines)');
   assert.equal(translate('en', 'settings.hardMeta'), '7x7x7 (30 mines)');
-  assert.match(translate('zh', 'task.hard.brief.1'), /三十个反制节点/);
-  assert.match(translate('en', 'task.hard.brief.1'), /thirty countermeasures/i);
+  assert.match(translate('zh', 'task.hard.brief.1'), /三十个异常节点.*坐标.*漂移/);
+  assert.match(translate('en', 'task.hard.brief.1'), /thirty anomaly nodes.*coordinates.*drifting/i);
   assert.match(translate('zh', 'lobby.task.easyMeta'), /经典扫描/);
   assert.match(translate('zh', 'lobby.task.mediumMeta'), /孤立区块清除/);
   assert.match(translate('zh', 'lobby.task.hardMeta'), /熵域压缩/);
@@ -46,16 +55,16 @@ test('explains the campaign, hidden Ultimate chapter, and independent Free Mode 
   assert.equal(translate('zh', 'lobby.task.startFreeplay'), '进入自由模式');
   assert.equal(translate('en', 'lobby.task.startFreeplay'), 'Enter Free Mode');
   assert.equal(translate('zh', 'lobby.task.freeplayBadge'), 'FREE MODE');
-  assert.match(translate('zh', 'task.hard.complete.2'), /基础扫描.*区块清除.*熵域压缩.*权限表之外.*回声/);
-  assert.match(translate('en', 'task.hard.complete.2'), /Classic Scan.*Sector Purge.*Entropy-Field Compression.*echo.*permission table/i);
-  assert.match(translate('zh', 'task.hard.brief.2'), /权限窗口.*管理员.*外围.*七层矩阵.*核心/);
+  assert.match(translate('zh', 'task.hard.complete.2'), /基础扫描.*区块清除.*熵域压缩.*导航网之外.*回声/);
+  assert.match(translate('en', 'task.hard.complete.2'), /Classic Scan.*Sector Purge.*Entropy-Field Compression.*echo.*navigation grid/i);
+  assert.match(translate('zh', 'task.hard.brief.2'), /稳定窗口.*外围.*七层矩阵.*证据链.*核心/);
   assert.doesNotMatch(translate('zh', 'task.hard.brief.2'), /直接.*消除|不需要插旗|左右键|双击/);
-  assert.match(translate('en', 'task.hard.brief.2'), /root-access window.*admin.*perimeter.*seven-layer matrix.*core/i);
+  assert.match(translate('en', 'task.hard.brief.2'), /stability window.*perimeter.*evidence chain.*core/i);
   assert.doesNotMatch(translate('en', 'task.hard.brief.2'), /remove it directly|no flag|mouse buttons|double-tap/i);
   assert.match(translate('zh', 'task.ultimate.brief.fact'), /9×9×9.*729 节点.*60 雷.*无大厅入口/);
   assert.match(translate('en', 'task.ultimate.brief.fact'), /9×9×9.*729 NODES.*60 MINES.*NO LOBBY ENTRY/i);
-  assert.match(translate('zh', 'task.ultimate.complete.2'), /战役.*真正结束.*成功路线.*自由模式.*终极骇客/);
-  assert.match(translate('en', 'task.ultimate.complete.2'), /campaign.*complete.*successful route.*Free Mode.*Ultimate Hacker Trojan/i);
+  assert.match(translate('zh', 'task.ultimate.complete.2'), new RegExp(`战役.*真正结束.*成功路线.*自由模式.*${zhGuide.computation}`));
+  assert.match(translate('en', 'task.ultimate.complete.2'), new RegExp(`campaign.*complete.*successful route.*Free Mode.*${enGuide.computation}`, 'i'));
   assert.match(translate('zh', 'lobby.task.freeplayBrief'), /选择矩阵规模.*经典扫描.*始终启用.*两个 Add-on.*默认全开.*游戏后.*调整/);
   assert.match(translate('en', 'lobby.task.freeplayBrief'), /Choose a matrix size.*Classic Scan.*active.*both add-ons.*enabled.*adjust.*in-game/i);
 
@@ -70,11 +79,11 @@ test('explains the campaign, hidden Ultimate chapter, and independent Free Mode 
 
   assert.equal(
     translate('zh', 'tutorial.completionFact', { time: '01:23' }),
-    '攻略用时：01:23  //  解密进度：100%',
+    '测绘用时：01:23  //  测绘进度：100%',
   );
   assert.equal(
     translate('en', 'tutorial.completionFact', { time: '01:23' }),
-    'BREACH TIME: 01:23  //  DECRYPTION: 100%',
+    'SURVEY TIME: 01:23  //  MAPPING: 100%',
   );
   assert.match(translate('en', 'reduction.tutorialMessage'), /seven-layer matrix.*Entropy-Field Compression.*unopened cell.*remove it directly.*remaining mine counts/i);
   assert.match(translate('en', 'reduction.tutorialFact'), /both mouse buttons.*double-tap any unopened cell.*flagged one.*Dig or Flag Mode.*wrong deduction.*update automatically.*zero recursively opens/i);
@@ -141,8 +150,8 @@ test('builds localized computer-themed nicknames from random parts', () => {
 });
 
 test('localizes semantic room activities independently for each client', () => {
-  assert.equal(translate('zh', 'activity.dug', { name: '银狼' }), '银狼 挖开了空间方块');
-  assert.equal(translate('en', 'activity.dug', { name: 'silver wolf' }), 'silver wolf excavated a spatial cell');
+  assert.equal(translate('zh', 'activity.dug', { name: '阿岭' }), '阿岭 挖开了空间方块');
+  assert.equal(translate('en', 'activity.dug', { name: 'Avery' }), 'Avery excavated a spatial cell');
 });
 
 test('distinguishes 3D neighbor positions from the beginner number ceiling', () => {
@@ -242,8 +251,8 @@ test('teaches exact medium hint deductions and labels guesses honestly', () => {
   assert.equal(translate('en', 'solver.collapse'), 'Collapse reasoning explanation');
   assert.equal(translate('en', 'solver.expand'), 'Expand reasoning explanation');
   assert.equal(translate('en', 'solver.buttonActive'), 'Exit Reasoning Mode');
-  assert.equal(translate('zh', 'solver.panelLabel'), '银狼任务提示终端');
-  assert.equal(translate('en', 'solver.panelLabel'), 'Silver Wolf mission hint terminal');
+  assert.equal(translate('zh', 'solver.panelLabel'), `${zhGuide.name}任务提示终端`);
+  assert.equal(translate('en', 'solver.panelLabel'), `${enGuide.name} mission hint terminal`);
   assert.match(translate('zh', 'solver.reason.first-move', { x: 5, y: 5, z: 5 }), /不会踩雷.*青色箭头.*坐标只用于核对/);
   assert.match(translate('en', 'solver.reason.first-move', { x: 5, y: 5, z: 5 }), /protected.*cyan arrow.*coordinate.*double-check/i);
   assert.equal(translate('zh', 'stats.mines'), '🚩 已标记 / 剩余地雷');
@@ -261,12 +270,12 @@ test('provides mobile touch controls and long-press guidance', () => {
     reset: 'R',
   };
   assert.equal(translate('zh', 'guide.rotateConfigured', zhControls), '电脑：滚轮 → 上下翻面；手机单指拖动旋转与翻面');
-  assert.equal(translate('zh', 'guide.zoomConfigured', zhControls), '电脑：Ctrl + 滚轮 → 缩放；手机双指捏合缩放（矩阵始终居中）');
-  assert.equal(translate('zh', 'guide.keysConfigured', zhControls), '[Q] / [E]：切换挖掘/标记；[R]：重置视角');
+  assert.equal(translate('zh', 'guide.zoomConfigured', zhControls), '电脑：Ctrl + 滚轮 → 缩放；手机双指捏合缩放');
+  assert.equal(translate('zh', 'guide.keysConfigured', zhControls), '[Q] / [E]：切换挖掘/标记；[R]：回到中心视角');
   assert.equal(translate('zh', 'controls.title'), '键位设置');
   assert.match(translate('zh', 'tutorial.controlsNote'), /手机.*控制.*键位设置.*电脑.*左侧.*键位设置/);
   assert.doesNotMatch(translate('zh', 'error.TUTORIAL_FIRST_MOVE_REQUIRED'), /视角|旋转/);
-  assert.match(translate('zh', 'controls.touchNote'), /手机.*单指旋转.*双指缩放.*不受.*桌面设置影响/);
+  assert.match(translate('zh', 'controls.touchNote'), /手机.*单指旋转.*双指缩放.*关闭固定中心.*长按拖动.*平移矩阵/);
   assert.match(translate('zh', 'tutorial.inspect'), /手机长按数字/);
   assert.match(translate('zh', 'tutorial.mark'), /手机.*标记模式.*轻触/);
   assert.equal(translate('zh', 'solver.actionLabel.reduce'), '熵域消雷');
@@ -281,12 +290,12 @@ test('provides mobile touch controls and long-press guidance', () => {
     reset: 'R',
   };
   assert.equal(translate('en', 'guide.rotateConfigured', enControls), 'Desktop: Wheel → Pitch; mobile: one-finger drag rotates and flips');
-  assert.equal(translate('en', 'guide.zoomConfigured', enControls), 'Desktop: Ctrl + Wheel → Zoom; mobile: pinch zooms (matrix stays centered)');
-  assert.equal(translate('en', 'guide.keysConfigured', enControls), '[Q] / [E]: switch Dig/Flag; [R]: reset view');
+  assert.equal(translate('en', 'guide.zoomConfigured', enControls), 'Desktop: Ctrl + Wheel → Zoom; mobile: pinch zooms');
+  assert.equal(translate('en', 'guide.keysConfigured', enControls), '[Q] / [E]: switch Dig/Flag; [R]: recenter view');
   assert.equal(translate('en', 'controls.title'), 'Key Bindings');
   assert.match(translate('en', 'tutorial.controlsNote'), /mobile.*Controls.*Key Bindings.*desktop.*left panel/i);
   assert.doesNotMatch(translate('en', 'error.TUTORIAL_FIRST_MOVE_REQUIRED'), /camera|rotate/i);
-  assert.match(translate('en', 'controls.touchNote'), /Mobile.*one-finger rotate.*two-finger zoom.*independent.*desktop settings/i);
+  assert.match(translate('en', 'controls.touchNote'), /Mobile.*one-finger rotate.*two-finger zoom.*long-press drag.*center is unlocked/i);
   assert.match(translate('en', 'guide.chord'), /Clue.*both mouse buttons.*Entropy-Field Compression enabled.*any unopened cell.*flagged cell.*either mobile mode.*wrong deduction fails/i);
   assert.match(translate('en', 'tutorial.inspect'), /long-press.*mobile/i);
   assert.equal(translate('en', 'solver.actionLabel.reduce'), 'ENTROPY PURGE');
@@ -298,13 +307,44 @@ test('describes middle- and right-button camera drag choices in both languages',
   assert.match(translate('zh', 'controls.preset.rightOrbitDesc'), /右键拖动旋转.*滚轮缩放/);
   assert.equal(translate('zh', 'controls.rightDrag'), '右键拖动');
   assert.equal(translate('zh', 'controls.gesture.rightDrag'), '右键拖动');
-  assert.match(translate('zh', 'controls.fixedNote'), /右键轻点.*标记.*按住不移动.*检查.*只有拖动.*视角.*左右键同时按.*自动开启或压缩/);
+  assert.match(translate('zh', 'controls.fixedNote'), /右键轻点.*标记.*按住不移动.*检查.*关闭固定中心.*右键拖动.*平移矩阵.*左右键同时按.*自动开启或压缩/);
 
   assert.equal(translate('en', 'controls.preset.rightOrbit'), 'Right-button Orbit');
   assert.match(translate('en', 'controls.preset.rightOrbitDesc'), /Right-drag rotates.*Wheel zooms/i);
   assert.equal(translate('en', 'controls.rightDrag'), 'Right-button drag');
   assert.equal(translate('en', 'controls.gesture.rightDrag'), 'Right-drag');
-  assert.match(translate('en', 'controls.fixedNote'), /right-click.*flags.*holding.*without moving.*inspects.*Only dragging.*camera.*both buttons.*auto-open or compression/i);
+  assert.match(translate('en', 'controls.fixedNote'), /right-click.*flags.*holding.*without moving.*inspects.*center is unlocked.*right-drag.*pans the matrix.*both buttons.*auto-opens or compresses/i);
+});
+
+test('localizes the matrix-center switch, pan gesture, and recenter action', () => {
+  assert.equal(translate('zh', 'controls.center.title'), '固定矩阵中心');
+  assert.equal(translate('zh', 'controls.center.fixedState'), '已固定');
+  assert.equal(translate('zh', 'controls.center.movableState'), '可移动');
+  assert.match(translate('zh', 'controls.center.fixedHint'), /矩阵保持.*画面中央.*围绕中心旋转/);
+  assert.match(translate('zh', 'controls.center.movableHint'), /右键拖动.*手机长按.*振动.*平移/);
+  assert.equal(translate('zh', 'controls.action.pan'), '平移矩阵');
+  assert.match(translate('zh', 'guide.centerFixed'), /固定中心.*开启.*保持居中/);
+  assert.match(translateForInput('zh', 'guide.centerMovable', 'mouse'), /固定中心.*关闭.*右键拖动.*平移矩阵/);
+  assert.doesNotMatch(translateForInput('zh', 'guide.centerMovable', 'mouse'), /手机|长按/);
+  assert.match(translateForInput('zh', 'guide.centerMovable', 'touch'), /固定中心.*关闭.*长按.*振动.*平移矩阵/);
+  assert.doesNotMatch(translateForInput('zh', 'guide.centerMovable', 'touch'), /电脑|右键/);
+  assert.equal(translate('zh', 'action.resetCamera'), '◎ 回到中心视角');
+  assert.equal(translate('zh', 'action.centerShort'), '回中');
+  assert.match(translate('zh', 'action.resetCameraTitle'), /中心位置.*默认角度.*缩放/);
+  assert.match(translateForInput('zh', 'mobile.touchHintMovable', 'touch'), /中心未固定.*长按.*振动.*平移.*右上角.*回中/);
+
+  assert.equal(translate('en', 'controls.center.title'), 'Lock Matrix Center');
+  assert.equal(translate('en', 'controls.center.fixedState'), 'Fixed');
+  assert.equal(translate('en', 'controls.center.movableState'), 'Movable');
+  assert.match(translate('en', 'controls.center.movableHint'), /right-drag.*hold until vibration.*pan/i);
+  assert.equal(translate('en', 'controls.action.pan'), 'Pan matrix');
+  assert.match(translateForInput('en', 'guide.centerMovable', 'mouse'), /center lock.*off.*right-drag.*pan/i);
+  assert.doesNotMatch(translateForInput('en', 'guide.centerMovable', 'mouse'), /mobile|long-press|hold until/i);
+  assert.match(translateForInput('en', 'guide.centerMovable', 'touch'), /center lock.*off.*hold until vibration.*drag.*pan/i);
+  assert.doesNotMatch(translateForInput('en', 'guide.centerMovable', 'touch'), /desktop|right-drag/i);
+  assert.equal(translate('en', 'action.resetCamera'), '◎ Recenter View');
+  assert.equal(translate('en', 'action.centerShort'), 'Center');
+  assert.match(translateForInput('en', 'mobile.touchHintMovable', 'touch'), /center unlocked.*hold until vibration.*drag.*pan.*top right/i);
 });
 
 test('provides explicit click targets for the guided beginner board', () => {
@@ -337,7 +377,7 @@ test('uses a single rewind action for solo mission failure', () => {
   assert.equal(translate('zh', 'task.result.lostTitle'), '任务演算失败');
   assert.equal(translate('zh', 'task.result.rewind'), '↺ 回溯');
   assert.doesNotMatch(translate('zh', 'task.result.lostMessage'), /广告/);
-  assert.equal(translate('zh', 'task.result.lostMessage'), '银狼已保存失败前的数据。点击回溯，重新演算当前任务。');
+  assert.equal(translate('zh', 'task.result.lostMessage'), `${zhGuide.name}已保存失败前的数据。点击回溯，重新演算当前任务。`);
   assert.equal(translate('zh', 'action.restart'), '重新初始化雷区');
   assert.equal(translate('zh', 'result.restart'), '重新初始化雷区');
   assert.equal(translate('en', 'task.result.rewind'), '↺ REWIND');

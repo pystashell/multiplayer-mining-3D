@@ -1,0 +1,261 @@
+{
+  "schemaVersion": 1,
+  "categories": {
+    "game-engine": {
+      "labelZh": "游戏规则与权威状态",
+      "automationLevelZh": "行为级自动化",
+      "failureActionZh": "先用失败用例的固定输入复现，再检查规则实现、状态迁移和测试夹具。若规则确实被产品决策修改，应在同一变更中同步需求、实现和断言，不能只放宽断言。",
+      "validityReviewZh": "内部重构不应使这类行为契约失效；只有公开规则、协议或兼容边界正式改变时才评审更新。"
+    },
+    "client-runtime": {
+      "labelZh": "客户端运行时与交互逻辑",
+      "automationLevelZh": "行为级或源码契约自动化",
+      "failureActionZh": "先判断是浏览器行为、会话状态还是事件路由发生回归，再修复实现。若仅重构内部结构，应把断言迁移到等价的公开行为，不能直接删除保护。",
+      "validityReviewZh": "用户可观察行为不变时测试仍应有效；事件模型、输入协议或持久化边界正式改变时才评审更新。"
+    },
+    "ui-source-contract": {
+      "labelZh": "UI 结构与源码契约",
+      "automationLevelZh": "源码级自动化，必须配合人工视觉验收",
+      "failureActionZh": "检查 DOM、CSS、可访问性属性和事件绑定是否丢失。通过源码测试不代表视觉正确，修复后仍必须执行发布前 UI 人工手册。",
+      "validityReviewZh": "大规模 UI 架构重构时可替换选择器或结构断言，但必须保留等价的用户行为保护，并由人工清单确认像素级结果。"
+    },
+    "content-localization": {
+      "labelZh": "角色配置、故事与中英文内容",
+      "automationLevelZh": "配置驱动自动化",
+      "failureActionZh": "先检查单一配置源、模板插值、翻译键或内容政策。普通角色改名不得通过修改测试解决；只有故事或产品政策经确认改变时，才同步更新政策配置和测试。",
+      "validityReviewZh": "测试必须对任意合法角色配置成立；角色姓名、代号、职业和素材替换不构成测试失效理由。"
+    },
+    "release-security": {
+      "labelZh": "版本、供应链、安全与发布门禁",
+      "automationLevelZh": "交付链自动化",
+      "failureActionZh": "停止发布，定位版本漂移、依赖漂移、安全头、工作流顺序或部署门禁缺失。不得跳过失败步骤；修复后从完整测试重新开始。",
+      "validityReviewZh": "仅在正式更换发布平台、版本规则、安全基线或依赖管理方式时评审更新，并保留同等或更强的门禁。"
+    },
+    "solver-reasoning": {
+      "labelZh": "求解器、推理证据与教程判定",
+      "automationLevelZh": "算法行为级自动化",
+      "failureActionZh": "使用失败棋盘固定复现，检查邻域、约束、概率、证据链和目标选择。不得为了让随机样例通过而降低正确性断言。",
+      "validityReviewZh": "只要三维扫雷规则和教学正确性标准不变就应持续有效；算法可以重写，但同样输入必须保持安全与可解释性。"
+    },
+    "media-assets": {
+      "labelZh": "美术、字体、音频与静态资源",
+      "automationLevelZh": "资源完整性与映射自动化",
+      "failureActionZh": "检查配置映射、文件存在性、尺寸/格式、缓存版本和运行时引用。素材替换应改配置或资源，不应把当前角色文件名写死进测试。",
+      "validityReviewZh": "允许更换具体素材，但完整覆盖、可加载、版本化和配置驱动这些契约必须保留。"
+    }
+  },
+  "suites": {
+    "auto-survey-engine.test.js": {
+      "category": "game-engine",
+      "purposeZh": "验证自动测绘在服务端的权限、保密、去重、取消、持久化和有界完成行为。"
+    },
+    "auto-survey-integration.test.js": {
+      "category": "game-engine",
+      "purposeZh": "验证自动测绘与房间引擎、Reduction、存档恢复和最终完成流程的整合。"
+    },
+    "auto-survey-ui.test.js": {
+      "category": "ui-source-contract",
+      "purposeZh": "验证自动测绘入口、HUD、移动端锁定、协议命令和任务进度的 UI 源码契约。"
+    },
+    "camera-gestures.test.js": {
+      "category": "client-runtime",
+      "purposeZh": "验证鼠标与触摸相机平移的阈值、互斥、取消恢复和相机目标同步。"
+    },
+    "content-policy.test.js": {
+      "category": "content-localization",
+      "purposeZh": "按数据化政策扫描玩家可见内容，阻止退役设定回流并保留当前故事的核心概念。"
+    },
+    "control-settings.test.js": {
+      "category": "client-runtime",
+      "purposeZh": "验证控制预设、持久化、非法值回退、滚轮手势和按键显示。"
+    },
+    "deploy-gate.test.js": {
+      "category": "release-security",
+      "purposeZh": "验证本地生产部署命令必经完整自动化、Cloudflare dry-run 和有效 UI 人工验收。"
+    },
+    "dialogue-overlay.test.js": {
+      "category": "client-runtime",
+      "purposeZh": "验证移动端棋盘手势留下的兼容点击不会误关闭剧情对话。"
+    },
+    "game-core-vendor.test.js": {
+      "category": "release-security",
+      "purposeZh": "验证浏览器端游戏核心与服务端权威引擎来源一致，避免规则分叉。"
+    },
+    "guide-character.test.js": {
+      "category": "content-localization",
+      "purposeZh": "用任意合成角色验证角色配置结构、派生文本、模板渲染和运行时代码无身份写死。"
+    },
+    "guided-callout.test.js": {
+      "category": "ui-source-contract",
+      "purposeZh": "验证教学标注和坐标轴在几何上避开棋盘与彼此，不遮挡关键操作区。"
+    },
+    "guided-tutorial.test.js": {
+      "category": "solver-reasoning",
+      "purposeZh": "验证分级教学目标、确定性行动锁定、邻域讲解和自动揭示触发顺序。"
+    },
+    "i18n-audit.test.js": {
+      "category": "content-localization",
+      "purposeZh": "验证中英文键与参数完全对齐，并用合成角色检查所有角色模板可解析。"
+    },
+    "i18n.test.js": {
+      "category": "content-localization",
+      "purposeZh": "验证语言选择、任务术语、输入说明、教程、模式和多人活动的双语行为。"
+    },
+    "identity-agnostic-tests.test.js": {
+      "category": "content-localization",
+      "purposeZh": "元测试：扫描全部自动化测试源码，禁止写死当前角色的 ID、姓名或代号。"
+    },
+    "input-mode-ui.test.js": {
+      "category": "ui-source-contract",
+      "purposeZh": "验证输入模式在单页应用生命周期内校准并刷新所有可见说明。"
+    },
+    "input-mode.test.js": {
+      "category": "client-runtime",
+      "purposeZh": "验证鼠标、触摸和混合设备的输入模式识别、重校准与本地化文案选择。"
+    },
+    "interaction-layout.test.js": {
+      "category": "ui-source-contract",
+      "purposeZh": "验证桌面交互布局、相机控制、教学目标、求解器面板、通讯和对话插图的结构契约。"
+    },
+    "local-solo-client.test.js": {
+      "category": "client-runtime",
+      "purposeZh": "验证本地单人模式无需网络即可运行、恢复、回放、过期清理并兼容旧房间链接。"
+    },
+    "minesweeper-solver-room.test.js": {
+      "category": "solver-reasoning",
+      "purposeZh": "在真实中等棋盘上验证求解器不会把地雷判安全或把安全格判为确定地雷。"
+    },
+    "minesweeper-solver.test.js": {
+      "category": "solver-reasoning",
+      "purposeZh": "验证三维约束推理、枚举、概率、证据说明、目标偏好和预算回退。"
+    },
+    "mobile-ui.test.js": {
+      "category": "ui-source-contract",
+      "purposeZh": "验证移动端选择抑制、大厅宽度、手势、五键操作区、层级和提示面板结构。"
+    },
+    "pointer-targeting.test.js": {
+      "category": "client-runtime",
+      "purposeZh": "验证三维射线命中、数字纹理、代理壳、双键手势和拖拽取消不会误选格子。"
+    },
+    "reasoning-coordinate-axes.test.js": {
+      "category": "ui-source-contract",
+      "purposeZh": "验证推理期间显示三维坐标轴，并在建议行动或教学推理结束后隐藏。"
+    },
+    "release-pipeline.test.js": {
+      "category": "release-security",
+      "purposeZh": "验证 CI、正式标签发布、人工恢复发布、Cloudflare 部署和线上验证的门禁顺序。"
+    },
+    "release-version.test.js": {
+      "category": "release-security",
+      "purposeZh": "验证 package、锁文件、公开元数据、缓存参数和 SemVer 标签保持一致。"
+    },
+    "replay-engine.test.js": {
+      "category": "game-engine",
+      "purposeZh": "验证成功回放只记录有效行动，并正确处理撤回、去重、Reduction、Auto-Purge 和恢复。"
+    },
+    "return-to-lobby.test.js": {
+      "category": "client-runtime",
+      "purposeZh": "验证桌面与移动端都能安全返回大厅，清理状态、URL、重连和房间成员关系。"
+    },
+    "reveal-animation.test.js": {
+      "category": "client-runtime",
+      "purposeZh": "验证直接揭示、递归波、快照同步和清除旗帜动画的时间契约。"
+    },
+    "room-client-id.test.js": {
+      "category": "client-runtime",
+      "purposeZh": "验证不同浏览器 Crypto 能力下都能生成可靠且不重复的请求 ID。"
+    },
+    "room-client-safari-reconnect.test.js": {
+      "category": "client-runtime",
+      "purposeZh": "验证 Safari 与 IP 主机上的 WebSocket 卡顿、异常、并行尝试和正常欢迎流程。"
+    },
+    "room-engine.test.js": {
+      "category": "game-engine",
+      "purposeZh": "验证权威房间规则、隐私、首挖保护、递归揭示、去重、复活、权限、存档和初级布局。"
+    },
+    "sector-purge-ui.test.js": {
+      "category": "ui-source-contract",
+      "purposeZh": "验证 Sector Purge 与 Reduction 的视觉状态、动画、进度、移动端提示和关卡路由源码契约。"
+    },
+    "sector-purge.test.js": {
+      "category": "game-engine",
+      "purposeZh": "验证孤立区域识别、线索重算、连锁揭示、Reduction 与 Auto-Purge 的独立及组合规则。"
+    },
+    "security-headers.test.js": {
+      "category": "release-security",
+      "purposeZh": "验证 HTML、API、静态资源、异常响应和 WebSocket 的安全头与缓存策略。"
+    },
+    "solver-explanation.test.js": {
+      "category": "ui-source-contract",
+      "purposeZh": "验证求解证据以可读、可滚动的逐条证明呈现，而不是不可解释的文本块。"
+    },
+    "soundtrack.test.js": {
+      "category": "media-assets",
+      "purposeZh": "验证各场景配乐路由、音色差异、偏好与音量持久化、音频失败回退和 UI 控制。"
+    },
+    "story-art.test.js": {
+      "category": "media-assets",
+      "purposeZh": "验证每条故事路线都有配置化插图、对话图尺寸适用，并禁止应用代码写死当前素材路径。"
+    },
+    "success-replay-ui.test.js": {
+      "category": "ui-source-contract",
+      "purposeZh": "验证成功回放入口、HUD、暂停退出、动画路径、多人/单人路由、移动端和双语文案。"
+    },
+    "tutorial-triggers.test.js": {
+      "category": "solver-reasoning",
+      "purposeZh": "验证自动揭示教学只在新产生且仍可行动的确定机会出现，并可精确完成。"
+    },
+    "ui-approval.test.js": {
+      "category": "release-security",
+      "purposeZh": "验证 UI 人工验收记录必须绑定当前源码摘要、版本、完整场景和可追溯证据。"
+    },
+    "vendor-assets.test.js": {
+      "category": "media-assets",
+      "purposeZh": "验证运行时不依赖外部字体/CDN，固定版本资源、字体权重和许可证完整。"
+    }
+  },
+  "gates": [
+    {
+      "id": "catalog-freshness",
+      "command": "npm run test:catalog:check",
+      "purposeZh": "确认每个自动化测试文件都已登记，且本文档与真实测试标题一致。",
+      "failureActionZh": "补充或修正测试清单后运行 npm run test:catalog 重新生成目录；不要跳过目录检查。"
+    },
+    {
+      "id": "ui-manual-freshness",
+      "command": "npm run ui:manual:check",
+      "purposeZh": "确认 UI 人工测试手册与机器可读清单一致。",
+      "failureActionZh": "修改 config/predeploy-ui-checklist.json 后运行 npm run ui:manual 重新生成手册。"
+    },
+    {
+      "id": "automated-regression",
+      "command": "npm test",
+      "purposeZh": "运行目录、UI 手册、依赖、版本和全部 Node 自动化回归。",
+      "failureActionZh": "根据本目录对应套件处理失败；任何红灯都阻止部署。"
+    },
+    {
+      "id": "cloudflare-dry-run",
+      "command": "npm run deploy:dry",
+      "purposeZh": "让 Wrangler 构建并校验将要部署的 Cloudflare Worker 包。",
+      "failureActionZh": "修复 Worker 配置、兼容性、绑定或打包错误后重新运行完整门禁。"
+    },
+    {
+      "id": "manual-ui-approval",
+      "command": "npm run ui:check",
+      "purposeZh": "确认人工 UI 验收与当前 public 源码摘要及发布版本完全绑定。",
+      "failureActionZh": "按 UI 手册重新验收并记录；禁止复制旧版本验收文件或跳过。"
+    },
+    {
+      "id": "live-version",
+      "command": "npm run verify:live-version",
+      "purposeZh": "确认 Cloudflare 线上版本与正在发布的不可变标签一致。",
+      "failureActionZh": "停止发布，核对部署目标、标签、缓存和线上 version.json。"
+    },
+    {
+      "id": "live-room-smoke",
+      "command": "npm run test:live",
+      "purposeZh": "用两个真实 WebSocket 客户端验证线上建房、加入和房间同步。",
+      "failureActionZh": "保留 Release 草稿，检查线上 Worker、Durable Object、网络和协议日志后重新部署验证。"
+    }
+  ]
+}

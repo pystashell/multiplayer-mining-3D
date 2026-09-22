@@ -17,7 +17,7 @@ test('suppresses native mobile selection without blocking form text selection', 
 test('keeps the lobby at its 420px design width until the viewport is genuinely narrower', () => {
   assert.match(
     styleSource,
-    /\.silver-lobby\s*\{[^}]*width:\s*min\(420px,\s*calc\(100vw - 16px\)\)\s*!important[^}]*max-width:\s*calc\(100vw - 16px\)/s,
+    /\.guide-lobby\s*\{[^}]*width:\s*min\(420px,\s*calc\(100vw - 16px\)\)\s*!important[^}]*max-width:\s*calc\(100vw - 16px\)/s,
   );
 });
 
@@ -51,6 +51,39 @@ test('uses a five-button mobile dock with slices and an anchored guided-cell poi
   assert.match(styleSource, /\.guided-cell-pointer\.mine/);
   assert.match(appSource, /updateGuidedPointerPosition\(\)/);
   assert.match(appSource, /guidedCalloutSafeBounds\(board\)/);
+});
+
+test('keeps center locking independent from camera presets and exposes recenter outside the five-button dock', () => {
+  assert.match(indexSource, /id="control-center-mode-toggle"[^>]*role="switch"[^>]*aria-checked="true"/);
+  assert.match(indexSource, /id="control-center-mode-description"[^>]*data-i18n="controls\.center\.fixedHint"/);
+  assert.match(indexSource, /id="control-center-mode-state"[^>]*data-i18n="controls\.center\.fixedState"/);
+  assert.match(indexSource, /id="btn-center-camera"[^>]*data-i18n-title="action\.resetCameraTitle"/);
+  const centerButton = indexSource.indexOf('id="btn-center-camera"');
+  const mobileDock = indexSource.indexOf('id="mobile-control-dock"');
+  assert.ok(centerButton >= 0 && mobileDock > centerButton, 'recenter must remain outside the five-button dock');
+  assert.equal((indexSource.match(/id="btn-center-camera"/g) || []).length, 1);
+
+  assert.match(appSource, /\['btn-reset-camera', 'btn-center-camera'\][\s\S]*addEventListener\('click', \(\) => this\.resetCamera\(\)\)/);
+  assert.match(appSource, /control-center-mode-toggle[\s\S]*centerMode === 'movable'[\s\S]*'fixed'[\s\S]*'movable'/);
+  assert.match(appSource, /const centerMode = this\.pendingControlSettings\?\.centerMode \?\? this\.controlSettings\.centerMode[\s\S]*cloneControlSettings\(CONTROL_PRESETS/);
+  assert.match(appSource, /rightDragSelect\.disabled = movable[\s\S]*controls\.center\.rightDragOverride/);
+  assert.match(styleSource, /body\.in-room \.mobile-statusbar\s*\{[^}]*left:\s*60px[^}]*right:\s*60px/s);
+  assert.match(styleSource, /\.center-camera-button\s*\{[^}]*position:\s*fixed[^}]*top:[^}]*right:\s*10px[^}]*width:\s*42px[^}]*height:\s*42px/s);
+  assert.match(styleSource, /body\.in-room\.mobile-panel-active \.center-camera-button,[\s\S]*body\.replay-active \.center-camera-button,[\s\S]*body\.auto-survey-active \.center-camera-button[\s\S]*display:\s*none\s*!important/s);
+});
+
+test('uses a stationary mobile long-press for matrix pan and cleans up every interrupted gesture', () => {
+  assert.match(appSource, /this\.touchHoldTimer = window\.setTimeout\(\(\) => \{[\s\S]*this\.touchHoldTriggered = true[\s\S]*const heldPoint =[\s\S]*startNeighborInspection\(heldPoint\)[\s\S]*beginTouchPan\(heldPoint\)[\s\S]*\}, 420\)/);
+  assert.match(appSource, /e\.pointerType === 'touch' && this\.touchHoldTimer[\s\S]*Math\.sqrt\(dx \* dx \+ dy \* dy\) > 10[\s\S]*clearTimeout\(this\.touchHoldTimer\)/);
+  assert.match(appSource, /this\.touchHoldTriggered && !this\.touchPanActive[\s\S]*centerMode === 'movable'[\s\S]*Math\.hypot\(dx, dy\) >= 6[\s\S]*beginTouchPan/);
+  assert.match(appSource, /beginTouchPan\(\{ clientX, clientY, pointerId \}\)[\s\S]*centerMode !== 'movable'[\s\S]*this\.controls\.enabled = false[\s\S]*matrix-touch-panning/);
+  assert.match(appSource, /this\.touchPanActive && this\.touchPanPointerId === e\.pointerId[\s\S]*preventDefault\(\)[\s\S]*stopImmediatePropagation\(\)[\s\S]*panCameraByPixels/);
+  assert.match(appSource, /panCameraByPixels\(deltaX, deltaY\)[\s\S]*this\.camera\.position\.add\(translation\)[\s\S]*this\.controls\.target\.add\(translation\)[\s\S]*positionReasoningCoordinateAxes\(true\)/);
+  assert.match(appSource, /activeTouchPointers\.size > 1[\s\S]*endTouchPan\([\s\S]*this\.controls\.enablePan = false/);
+  assert.match(appSource, /window\.addEventListener\('blur'[\s\S]*endTouchPan\(\{ force: true \}\)/);
+  assert.match(appSource, /addEventListener\('pointercancel'[\s\S]*endTouchPan/);
+  assert.match(appSource, /addEventListener\('pointerleave'[\s\S]*endTouchPan\(\{ force: true \}\)/);
+  assert.match(appSource, /returnToLobby\(\)[\s\S]*endTouchPan\(\{ force: true \}\)/);
 });
 
 test('separates number auto-open from direct cell reduction on desktop and mobile', () => {
@@ -87,10 +120,10 @@ test('stacks the tutorial action above the solver hint and mobile dock', () => {
   assert.match(styleSource, /\.solver-hint-panel\s*\{[^}]*position:\s*relative/s);
 });
 
-test('keeps mobile drawer actions clear of the Silver Wolf hint panel', () => {
+test('keeps mobile drawer actions clear of the guide hint panel', () => {
   const customStart = indexSource.indexOf('id="custom-toggle"');
   const pickerStart = indexSource.indexOf('id="ruleset-picker"');
-  const ultimateStart = indexSource.indexOf('id="ultimate-hack-launch"');
+  const ultimateStart = indexSource.indexOf('id="auto-survey-launch"');
   const actionStart = indexSource.indexOf('class="panel-section action-section"');
   assert.ok(customStart >= 0 && customStart < pickerStart && pickerStart < ultimateStart && ultimateStart < actionStart);
   assert.match(appSource, /panel\.classList\.add\('mobile-open'\);\s*document\.body\.classList\.add\('mobile-panel-active'\)/s);

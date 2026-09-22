@@ -1,0 +1,85 @@
+name: Finalize a verified manual release
+
+on:
+  push:
+    branches:
+      - "codex/v*.*.*-*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    name: Verify live release and publish draft
+    if: contains(github.event.head_commit.message, '[finalize-release]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+
+    env:
+      HOLO_SWEEPER_URL: https://3d-multiplayer-mining.pystashell.workers.dev
+
+    steps:
+      - name: Check out the release branch
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "22.13.0"
+          package-manager-cache: false
+
+      - name: Resolve and check out the immutable release tag
+        id: release
+        shell: bash
+        run: |
+          package_version="$(node -p "require('./package.json').version")"
+          release_tag="v${package_version}"
+          git fetch origin "refs/tags/${release_tag}:refs/tags/${release_tag}"
+          release_commit="$(git rev-parse "${release_tag}^{commit}")"
+
+          if ! git merge-base --is-ancestor "$release_commit" "$GITHUB_SHA"; then
+            echo "::error::Tag $release_tag is not an ancestor of the recovery branch."
+            exit 1
+          fi
+
+          echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
+          git checkout --detach "$release_tag"
+
+      - name: Install the tagged release dependencies
+        run: npm ci
+
+      - name: Match the tag, package, public version, and cache versions
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
+        run: npm run release:check -- "$RELEASE_TAG"
+
+      - name: Run the complete tagged regression suite
+        run: npm test
+
+      - name: Require UI approval for the exact release sources
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
+        run: npm run ui:check -- "$RELEASE_TAG"
+
+      - name: Verify the manually deployed version
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
+        run: npm run verify:live-version
+
+      - name: Run the live multiplayer smoke test
+        run: npm run test:live
+
+      - name: Publish the verified draft GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
+        run: |
+          gh release view "$RELEASE_TAG" >/dev/null
+          gh release edit "$RELEASE_TAG" --draft=false --latest

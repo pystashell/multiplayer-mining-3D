@@ -1,5 +1,7 @@
 # Holo-Sweeper 3D
 
+[![CI](https://github.com/pystashell/multiplayer-mining-3D/actions/workflows/ci.yml/badge.svg)](https://github.com/pystashell/multiplayer-mining-3D/actions/workflows/ci.yml)
+
 一个使用 Three.js、Cloudflare Workers、Durable Objects 和 Hibernating WebSockets 构建的多人 3D 扫雷游戏。
 
 ## 在线试玩
@@ -8,7 +10,7 @@
 
 输入昵称后创建房间，点击“复制邀请”，把带有 `?room=房间码` 的链接发给朋友即可联机。
 
-界面支持中文和英文，并会根据浏览器语言自动选择；也可以在大厅或游戏左上角随时切换。首次进入时，中文默认昵称为“银狼”，英文默认昵称为“silver wolf”。
+界面支持中文和英文，并会根据浏览器语言自动选择；也可以在大厅或游戏左上角随时切换。首次进入时会自动生成电脑术语昵称；任务模式由零域测绘师提供引导。角色姓名、代号、职业和图片只需在 `public/guide-character.js` 中配置一次，所有中英文界面会自动更新。
 
 ## 架构
 
@@ -38,6 +40,15 @@ npm test
 npm run deploy:dry
 ```
 
+推送任意分支或建立 Pull Request 后，GitHub Actions 也会自动执行以上检查。测试记录可以在仓库的 **Actions → CI** 中查看。
+
+`npm test` 中的测试是配置驱动的通用契约，不依赖当前角色姓名或素材文件名。
+每个测试的目的、失败处理和有效性边界见
+[自动化测试目录](docs/AUTOMATED_TEST_CATALOG.md)。
+正式发布还必须按 [UI 人工测试手册](docs/PREDEPLOY_UI_MANUAL.md)
+完成真实桌面、手机和双客户端验收；完整门禁见
+[发布前质量流程](docs/PREDEPLOY_PROCESS.md)。
+
 开发服务器运行时，可以执行真实双 WebSocket 测试：
 
 ```bash
@@ -48,7 +59,15 @@ npm run test:live
 
 ```bash
 npx wrangler login
+npm run predeploy
 npm run deploy
 ```
 
+`npm run predeploy` 会运行全部自动化、Wrangler dry-run，并验证与当前源码绑定的
+UI 人工验收记录；`npm run deploy` 会再次执行这套门禁后才部署。
+
 部署后，网页、房间 API 和 WebSocket 共用同一个 `workers.dev` 域名。创建房间后 URL 会自动附加 `?room=六位房间码`，可以直接复制给朋友。
+
+正式版本采用“版本分支 → CI → SemVer 标签 → GitHub Release → Cloudflare”的固定流程。
+常规版本可先合并 `main`；独立的大型角色或故事版本也可以从与标签同名的受控发布
+分支直接发布。详细规则和所需密钥见 [RELEASING.md](RELEASING.md)。

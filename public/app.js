@@ -1,18 +1,27 @@
 import * as THREE from './vendor/three-0.150.0/build/three.module.js';
 import { OrbitControls } from './vendor/three-0.150.0/examples/jsm/controls/OrbitControls.js';
-import { HybridRoomClient } from './local-room-client.js?v=20260719-local-solo-1';
-import { initialLanguage, randomNickname, translateForInput } from './i18n.js?v=20260719-chord-target-1';
+import { HybridRoomClient } from './local-room-client.js?v=4.0.0';
+import { initialLanguage, randomNickname, translateForInput } from './i18n.js?v=4.0.0';
+import { GUIDE_ART } from './guide-character.js';
 import {
   detectInitialInputMode,
   inputModeFromPointerType,
-} from './input-mode.js?v=20260718-input-copy-1';
+} from './input-mode.js?v=4.0.0';
+import {
+  interruptedGesturePatch,
+  recenterCameraKeepingOffset,
+  screenPanTranslation,
+  shouldStartMousePan,
+  shouldStartTouchPan,
+  touchHoldDecision,
+} from './camera-gestures.js?v=4.0.0';
 import { solveMinesweeperHint } from './minesweeper-solver.js';
 import {
   chordOpportunityAt,
   findChordOpportunity,
   findNewChordOpportunity,
   isNewSuccessfulChord,
-} from './tutorial-triggers.js?v=20260719-chord-target-1';
+} from './tutorial-triggers.js?v=4.0.0';
 import { chooseFloatingAxisPlacement, chooseGuidedCalloutPlacement } from './guided-callout.js';
 import {
   BOARD_ANIMATION_TIMING,
@@ -31,14 +40,26 @@ import {
   CONTROL_PRESETS,
   cloneControlSettings,
   controlPresetForSettings,
+  effectiveRightDragAction,
   formatControlKey,
   isBindableControlKey,
   loadControlSettings,
   normalizeWheelDelta,
   saveControlSettings,
+  settingsWithCenterMode,
   validateControlSettings,
   wheelActionForEvent,
-} from './control-settings.js';
+} from './control-settings.js?v=4.0.0';
+import {
+  SciFiMusicDirector,
+  getSharedAudioContext,
+  loadSfxEnabled,
+  loadSfxVolume,
+  musicTrackForGame,
+  persistSfxEnabled,
+  persistSfxVolume,
+  resumeSharedAudioContext,
+} from './soundtrack.js?v=4.0.0';
 
 const TASK_MISSIONS = Object.freeze({
   easy: Object.freeze({ width: 3, height: 3, depth: 3, mineCount: 3, ruleset: 'classic', autoPurge: false, reduction: false, campaign: true }),
@@ -59,6 +80,7 @@ const CONFIG_KEYS = Object.freeze([
 ]);
 
 const LOBBY_ENTRY_TIMEOUT_MS = 25000;
+const NICKNAME_STORAGE_KEY = 'holo-sweeper.nickname.v2';
 
 function rulesetForFeatures(autoPurge, reduction) {
   if (reduction) return 'reduction';
@@ -66,58 +88,72 @@ function rulesetForFeatures(autoPurge, reduction) {
   return 'classic';
 }
 
-const STORY_ART = Object.freeze({
-  easy: 'assets/silver-wolf-quantum-pathfinder.png',
-  medium: 'assets/silver-wolf-neighbor-hack.png',
-  hard: 'assets/silver-wolf-final-protocol.png',
-  ultimate: 'assets/silver-wolf-final-protocol.png',
-  squad: 'assets/silver-wolf-squad-link.png',
-});
-
-const DIALOGUE_ART = Object.freeze({
-  easy: Object.freeze({
-    main: STORY_ART.easy,
-    neighbors: 'assets/silver-wolf-easy-neighbors.webp',
-    scan: 'assets/silver-wolf-easy-scan.webp',
-    finish: 'assets/silver-wolf-easy-finish.webp',
-  }),
-  medium: Object.freeze({
-    main: STORY_ART.medium,
-    tip: 'assets/silver-wolf-medium-tip.webp',
-    scan: 'assets/silver-wolf-medium-scan.webp',
-    inspect: 'assets/silver-wolf-medium-inspect.webp',
-    ready: 'assets/silver-wolf-medium-ready.webp',
-  }),
-  hard: Object.freeze({
-    main: STORY_ART.hard,
-  }),
-  ultimate: Object.freeze({
-    main: STORY_ART.ultimate,
-  }),
-});
-
 // -------------------------------------------------------------
 // 1. 音效合成器模块 (Web Audio API)
 // -------------------------------------------------------------
 class SoundSynthesizer {
-  constructor() {
+  constructor({ scope = window, storage } = {}) {
+    this.scope = scope;
+    if (storage === undefined) {
+      try { storage = scope?.localStorage; } catch { storage = null; }
+    }
+    this.storage = storage;
     this.ctx = null;
-    this.enabled = true;
+    this.master = null;
+    this.volume = loadSfxVolume(storage);
+    this.enabled = loadSfxEnabled(storage) && this.volume > 0;
   }
 
   init() {
-    if (!this.ctx) {
-      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.ctx = getSharedAudioContext(this.scope);
+    if (!this.ctx) return null;
+    if (!this.master || this.master.context !== this.ctx) {
+      this.master = this.ctx.createGain();
+      this.master.gain.setValueAtTime(this.volume, this.ctx.currentTime);
+      this.master.connect(this.ctx.destination);
     }
-    // 恢复 AudioContext（因浏览器安全策略，需在用户点击后初始化）
-    if (this.ctx.state === 'suspended') {
-      this.ctx.resume();
+    // Resume from the user gesture when possible. SFX and music share one
+    // context so iOS/Safari does not need to keep two audio engines alive.
+    void resumeSharedAudioContext(this.scope);
+    return this.ctx;
+  }
+
+  applyVolume() {
+    if (!this.master || !this.ctx) return;
+    const now = this.ctx.currentTime;
+    const nextValue = this.enabled ? this.volume : 0;
+    try {
+      this.master.gain.cancelScheduledValues(now);
+      this.master.gain.setValueAtTime(this.master.gain.value, now);
+      this.master.gain.linearRampToValueAtTime(nextValue, now + 0.025);
+    } catch {
+      this.master.gain.value = nextValue;
     }
+  }
+
+  setEnabled(enabled) {
+    if (enabled && this.volume <= 0) this.volume = persistSfxVolume(1, this.storage);
+    this.enabled = Boolean(enabled);
+    persistSfxEnabled(this.enabled, this.storage);
+    this.applyVolume();
+    return this.enabled;
+  }
+
+  toggleEnabled() {
+    return this.setEnabled(!this.enabled);
+  }
+
+  setVolume(volume) {
+    this.volume = persistSfxVolume(volume, this.storage);
+    this.applyVolume();
+    if (this.volume <= 0 && this.enabled) this.setEnabled(false);
+    else if (this.volume > 0 && !this.enabled) this.setEnabled(true);
+    return this.volume;
   }
 
   playDig() {
     if (!this.enabled) return;
-    this.init();
+    if (!this.init()) return;
     
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
@@ -131,7 +167,7 @@ class SoundSynthesizer {
     gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
     
     osc.connect(gain);
-    gain.connect(this.ctx.destination);
+    gain.connect(this.master);
     
     osc.start(now);
     osc.stop(now + 0.15);
@@ -139,7 +175,7 @@ class SoundSynthesizer {
 
   playFlag() {
     if (!this.enabled) return;
-    this.init();
+    if (!this.init()) return;
     
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
@@ -153,7 +189,7 @@ class SoundSynthesizer {
     gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
     
     osc.connect(gain);
-    gain.connect(this.ctx.destination);
+    gain.connect(this.master);
     
     osc.start(now);
     osc.stop(now + 0.12);
@@ -161,7 +197,7 @@ class SoundSynthesizer {
 
   playExplosion() {
     if (!this.enabled) return;
-    this.init();
+    if (!this.init()) return;
     
     const now = this.ctx.currentTime;
     const bufferSize = this.ctx.sampleRate * 1.5; // 1.5秒爆炸声
@@ -196,10 +232,10 @@ class SoundSynthesizer {
     
     noiseNode.connect(filter);
     filter.connect(gain);
-    gain.connect(this.ctx.destination);
+    gain.connect(this.master);
     
     subOsc.connect(subGain);
-    subGain.connect(this.ctx.destination);
+    subGain.connect(this.master);
     
     noiseNode.start(now);
     noiseNode.stop(now + 1.5);
@@ -209,7 +245,7 @@ class SoundSynthesizer {
 
   playWin() {
     if (!this.enabled) return;
-    this.init();
+    if (!this.init()) return;
     
     const now = this.ctx.currentTime;
     const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98, 2093.00]; // C大调和弦升音
@@ -226,7 +262,7 @@ class SoundSynthesizer {
       gain.gain.exponentialRampToValueAtTime(0.005, now + delay + 0.4);
       
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.master);
       
       osc.start(now + delay);
       osc.stop(now + delay + 0.5);
@@ -235,7 +271,7 @@ class SoundSynthesizer {
 
   playHover() {
     if (!this.enabled) return;
-    this.init();
+    if (!this.init()) return;
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
@@ -246,13 +282,15 @@ class SoundSynthesizer {
     gain.gain.linearRampToValueAtTime(0.001, now + 0.02);
     
     osc.connect(gain);
-    gain.connect(this.ctx.destination);
+    gain.connect(this.master);
     osc.start(now);
     osc.stop(now + 0.02);
   }
 }
 
-const sfx = new SoundSynthesizer();
+const sfx = new SoundSynthesizer({ scope: window });
+const music = new SciFiMusicDirector({ scope: window });
+music.setScene({ inRoom: false });
 
 // -------------------------------------------------------------
 // 2. 粒子效果引擎
@@ -432,9 +470,9 @@ class HoloSweeperGame {
     this.successReplay = null;
     this.successReplayTimer = null;
     this.pendingReplaySnapshot = null;
-    this.ultimateHackClient = null;
-    this.ultimateHackStepTimer = null;
-    this.ultimateHackStartPending = false;
+    this.autoSurveyClient = null;
+    this.autoSurveyStepTimer = null;
+    this.autoSurveyStartPending = false;
     this.automatedFlagKeys = new Set();
     this.lastSectorPurgeId = null;
     this.sectorPurgeBannerTimer = null;
@@ -460,6 +498,11 @@ class HoloSweeperGame {
     this.pendingControlSettings = null;
     this.controlKeyCaptureField = null;
     this.cameraPointerStartDirection = null;
+    this.cameraPointerStartTarget = null;
+    this.mousePanActive = false;
+    this.mousePanPointerId = null;
+    this.mousePanStartPosition = null;
+    this.mousePanLastPosition = null;
     this.particles = null;
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2();
@@ -504,6 +547,10 @@ class HoloSweeperGame {
     this.touchHoldTimer = null;
     this.touchHoldTriggered = false;
     this.touchInspectionActive = false;
+    this.touchPanActive = false;
+    this.touchPanPointerId = null;
+    this.touchPanLastPosition = null;
+    this.touchHoldLatestPosition = null;
     this.activeTouchPointers = new Set();
     this.touchGestureHadMultiplePointers = false;
     
@@ -535,10 +582,15 @@ class HoloSweeperGame {
   // 绑定 HTML 交互元素
   bindUI() {
     this.bindInputModeTracking();
+    const unlockAudioFromGesture = () => {
+      if (!music.unlocked || music.context?.state !== 'running') void music.unlock();
+    };
+    document.addEventListener('pointerdown', unlockAudioFromGesture, { capture: true, passive: true });
+    document.addEventListener('keydown', unlockAudioFromGesture, { capture: true });
     // Lobby UI
     const readNickname = () => document.getElementById('input-nickname').value.trim();
     const persistNickname = (nickname) => {
-      try { localStorage.setItem('holo-sweeper.nickname', nickname); } catch {}
+      try { localStorage.setItem(NICKNAME_STORAGE_KEY, nickname); } catch {}
     };
     document.getElementById('btn-lobby-task').addEventListener('click', () => this.selectLobbyMode('solo'));
     document.getElementById('btn-lobby-multiplayer').addEventListener('click', () => this.selectLobbyMode('squad'));
@@ -549,14 +601,14 @@ class HoloSweeperGame {
     document.getElementById('btn-task-campaign').addEventListener('click', () => this.selectTaskFlow('campaign'));
     document.getElementById('btn-task-freeplay').addEventListener('click', () => this.selectTaskFlow('freeplay'));
     document.getElementById('btn-random-nickname').addEventListener('click', () => this.rollNickname());
-    document.getElementById('btn-tutorial-next').addEventListener('click', () => this.advanceSilverWolfDialogue());
+    document.getElementById('btn-tutorial-next').addEventListener('click', () => this.advanceGuideDialogue());
     document.getElementById('btn-skip-tutorial').addEventListener('click', () => this.skipTutorial());
     document.getElementById('btn-tutorial-replay').addEventListener('click', () => this.startSuccessReplay());
     document.getElementById('btn-modal-replay').addEventListener('click', () => this.startSuccessReplay());
     document.getElementById('btn-replay-pause').addEventListener('click', () => this.toggleSuccessReplayPause());
     document.getElementById('btn-replay-exit').addEventListener('click', () => this.stopSuccessReplay());
-    document.getElementById('btn-ultimate-hack-start').addEventListener('click', () => this.startUltimateHack());
-    document.getElementById('btn-ultimate-hack-cancel').addEventListener('click', () => this.cancelUltimateHack());
+    document.getElementById('btn-auto-survey-start').addEventListener('click', () => this.startAutoSurvey());
+    document.getElementById('btn-auto-survey-cancel').addEventListener('click', () => this.cancelAutoSurvey());
     const guidedPointer = document.getElementById('guided-cell-pointer');
     guidedPointer.addEventListener('click', () => this.activateGuidedTarget('primary'));
     guidedPointer.addEventListener('contextmenu', (event) => {
@@ -582,11 +634,12 @@ class HoloSweeperGame {
         && !this.currentDialogueRequiresExplicitAction()
       ) {
         event.preventDefault();
-        this.advanceSilverWolfDialogue();
+        this.advanceGuideDialogue();
       }
     });
 
     document.getElementById('btn-start-task').addEventListener('click', async () => {
+      void music.unlock();
       if (this.retryPendingLobbyConnection('btn-start-task')) return;
       if (this.lobbyEntryPending) return;
       const nickname = readNickname();
@@ -616,6 +669,7 @@ class HoloSweeperGame {
     });
 
     document.getElementById('btn-join-room').addEventListener('click', async () => {
+      void music.unlock();
       if (this.retryPendingLobbyConnection('btn-join-room')) return;
       if (this.lobbyEntryPending) return;
       const nickname = readNickname();
@@ -636,6 +690,7 @@ class HoloSweeperGame {
     });
 
     document.getElementById('btn-create-room').addEventListener('click', async () => {
+      void music.unlock();
       if (this.retryPendingLobbyConnection('btn-create-room')) return;
       if (this.lobbyEntryPending) return;
       const nickname = readNickname();
@@ -656,11 +711,7 @@ class HoloSweeperGame {
 
     const nicknameInput = document.getElementById('input-nickname');
     let savedNickname = null;
-    try { savedNickname = localStorage.getItem('holo-sweeper.nickname'); } catch {}
-    if (savedNickname && ['银狼', 'silver wolf'].includes(savedNickname.trim().toLowerCase())) {
-      try { localStorage.removeItem('holo-sweeper.nickname'); } catch {}
-      savedNickname = null;
-    }
+    try { savedNickname = localStorage.getItem(NICKNAME_STORAGE_KEY); } catch {}
     nicknameInput.value = savedNickname || this.generatedNickname;
     document.getElementById('input-room').addEventListener('input', (event) => {
       event.target.value = event.target.value.toUpperCase().replace(/[^A-HJ-NP-Z2-9]/g, '').slice(0, 6);
@@ -711,12 +762,26 @@ class HoloSweeperGame {
 
     // 常用控制
     document.getElementById('btn-restart').addEventListener('click', () => this.startNewGame());
-    document.getElementById('btn-reset-camera').addEventListener('click', () => this.resetCamera());
+    for (const id of ['btn-reset-camera', 'btn-center-camera']) {
+      document.getElementById(id)?.addEventListener('click', () => this.resetCamera());
+    }
     
     const soundBtn = document.getElementById('btn-sound-toggle');
     soundBtn.addEventListener('click', () => {
-      sfx.enabled = !sfx.enabled;
-      soundBtn.innerText = this.t(sfx.enabled ? 'action.soundOn' : 'action.soundOff');
+      sfx.toggleEnabled();
+      this.updateAudioControls();
+    });
+    document.getElementById('btn-music-toggle').addEventListener('click', () => {
+      void music.toggleEnabled();
+      this.updateAudioControls();
+    });
+    document.getElementById('sound-volume').addEventListener('input', (event) => {
+      sfx.setVolume(Number(event.currentTarget.value) / 100);
+      this.updateAudioControls();
+    });
+    document.getElementById('music-volume').addEventListener('input', (event) => {
+      void music.setVolume(Number(event.currentTarget.value) / 100);
+      this.updateAudioControls();
     });
 
     const openControlSettings = () => this.openControlSettings();
@@ -736,7 +801,11 @@ class HoloSweeperGame {
     });
     document.querySelectorAll('[data-control-preset]').forEach((button) => {
       button.addEventListener('click', () => {
-        this.pendingControlSettings = cloneControlSettings(CONTROL_PRESETS[button.dataset.controlPreset]);
+        const centerMode = this.pendingControlSettings?.centerMode ?? this.controlSettings.centerMode;
+        this.pendingControlSettings = {
+          ...cloneControlSettings(CONTROL_PRESETS[button.dataset.controlPreset]),
+          centerMode,
+        };
         this.controlKeyCaptureField = null;
         this.setControlSettingsStatus('');
         this.renderControlSettings();
@@ -749,6 +818,23 @@ class HoloSweeperGame {
         this.setControlSettingsStatus('');
         this.renderControlSettings();
       });
+    });
+    document.getElementById('control-center-mode-toggle').addEventListener('click', () => {
+      if (!this.pendingControlSettings) this.pendingControlSettings = cloneControlSettings(this.controlSettings);
+      const nextCenterMode = this.pendingControlSettings.centerMode === 'movable'
+        ? 'fixed'
+        : 'movable';
+      this.pendingControlSettings = settingsWithCenterMode(this.pendingControlSettings, nextCenterMode);
+      const wasMovable = this.controlSettings.centerMode === 'movable';
+      const liveSettings = settingsWithCenterMode(this.controlSettings, nextCenterMode);
+      saveControlSettings(liveSettings);
+      this.controlSettings = liveSettings;
+      this.applyControlBindings();
+      if (wasMovable && nextCenterMode === 'fixed') this.centerCameraTarget();
+      this.updateControlCopy();
+      if (this.dialogueState && !this.waitingTutorialAction) this.renderGuideDialogue();
+      if (this.waitingTutorialAction) this.setTutorialActionHint(this.waitingTutorialAction);
+      this.setControlSettingsStatus('controls.saved', true);
     });
     document.querySelectorAll('[data-control-key-field]').forEach((button) => {
       button.addEventListener('click', () => {
@@ -868,11 +954,13 @@ class HoloSweeperGame {
       this.setControlSettingsStatus(`controls.error.${result.errors[0]}`);
       return;
     }
+    const wasMovable = this.controlSettings.centerMode === 'movable';
     saveControlSettings(result.settings);
     this.controlSettings = result.settings;
     this.applyControlBindings();
+    if (wasMovable && this.controlSettings.centerMode === 'fixed') this.centerCameraTarget();
     this.updateControlCopy();
-    if (this.dialogueState && !this.waitingTutorialAction) this.renderSilverWolfDialogue();
+    if (this.dialogueState && !this.waitingTutorialAction) this.renderGuideDialogue();
     if (this.waitingTutorialAction) this.setTutorialActionHint(this.waitingTutorialAction);
     this.setControlSettingsStatus('controls.saved', true);
     window.setTimeout(() => this.closeControlSettings(), 180);
@@ -884,6 +972,20 @@ class HoloSweeperGame {
     document.querySelectorAll('[data-control-setting]').forEach((select) => {
       select.value = settings[select.dataset.controlSetting];
     });
+    const movable = settings.centerMode === 'movable';
+    const centerToggle = document.getElementById('control-center-mode-toggle');
+    centerToggle.classList.toggle('active', !movable);
+    centerToggle.classList.toggle('movable', movable);
+    centerToggle.setAttribute('aria-checked', String(!movable));
+    document.getElementById('control-center-mode-state').textContent = this.t(
+      movable ? 'controls.center.movableState' : 'controls.center.fixedState',
+    );
+    document.getElementById('control-center-mode-description').textContent = this.t(
+      movable ? 'controls.center.movableHint' : 'controls.center.fixedHint',
+    );
+    const rightDragSelect = document.getElementById('control-right-action');
+    rightDragSelect.disabled = movable;
+    rightDragSelect.title = movable ? this.t('controls.center.rightDragOverride') : '';
     const preset = controlPresetForSettings(settings);
     document.querySelectorAll('[data-control-preset]').forEach((button) => {
       const active = button.dataset.controlPreset === preset;
@@ -907,30 +1009,41 @@ class HoloSweeperGame {
 
   applyControlBindings() {
     if (!this.controls) return;
+    if (this.controlSettings.centerMode !== 'movable') this.endMousePan();
     this.controls.enableZoom = true;
+    this.controls.enablePan = this.controlSettings.centerMode === 'movable';
+    this.controls.screenSpacePanning = true;
     const dragActions = {
       rotate: THREE.MOUSE.ROTATE,
       zoom: THREE.MOUSE.DOLLY,
+      pan: THREE.MOUSE.PAN,
       none: null,
     };
     this.controls.mouseButtons.LEFT = null;
-    this.controls.mouseButtons.RIGHT = dragActions[this.controlSettings.rightDragAction];
+    // Movable-center right-drag is handled by the game gesture layer below.
+    // Keeping OrbitControls out of this one gesture prevents number inspection
+    // and two-button actions from racing its internal pan state.
+    this.controls.mouseButtons.RIGHT = this.controlSettings.centerMode === 'movable'
+      ? null
+      : dragActions[effectiveRightDragAction(this.controlSettings)];
     this.controls.mouseButtons.MIDDLE = dragActions[this.controlSettings.middleDragAction];
+    document.body.classList.toggle('matrix-center-unlocked', this.controlSettings.centerMode === 'movable');
   }
 
   controlBindingSummary(actionType) {
     const settings = this.controlSettings;
     const bindings = [
       ['controls.gesture.middleDrag', settings.middleDragAction],
-      ['controls.gesture.rightDrag', settings.rightDragAction],
+      ['controls.gesture.rightDrag', effectiveRightDragAction(settings)],
       ['controls.gesture.wheel', settings.wheelAction],
       ['controls.gesture.shiftWheel', settings.shiftWheelAction],
       ['controls.gesture.ctrlWheel', settings.ctrlWheelAction],
     ];
     return bindings
-      .filter(([, action]) => actionType === 'rotation'
-        ? ['rotate', 'yaw', 'pitch'].includes(action)
-        : action === 'zoom')
+      .filter(([, action]) => {
+        if (actionType === 'rotation') return ['rotate', 'yaw', 'pitch'].includes(action);
+        return action === actionType;
+      })
       .map(([gestureKey, action]) => this.t('controls.binding', {
         gesture: this.t(gestureKey),
         action: this.t(`controls.action.${action}`),
@@ -942,6 +1055,7 @@ class HoloSweeperGame {
     return {
       rotate: this.controlBindingSummary('rotation'),
       zoom: this.controlBindingSummary('zoom'),
+      pan: this.controlBindingSummary('pan'),
       dig: formatControlKey(this.controlSettings.digKey),
       flag: formatControlKey(this.controlSettings.flagKey),
       reset: formatControlKey(this.controlSettings.resetKey),
@@ -953,12 +1067,21 @@ class HoloSweeperGame {
     const rotateGuide = document.getElementById('guide-rotate');
     const zoomGuide = document.getElementById('guide-zoom');
     const keyGuide = document.getElementById('guide-keys');
+    const centerGuide = document.getElementById('guide-center');
     if (rotateGuide) rotateGuide.textContent = this.t('guide.rotateConfigured', params);
     if (zoomGuide) zoomGuide.textContent = this.t('guide.zoomConfigured', params);
+    if (centerGuide) centerGuide.textContent = this.t(
+      this.controlSettings.centerMode === 'movable' ? 'guide.centerMovable' : 'guide.centerFixed',
+      params,
+    );
     if (keyGuide) keyGuide.textContent = this.t('guide.keysConfigured', params);
     document.getElementById('btn-mode-dig').title = `${this.t('controls.hotkey.dig')}: ${params.dig}`;
     document.getElementById('btn-mode-flag').title = `${this.t('controls.hotkey.flag')}: ${params.flag}`;
     document.getElementById('btn-reset-camera').title = `${this.t('action.resetCameraTitle')}: ${params.reset}`;
+    document.getElementById('btn-center-camera').title = `${this.t('action.resetCameraTitle')}: ${params.reset}`;
+    document.querySelector('.mobile-touch-hint').textContent = this.t(
+      this.controlSettings.centerMode === 'movable' ? 'mobile.touchHintMovable' : 'mobile.touchHint',
+    );
     this.renderControlSettings();
   }
 
@@ -1080,20 +1203,23 @@ class HoloSweeperGame {
 
   storyArtKey(mode = this.gameMode, mission = this.taskMission) {
     if (mode === 'squad') return 'squad';
-    return STORY_ART[mission] ? mission : 'easy';
+    return GUIDE_ART.story[mission] ? mission : 'easy';
   }
 
   applyStoryArt(mode = this.gameMode, mission = this.taskMission) {
     const artKey = this.storyArtKey(mode, mission);
-    const source = STORY_ART[artKey];
+    const source = GUIDE_ART.story[artKey];
     document.body.dataset.storyArt = artKey;
+    document.getElementById('lobby-modal')?.style.setProperty('--story-lobby-art', `url("${source}")`);
     const missionArt = document.getElementById('mission-art');
     if (missionArt?.getAttribute('src') !== source) missionArt?.setAttribute('src', source);
     if (!this.dialogueState) this.setTutorialArt('main', artKey);
   }
 
   setTutorialArt(artKey = 'main', mission = this.taskMission) {
-    const source = DIALOGUE_ART[mission]?.[artKey] ?? STORY_ART[mission] ?? STORY_ART.easy;
+    const source = GUIDE_ART.dialogue[mission]?.[artKey]
+      ?? GUIDE_ART.story[mission]
+      ?? GUIDE_ART.story.easy;
     const tutorialArt = document.getElementById('tutorial-art');
     if (!tutorialArt) return;
     if (tutorialArt.getAttribute('src') !== source) tutorialArt.setAttribute('src', source);
@@ -1102,7 +1228,7 @@ class HoloSweeperGame {
 
   // 难度预设选择
   selectPreset(element) {
-    if (this.successReplay || this.ultimateHackRunning()) return;
+    if (this.successReplay || this.autoSurveyRunning()) return;
     const me = this.roomSnapshot?.players?.find((player) => player.id === this.currentPlayerId);
     if (me && !me.isHost) return;
     document.querySelectorAll('.btn-preset').forEach(btn => btn.classList.remove('active'));
@@ -1125,7 +1251,7 @@ class HoloSweeperGame {
   }
 
   toggleGameFeature(feature) {
-    if (this.successReplay || this.ultimateHackRunning()) return;
+    if (this.successReplay || this.autoSurveyRunning()) return;
     const me = this.roomSnapshot?.players?.find((player) => player.id === this.currentPlayerId);
     if (me && !me.isHost) return;
     if (feature === 'autoPurge') this.autoPurgeEnabled = !this.autoPurgeEnabled;
@@ -1148,7 +1274,7 @@ class HoloSweeperGame {
 
   // 设置操作模式 (挖矿/插旗)
   setMode(mode) {
-    if (this.ultimateHackRunning()) return;
+    if (this.autoSurveyRunning()) return;
     this.activeMode = mode;
     document.getElementById('btn-mode-dig').classList.toggle('active', mode === 'dig');
     document.getElementById('btn-mode-flag').classList.toggle('active', mode === 'flag');
@@ -1179,6 +1305,7 @@ class HoloSweeperGame {
   async returnToLobby() {
     if (this.returningToLobby) return;
     this.returningToLobby = true;
+    music.setScene({ inRoom: false });
     const departingMode = this.gameMode;
     const departingCode = this.roomSnapshot?.code ?? this.roomClient.session?.code ?? '';
     const returnButton = document.getElementById('btn-return-lobby');
@@ -1199,19 +1326,22 @@ class HoloSweeperGame {
       clearInterval(this.revivalTimer);
       clearTimeout(this.guidedCorrectionTimer);
       clearTimeout(this.successReplayTimer);
-      clearTimeout(this.ultimateHackStepTimer);
+      clearTimeout(this.autoSurveyStepTimer);
       clearTimeout(this.sectorPurgeBannerTimer);
       clearTimeout(this.touchHoldTimer);
       clearTimeout(this.lastMobileCellTap?.timer);
+      this.endMousePan();
+      this.endTouchPan({ force: true });
       this.timerInterval = null;
       this.revivalTimer = null;
       this.guidedCorrectionTimer = null;
       this.successReplayTimer = null;
-      this.ultimateHackStepTimer = null;
+      this.autoSurveyStepTimer = null;
       this.sectorPurgeBannerTimer = null;
       this.touchHoldTimer = null;
       this.lastMobileCellTap = null;
       this.lastMobileNumberTap = null;
+      this.touchHoldLatestPosition = null;
       this.activeTouchPointers.clear();
       this.touchGestureHadMultiplePointers = false;
       this.touchHoldTriggered = false;
@@ -1228,17 +1358,17 @@ class HoloSweeperGame {
           this.controls.autoRotateSpeed = replayState.previousAutoRotateSpeed;
         }
       }
-      const hackClient = this.ultimateHackClient;
-      if (hackClient && this.controls) {
-        this.controls.autoRotate = hackClient.previousAutoRotate;
-        if (Number.isFinite(hackClient.previousAutoRotateSpeed)) {
-          this.controls.autoRotateSpeed = hackClient.previousAutoRotateSpeed;
+      const surveyClient = this.autoSurveyClient;
+      if (surveyClient && this.controls) {
+        this.controls.autoRotate = surveyClient.previousAutoRotate;
+        if (Number.isFinite(surveyClient.previousAutoRotateSpeed)) {
+          this.controls.autoRotateSpeed = surveyClient.previousAutoRotateSpeed;
         }
       }
       this.successReplay = null;
       this.pendingReplaySnapshot = null;
-      this.ultimateHackClient = null;
-      this.ultimateHackStartPending = false;
+      this.autoSurveyClient = null;
+      this.autoSurveyStartPending = false;
 
       this.stopGuidedTutorial();
       this.dialogueState = null;
@@ -1265,11 +1395,11 @@ class HoloSweeperGame {
       for (const id of ['modal-overlay', 'ad-modal-overlay', 'tutorial-overlay']) {
         document.getElementById(id)?.classList.add('hidden');
       }
-      for (const id of ['replay-hud', 'ultimate-hack-hud', 'sector-purge-banner']) {
+      for (const id of ['replay-hud', 'auto-survey-hud', 'sector-purge-banner']) {
         document.getElementById(id)?.classList.add('hidden');
       }
-      document.body.classList.remove('in-room', 'replay-active', 'ultimate-hack-active', 'mobile-panel-active');
-      delete document.body.dataset.ultimateHackStrategy;
+      document.body.classList.remove('in-room', 'replay-active', 'auto-survey-active', 'mobile-panel-active');
+      delete document.body.dataset.autoSurveyStrategy;
       document.getElementById('room-code-display').textContent = this.t('players.roomCode', { code: '-' });
       document.getElementById('btn-copy-invite').style.display = 'none';
       if (departingMode === 'squad' && departingCode) {
@@ -1286,6 +1416,58 @@ class HoloSweeperGame {
       if (returnButton) returnButton.disabled = false;
       if (returnLabel) returnLabel.textContent = this.t('navigation.backToLobby');
     }
+  }
+
+  updateAudioControls() {
+    const soundButton = document.getElementById('btn-sound-toggle');
+    const musicButton = document.getElementById('btn-music-toggle');
+    const soundVolume = document.getElementById('sound-volume');
+    const musicVolume = document.getElementById('music-volume');
+    const soundPercent = Math.round(sfx.volume * 100);
+    const musicPercent = Math.round(music.volume * 100);
+    if (soundButton) {
+      soundButton.innerText = this.t(sfx.enabled ? 'action.soundOn' : 'action.soundOff');
+      soundButton.setAttribute('aria-pressed', String(sfx.enabled));
+    }
+    if (musicButton) {
+      musicButton.innerText = this.t(music.enabled ? 'action.musicOn' : 'action.musicOff');
+      musicButton.setAttribute('aria-pressed', String(music.enabled));
+      if (music.desiredTrackId) musicButton.dataset.track = music.desiredTrackId;
+      else delete musicButton.dataset.track;
+    }
+    if (soundVolume) {
+      soundVolume.value = String(soundPercent);
+      soundVolume.setAttribute('aria-valuetext', `${soundPercent}%`);
+    }
+    if (musicVolume) {
+      musicVolume.value = String(musicPercent);
+      musicVolume.setAttribute('aria-valuetext', `${musicPercent}%`);
+    }
+    const soundOutput = document.getElementById('sound-volume-value');
+    const musicOutput = document.getElementById('music-volume-value');
+    if (soundOutput) soundOutput.textContent = `${soundPercent}%`;
+    if (musicOutput) musicOutput.textContent = `${musicPercent}%`;
+  }
+
+  syncMusicForState(snapshot = this.roomSnapshot) {
+    const resolvedMode = snapshot?.mode === 'solo'
+      ? 'solo'
+      : (snapshot?.mode === 'squad' ? 'squad' : this.gameMode);
+    const resolvedConfig = resolvedMode === 'solo' && this.pendingTaskConfig
+      ? this.pendingTaskConfig
+      : (snapshot?.config ?? this.pendingTaskConfig);
+    const state = {
+      inRoom: Boolean(snapshot) && !this.returningToLobby,
+      gameMode: resolvedMode,
+      taskMission: this.pendingTaskMission ?? this.taskMission,
+      config: resolvedConfig,
+    };
+    const trackId = musicTrackForGame(state);
+    music.setScene(state);
+    if (trackId) document.body.dataset.musicTrack = trackId;
+    else delete document.body.dataset.musicTrack;
+    this.updateAudioControls();
+    return trackId;
   }
 
   t(key, params = {}) {
@@ -1337,7 +1519,7 @@ class HoloSweeperGame {
   refreshInputModeCopy() {
     this.localizeDocumentElements();
     this.updateControlCopy();
-    if (this.dialogueState && !this.waitingTutorialAction) this.renderSilverWolfDialogue();
+    if (this.dialogueState && !this.waitingTutorialAction) this.renderGuideDialogue();
     if (this.waitingTutorialAction) this.setTutorialActionHint(this.waitingTutorialAction);
     else this.setTutorialActionHint();
     if (this.guidedTutorialTarget) this.renderGuidedHint();
@@ -1359,7 +1541,7 @@ class HoloSweeperGame {
     }
     this.generatedNickname = next;
     input.value = next;
-    try { localStorage.removeItem('holo-sweeper.nickname'); } catch {}
+    try { localStorage.removeItem(NICKNAME_STORAGE_KEY); } catch {}
     input.focus();
     input.select();
   }
@@ -1387,12 +1569,12 @@ class HoloSweeperGame {
 
     const nicknameInput = document.getElementById('input-nickname');
     let savedNickname = null;
-    try { savedNickname = localStorage.getItem('holo-sweeper.nickname'); } catch {}
+    try { savedNickname = localStorage.getItem(NICKNAME_STORAGE_KEY); } catch {}
     if (!savedNickname && (initializing || !nicknameInput.value || nicknameInput.value === previousGeneratedNickname)) {
       if (!initializing || !this.generatedNickname) this.generatedNickname = randomNickname(language);
       nicknameInput.value = this.generatedNickname;
     }
-    document.getElementById('btn-sound-toggle').innerText = this.t(sfx.enabled ? 'action.soundOn' : 'action.soundOff');
+    this.updateAudioControls();
     const code = this.roomSnapshot?.code || '-';
     document.getElementById('room-code-display').innerText = this.t('players.roomCode', { code });
     const me = this.roomSnapshot?.players?.find(player => player.id === this.currentPlayerId);
@@ -1415,7 +1597,7 @@ class HoloSweeperGame {
     this.selectTaskFlow(this.taskFlow);
     this.updateMissionGuide();
     this.updateControlCopy();
-    if (this.dialogueState && !this.waitingTutorialAction) this.renderSilverWolfDialogue();
+    if (this.dialogueState && !this.waitingTutorialAction) this.renderGuideDialogue();
     if (this.waitingTutorialAction) this.setTutorialActionHint(this.waitingTutorialAction);
     if (this.guidedTutorialActive) this.updateGuidedTutorial(this.roomSnapshot);
     if (this.solverHint) this.renderSolverHint(this.solverHint);
@@ -1424,8 +1606,8 @@ class HoloSweeperGame {
       this.updateSuccessReplayControls();
       this.updateSuccessReplayProgress();
     }
-    if (this.ultimateHackRunning()) this.updateUltimateHackHUD(this.roomSnapshot);
-    this.updateUltimateHackLaunchAvailability(this.roomSnapshot);
+    if (this.autoSurveyRunning()) this.updateAutoSurveyHUD(this.roomSnapshot);
+    this.updateAutoSurveyLaunchAvailability(this.roomSnapshot);
   }
 
   // -------------------------------------------------------------
@@ -1497,6 +1679,7 @@ class HoloSweeperGame {
         this.roomClient.send({ op: 'restart', config: desired }).catch(error => this.handleRoomError(error));
       }
     }
+    this.syncMusicForState(message.snapshot);
   }
 
   handleRoomError(error) {
@@ -1545,6 +1728,7 @@ class HoloSweeperGame {
       }
     }
     this.syncGameModeUI();
+    this.syncMusicForState(snapshot);
     const configChanged = !previous || CONFIG_KEYS
       .some(key => previous.config[key] !== snapshot.config[key]);
     const restarted = previous && snapshot.phase === 'ready' && previous.phase !== 'ready';
@@ -1596,8 +1780,8 @@ class HoloSweeperGame {
 
     const desiredFlags = new Set((snapshot.flags || []).map(point => `${point.x}:${point.y}:${point.z}`));
     const previousFlags = new Set((previous?.flags || []).map(point => `${point.x}:${point.y}:${point.z}`));
-    const automatedScanActive = snapshot.ultimateHack?.status === 'running'
-      && (snapshot.ultimateHack?.strategy === 'scan' || snapshot.config?.reduction === false);
+    const automatedScanActive = snapshot.autoSurvey?.status === 'running'
+      && (snapshot.autoSurvey?.strategy === 'scan' || snapshot.config?.reduction === false);
     for (let x = 0; x < this.width; x++) for (let y = 0; y < this.height; y++) for (let z = 0; z < this.depth; z++) {
       if (this.grid[x][y][z].isPurged) continue;
       const key = `${x}:${y}:${z}`;
@@ -1703,7 +1887,7 @@ class HoloSweeperGame {
     this.isFirstClick = snapshot.phase === 'ready';
     this.isGameOver = snapshot.phase === 'lost' || (this.gameMode === 'solo' && snapshot.phase === 'revive');
     this.isGameWon = snapshot.phase === 'won';
-    this.isInteractionLocked = this.ultimateHackRunning(snapshot)
+    this.isInteractionLocked = this.autoSurveyRunning(snapshot)
       || ['revive', 'lost', 'won'].includes(snapshot.phase);
     this.syncServerTimer(
       snapshot.startedAt,
@@ -1750,7 +1934,7 @@ class HoloSweeperGame {
     this.maybeCompleteMediumChordObjective(snapshot, previous);
     this.syncSuccessReplayAvailability(snapshot);
     this.updateStats();
-    this.syncUltimateHack(snapshot, previous);
+    this.syncAutoSurvey(snapshot, previous);
     this.updateSolverHintVisibility(snapshot);
     if (this.guidedTutorialActive) this.updateGuidedTutorial(snapshot);
     if (this.gameMode === 'solo') {
@@ -1786,11 +1970,11 @@ class HoloSweeperGame {
     ) return;
     this.taskExperienceStarted = true;
     if (this.taskMission === 'easy') {
-      this.startSilverWolfTutorial();
+      this.startGuideTutorial();
       return;
     }
     if (this.taskMission === 'medium') {
-      this.showSilverWolfDialogue([
+      this.showGuideDialogue([
         { artKey: 'main', titleKey: 'task.medium.chapterTitle', messageKey: 'task.medium.brief.1', buttonKey: 'tutorial.next' },
         { artKey: 'tip', titleKey: 'purge.tutorialTitle', messageKey: 'purge.tutorialMessage', factKey: 'purge.tutorialFact', buttonKey: 'tutorial.next' },
         { artKey: 'tip', titleKey: 'task.medium.upgradeTitle', messageKey: 'task.medium.upgrade.1', factKey: 'task.medium.upgrade.fact', buttonKey: 'tutorial.next' },
@@ -1799,8 +1983,8 @@ class HoloSweeperGame {
       return;
     }
     if (this.taskMission === 'ultimate') {
-      if (snapshot.ultimateHack?.status === 'running') return;
-      this.showSilverWolfDialogue([
+      if (snapshot.autoSurvey?.status === 'running') return;
+      this.showGuideDialogue([
         {
           artKey: 'main',
           titleKey: 'task.ultimate.chapterTitle',
@@ -1810,7 +1994,7 @@ class HoloSweeperGame {
         },
         {
           artKey: 'main',
-          titleKey: 'task.ultimate.trojanTitle',
+          titleKey: 'task.ultimate.fixedProtocolTitle',
           messageKey: 'task.ultimate.brief.2',
           buttonKey: 'tutorial.next',
         },
@@ -1821,10 +2005,10 @@ class HoloSweeperGame {
           buttonKey: 'task.ultimate.installButton',
           requiresExplicit: true,
         },
-      ], { onComplete: () => this.startUltimateHack() });
+      ], { onComplete: () => this.startAutoSurvey() });
       return;
     }
-    this.showSilverWolfDialogue([
+    this.showGuideDialogue([
       { artKey: 'main', titleKey: `task.${this.taskMission}.chapterTitle`, messageKey: `task.${this.taskMission}.brief.1`, buttonKey: 'tutorial.next' },
       { artKey: 'main', titleKey: 'reduction.tutorialTitle', messageKey: 'reduction.tutorialMessage', factKey: 'reduction.tutorialFact', buttonKey: 'tutorial.next' },
       { artKey: 'main', titleKey: `task.${this.taskMission}.chapterTitle`, messageKey: `task.${this.taskMission}.brief.2`, factKey: `task.${this.taskMission}.brief.fact`, buttonKey: 'tutorial.startMission' },
@@ -1853,7 +2037,7 @@ class HoloSweeperGame {
     this.setMediumChordObjectiveTarget(clue);
     this.updateMissionGuide();
     this.closeMobilePanels();
-    this.showSilverWolfDialogue([
+    this.showGuideDialogue([
       {
         artKey: 'tip',
         titleKey: 'task.medium.chordTipTitle',
@@ -1945,29 +2129,29 @@ class HoloSweeperGame {
     this.ensureMediumChordObjectiveMarker();
   }
 
-  startSilverWolfTutorial() {
-    // Keep the board inert until Silver Wolf hands control to the guided route,
+  startGuideTutorial() {
+    // Keep the board inert until the guide hands control to the guided route,
     // so an early click cannot initialize a different minefield.
     this.beginnerBoardInputLocked = true;
-    this.showSilverWolfDialogue([
+    this.showGuideDialogue([
       { artKey: 'main', titleKey: 'tutorial.speaker', messageKey: 'tutorial.intro', factKey: 'tutorial.controlsNote', buttonKey: 'tutorial.next' },
       { artKey: 'neighbors', titleKey: 'tutorial.neighborsTitle', messageKey: 'tutorial.neighbors', factKey: 'tutorial.neighborsFact', buttonKey: 'tutorial.understood' },
       { artKey: 'scan', titleKey: 'tutorial.guidedTitle', messageKey: 'tutorial.guided', factKey: 'tutorial.guidedFact', buttonKey: 'tutorial.followMe' },
     ], { allowSkip: true, onComplete: () => this.beginGuidedTutorial() });
   }
 
-  showSilverWolfDialogue(steps, { allowSkip = false, allowReplay = false, onComplete = null } = {}) {
+  showGuideDialogue(steps, { allowSkip = false, allowReplay = false, onComplete = null } = {}) {
     this.dialogueState = { steps, index: 0, allowSkip, allowReplay, onComplete };
     this.waitingTutorialAction = null;
     this.setTutorialActionHint();
-    this.renderSilverWolfDialogue();
+    this.renderGuideDialogue();
   }
 
-  renderSilverWolfDialogue() {
+  renderGuideDialogue() {
     const state = this.dialogueState;
     if (!state) return;
     if (state.index >= state.steps.length) {
-      this.finishSilverWolfDialogue();
+      this.finishGuideDialogue();
       return;
     }
     const step = state.steps[state.index];
@@ -1997,7 +2181,7 @@ class HoloSweeperGame {
     return Boolean(state?.steps?.[state.index]?.requiresExplicit);
   }
 
-  advanceSilverWolfDialogue() {
+  advanceGuideDialogue() {
     const state = this.dialogueState;
     if (!state) return;
     const step = state.steps[state.index];
@@ -2009,10 +2193,10 @@ class HoloSweeperGame {
       return;
     }
     state.index += 1;
-    this.renderSilverWolfDialogue();
+    this.renderGuideDialogue();
   }
 
-  finishSilverWolfDialogue() {
+  finishGuideDialogue() {
     const onComplete = this.dialogueState?.onComplete;
     document.getElementById('tutorial-overlay').classList.add('hidden');
     this.dialogueState = null;
@@ -2048,7 +2232,7 @@ class HoloSweeperGame {
     this.waitingTutorialAction = null;
     this.setTutorialActionHint();
     this.dialogueState.index += 1;
-    setTimeout(() => this.renderSilverWolfDialogue(), 240);
+    setTimeout(() => this.renderGuideDialogue(), 240);
   }
 
   renderTutorialActionHint(message = '') {
@@ -2157,7 +2341,7 @@ class HoloSweeperGame {
       this.guidedInspectLessonActive = true;
       this.beginnerBoardInputLocked = true;
       this.clearGuidedTarget();
-      this.showSilverWolfDialogue([
+      this.showGuideDialogue([
         {
           artKey: 'neighbors',
           titleKey: 'tutorial.beginnerInspectTitle',
@@ -2239,7 +2423,7 @@ class HoloSweeperGame {
     if (target.action === 'flag' && !this.guidedFlagModeExplained) {
       this.guidedFlagModeExplained = true;
       this.clearGuidedTarget();
-      this.showSilverWolfDialogue([
+    this.showGuideDialogue([
         { artKey: 'scan', titleKey: 'tutorial.flagModeTitle', messageKey: 'tutorial.flagMode', factKey: 'tutorial.flagModeFact', buttonKey: 'tutorial.tryFlag' },
       ], { allowSkip: true, onComplete: () => this.updateGuidedTutorial(this.roomSnapshot) });
       return;
@@ -2266,7 +2450,7 @@ class HoloSweeperGame {
   }
 
   showGuidedRecoveryDialogue() {
-    this.showSilverWolfDialogue([{
+    this.showGuideDialogue([{
       artKey: 'scan',
       titleKey: 'tutorial.guided.reseedTitle',
       messageKey: 'tutorial.guided.reseedMessage',
@@ -2815,7 +2999,7 @@ class HoloSweeperGame {
       && ['medium', 'hard'].includes(this.taskMission)
       && snapshot
       && ['ready', 'playing'].includes(snapshot.phase)
-      && !this.ultimateHackRunning(snapshot);
+      && !this.autoSurveyRunning(snapshot);
     panel.classList.toggle('hidden', !visible);
     if (!visible) this.clearSolverHint();
   }
@@ -3096,16 +3280,16 @@ class HoloSweeperGame {
     }
   }
 
-  ultimateHackRunning(snapshot = this.roomSnapshot) {
-    return snapshot?.ultimateHack?.status === 'running';
+  autoSurveyRunning(snapshot = this.roomSnapshot) {
+    return snapshot?.autoSurvey?.status === 'running';
   }
 
-  ultimateHackStrategy(snapshot = this.roomSnapshot) {
-    if (snapshot?.ultimateHack?.strategy === 'scan') return 'scan';
+  autoSurveyStrategy(snapshot = this.roomSnapshot) {
+    if (snapshot?.autoSurvey?.strategy === 'scan') return 'scan';
     return snapshot?.config?.reduction === false ? 'scan' : 'entropy';
   }
 
-  startUltimateHack() {
+  startAutoSurvey() {
     const snapshot = this.roomSnapshot;
     const allowedSurface = this.gameMode === 'solo' && (
       this.taskFlow === 'freeplay'
@@ -3115,56 +3299,56 @@ class HoloSweeperGame {
       !allowedSurface
       || !snapshot
       || !['ready', 'playing'].includes(snapshot.phase)
-      || this.ultimateHackRunning(snapshot)
-      || this.ultimateHackStartPending
+      || this.autoSurveyRunning(snapshot)
+      || this.autoSurveyStartPending
       || this.successReplay
     ) return;
 
-    this.ultimateHackStartPending = true;
+    this.autoSurveyStartPending = true;
     this.clearSolverHint();
     this.closeMobilePanels();
-    this.updateUltimateHackLaunchAvailability(snapshot);
-    this.roomClient.send({ op: 'ultimate_hack_start' }).catch((error) => {
-      this.ultimateHackStartPending = false;
-      this.updateUltimateHackLaunchAvailability(this.roomSnapshot);
+    this.updateAutoSurveyLaunchAvailability(snapshot);
+    this.roomClient.send({ op: 'auto_survey_start' }).catch((error) => {
+      this.autoSurveyStartPending = false;
+      this.updateAutoSurveyLaunchAvailability(this.roomSnapshot);
       this.handleRoomError(error);
     });
   }
 
-  cancelUltimateHack() {
-    const hack = this.roomSnapshot?.ultimateHack;
-    const client = this.ultimateHackClient;
-    if (hack?.status !== 'running' || !hack.runId || client?.cancelPending) return;
+  cancelAutoSurvey() {
+    const survey = this.roomSnapshot?.autoSurvey;
+    const client = this.autoSurveyClient;
+    if (survey?.status !== 'running' || !survey.runId || client?.cancelPending) return;
     client.cancelPending = true;
-    clearTimeout(this.ultimateHackStepTimer);
-    this.ultimateHackStepTimer = null;
+    clearTimeout(this.autoSurveyStepTimer);
+    this.autoSurveyStepTimer = null;
     client.scheduledStepKey = null;
-    this.updateUltimateHackHUD(this.roomSnapshot);
-    this.roomClient.send({ op: 'ultimate_hack_cancel', runId: hack.runId }).catch((error) => {
-      if (this.ultimateHackClient?.runId === hack.runId) {
-        this.ultimateHackClient.cancelPending = false;
-        this.scheduleUltimateHackStep(this.roomSnapshot);
-        this.updateUltimateHackHUD(this.roomSnapshot);
+    this.updateAutoSurveyHUD(this.roomSnapshot);
+    this.roomClient.send({ op: 'auto_survey_cancel', runId: survey.runId }).catch((error) => {
+      if (this.autoSurveyClient?.runId === survey.runId) {
+        this.autoSurveyClient.cancelPending = false;
+        this.scheduleAutoSurveyStep(this.roomSnapshot);
+        this.updateAutoSurveyHUD(this.roomSnapshot);
       }
       this.handleRoomError(error);
     });
   }
 
-  beginUltimateHackClient(hack, snapshot) {
-    clearTimeout(this.ultimateHackStepTimer);
-    this.ultimateHackStepTimer = null;
-    this.ultimateHackStartPending = false;
-    this.ultimateHackClient = {
-      runId: hack.runId,
+  beginAutoSurveyClient(survey, snapshot) {
+    clearTimeout(this.autoSurveyStepTimer);
+    this.autoSurveyStepTimer = null;
+    this.autoSurveyStartPending = false;
+    this.autoSurveyClient = {
+      runId: survey.runId,
       lastRequestedStepKey: null,
       scheduledStepKey: null,
       cancelPending: false,
       previousAutoRotate: Boolean(this.controls?.autoRotate),
       previousAutoRotateSpeed: this.controls?.autoRotateSpeed,
     };
-    document.body.classList.add('ultimate-hack-active');
-    document.body.dataset.ultimateHackStrategy = this.ultimateHackStrategy(snapshot);
-    document.getElementById('ultimate-hack-hud')?.classList.remove('hidden');
+    document.body.classList.add('auto-survey-active');
+    document.body.dataset.autoSurveyStrategy = this.autoSurveyStrategy(snapshot);
+    document.getElementById('auto-survey-hud')?.classList.remove('hidden');
     document.getElementById('tutorial-overlay')?.classList.add('hidden');
     this.closeMobilePanels();
     this.clearSolverHint();
@@ -3176,15 +3360,15 @@ class HoloSweeperGame {
     }
   }
 
-  endUltimateHackClient(snapshot = this.roomSnapshot) {
-    const client = this.ultimateHackClient;
-    clearTimeout(this.ultimateHackStepTimer);
-    this.ultimateHackStepTimer = null;
-    this.ultimateHackStartPending = false;
-    this.ultimateHackClient = null;
-    document.body.classList.remove('ultimate-hack-active');
-    delete document.body.dataset.ultimateHackStrategy;
-    document.getElementById('ultimate-hack-hud')?.classList.add('hidden');
+  endAutoSurveyClient(snapshot = this.roomSnapshot) {
+    const client = this.autoSurveyClient;
+    clearTimeout(this.autoSurveyStepTimer);
+    this.autoSurveyStepTimer = null;
+    this.autoSurveyStartPending = false;
+    this.autoSurveyClient = null;
+    document.body.classList.remove('auto-survey-active');
+    delete document.body.dataset.autoSurveyStrategy;
+    document.getElementById('auto-survey-hud')?.classList.add('hidden');
     if (client && this.controls) {
       this.controls.autoRotate = client.previousAutoRotate;
       if (Number.isFinite(client.previousAutoRotateSpeed)) {
@@ -3194,90 +3378,90 @@ class HoloSweeperGame {
     this.isInteractionLocked = ['revive', 'lost', 'won'].includes(snapshot?.phase);
   }
 
-  syncUltimateHack(snapshot, previous = null) {
-    const hack = snapshot?.ultimateHack;
-    const running = hack?.status === 'running' && Boolean(hack.runId);
+  syncAutoSurvey(snapshot, previous = null) {
+    const survey = snapshot?.autoSurvey;
+    const running = survey?.status === 'running' && Boolean(survey.runId);
     if (!running) {
-      if (this.ultimateHackClient) this.endUltimateHackClient(snapshot);
-      this.updateUltimateHackLaunchAvailability(snapshot);
+      if (this.autoSurveyClient) this.endAutoSurveyClient(snapshot);
+      this.updateAutoSurveyLaunchAvailability(snapshot);
       return;
     }
 
-    if (this.ultimateHackClient?.runId !== hack.runId) {
-      if (this.ultimateHackClient) this.endUltimateHackClient(snapshot);
-      this.beginUltimateHackClient(hack, snapshot);
+    if (this.autoSurveyClient?.runId !== survey.runId) {
+      if (this.autoSurveyClient) this.endAutoSurveyClient(snapshot);
+      this.beginAutoSurveyClient(survey, snapshot);
     }
     this.isInteractionLocked = true;
-    document.body.dataset.ultimateHackStrategy = this.ultimateHackStrategy(snapshot);
-    this.updateUltimateHackHUD(snapshot);
-    this.updateUltimateHackLaunchAvailability(snapshot);
+    document.body.dataset.autoSurveyStrategy = this.autoSurveyStrategy(snapshot);
+    this.updateAutoSurveyHUD(snapshot);
+    this.updateAutoSurveyLaunchAvailability(snapshot);
 
-    const previousHack = previous?.ultimateHack;
-    const stepChanged = previousHack?.runId !== hack.runId || previousHack?.step !== hack.step;
-    if (stepChanged || !this.ultimateHackClient.lastRequestedStepKey) {
-      this.scheduleUltimateHackStep(snapshot);
+    const previousSurvey = previous?.autoSurvey;
+    const stepChanged = previousSurvey?.runId !== survey.runId || previousSurvey?.step !== survey.step;
+    if (stepChanged || !this.autoSurveyClient.lastRequestedStepKey) {
+      this.scheduleAutoSurveyStep(snapshot);
     }
   }
 
-  updateUltimateHackLaunchAvailability(snapshot = this.roomSnapshot) {
-    const launch = document.getElementById('ultimate-hack-launch');
-    const button = document.getElementById('btn-ultimate-hack-start');
-    const label = document.getElementById('btn-ultimate-hack-start-label');
+  updateAutoSurveyLaunchAvailability(snapshot = this.roomSnapshot) {
+    const launch = document.getElementById('auto-survey-launch');
+    const button = document.getElementById('btn-auto-survey-start');
+    const label = document.getElementById('btn-auto-survey-start-label');
     if (!launch || !button) return;
     const visible = this.gameMode === 'solo' && this.taskFlow === 'freeplay';
     const enabled = visible
       && snapshot
       && ['ready', 'playing'].includes(snapshot.phase)
-      && !this.ultimateHackRunning(snapshot)
-      && !this.ultimateHackStartPending
+      && !this.autoSurveyRunning(snapshot)
+      && !this.autoSurveyStartPending
       && !this.successReplay;
     launch.classList.toggle('hidden', !visible);
     button.disabled = !enabled;
-    if (label) label.textContent = this.t(this.ultimateHackStartPending ? 'ultimateHack.launchPending' : 'ultimateHack.launch');
+    if (label) label.textContent = this.t(this.autoSurveyStartPending ? 'autoSurvey.launchPending' : 'autoSurvey.launch');
   }
 
-  updateUltimateHackHUD(snapshot = this.roomSnapshot) {
-    const hack = snapshot?.ultimateHack;
-    if (!hack || hack.status !== 'running') return;
-    const strategy = this.ultimateHackStrategy(snapshot);
-    const numericStep = Number(hack.step);
+  updateAutoSurveyHUD(snapshot = this.roomSnapshot) {
+    const survey = snapshot?.autoSurvey;
+    if (!survey || survey.status !== 'running') return;
+    const strategy = this.autoSurveyStrategy(snapshot);
+    const numericStep = Number(survey.step);
     const step = Number.isFinite(numericStep) ? Math.max(0, numericStep) : 0;
     const progress = this.currentBoardProgress(snapshot).percent;
-    document.getElementById('ultimate-hack-stage').textContent = this.t(`ultimateHack.stage.${strategy}`);
-    document.getElementById('ultimate-hack-step').textContent = this.t('ultimateHack.step', { step });
-    document.getElementById('ultimate-hack-progress').textContent = this.t('ultimateHack.progress', { progress });
-    const cancel = document.getElementById('btn-ultimate-hack-cancel');
+    document.getElementById('auto-survey-stage').textContent = this.t(`autoSurvey.stage.${strategy}`);
+    document.getElementById('auto-survey-step').textContent = this.t('autoSurvey.step', { step });
+    document.getElementById('auto-survey-progress').textContent = this.t('autoSurvey.progress', { progress });
+    const cancel = document.getElementById('btn-auto-survey-cancel');
     if (cancel) {
-      cancel.disabled = Boolean(this.ultimateHackClient?.cancelPending);
-      cancel.textContent = this.t(cancel.disabled ? 'ultimateHack.cancelPending' : 'ultimateHack.cancel');
+      cancel.disabled = Boolean(this.autoSurveyClient?.cancelPending);
+      cancel.textContent = this.t(cancel.disabled ? 'autoSurvey.cancelPending' : 'autoSurvey.cancel');
     }
   }
 
-  scheduleUltimateHackStep(snapshot = this.roomSnapshot) {
-    const hack = snapshot?.ultimateHack;
-    const client = this.ultimateHackClient;
+  scheduleAutoSurveyStep(snapshot = this.roomSnapshot) {
+    const survey = snapshot?.autoSurvey;
+    const client = this.autoSurveyClient;
     if (
       !client
       || client.cancelPending
-      || hack?.status !== 'running'
-      || hack.runId !== client.runId
+      || survey?.status !== 'running'
+      || survey.runId !== client.runId
       || !['ready', 'playing'].includes(snapshot.phase)
     ) return;
-    const stepKey = `${hack.runId}:${String(hack.step ?? 0)}`;
+    const stepKey = `${survey.runId}:${String(survey.step ?? 0)}`;
     if (client.lastRequestedStepKey === stepKey || client.scheduledStepKey === stepKey) return;
-    clearTimeout(this.ultimateHackStepTimer);
+    clearTimeout(this.autoSurveyStepTimer);
     client.scheduledStepKey = stepKey;
 
     const sendWhenSettled = () => {
-      const liveHack = this.roomSnapshot?.ultimateHack;
-      const liveClient = this.ultimateHackClient;
+      const liveSurvey = this.roomSnapshot?.autoSurvey;
+      const liveClient = this.autoSurveyClient;
       if (
         !liveClient
         || liveClient.cancelPending
-        || liveClient.runId !== hack.runId
-        || liveHack?.status !== 'running'
-        || liveHack.runId !== hack.runId
-        || `${liveHack.runId}:${String(liveHack.step ?? 0)}` !== stepKey
+        || liveClient.runId !== survey.runId
+        || liveSurvey?.status !== 'running'
+        || liveSurvey.runId !== survey.runId
+        || `${liveSurvey.runId}:${String(liveSurvey.step ?? 0)}` !== stepKey
       ) {
         if (liveClient?.scheduledStepKey === stepKey) liveClient.scheduledStepKey = null;
         return;
@@ -3286,22 +3470,22 @@ class HoloSweeperGame {
       const revealStillRunning = this.cellRevealAnimations.length > 0
         || performance.now() < this.revealAnimationEndsAt;
       if (revealStillRunning || this.sectorPurgeAnimations.length > 0) {
-        this.ultimateHackStepTimer = window.setTimeout(sendWhenSettled, 80);
+        this.autoSurveyStepTimer = window.setTimeout(sendWhenSettled, 80);
         return;
       }
 
       liveClient.scheduledStepKey = null;
       liveClient.lastRequestedStepKey = stepKey;
-      this.ultimateHackStepTimer = null;
+      this.autoSurveyStepTimer = null;
       this.roomClient.send({
-        op: 'ultimate_hack_step',
-        runId: hack.runId,
-        expectedStep: Number(hack.step),
+        op: 'auto_survey_step',
+        runId: survey.runId,
+        expectedStep: Number(survey.step),
       }).catch((error) => {
-        if (this.ultimateHackClient?.runId === hack.runId) {
-          this.ultimateHackClient.lastRequestedStepKey = null;
-          this.ultimateHackStepTimer = window.setTimeout(
-            () => this.scheduleUltimateHackStep(this.roomSnapshot),
+        if (this.autoSurveyClient?.runId === survey.runId) {
+          this.autoSurveyClient.lastRequestedStepKey = null;
+          this.autoSurveyStepTimer = window.setTimeout(
+            () => this.scheduleAutoSurveyStep(this.roomSnapshot),
             650,
           );
         }
@@ -3310,12 +3494,12 @@ class HoloSweeperGame {
     };
 
     const revealWait = Math.max(0, Math.ceil(this.revealAnimationEndsAt - performance.now()));
-    this.ultimateHackStepTimer = window.setTimeout(sendWhenSettled, Math.max(120, revealWait));
+    this.autoSurveyStepTimer = window.setTimeout(sendWhenSettled, Math.max(120, revealWait));
   }
 
   showTaskCompletion() {
     if (this.taskFlow === 'freeplay') {
-      this.showSilverWolfDialogue([{
+      this.showGuideDialogue([{
         artKey: 'main',
         titleKey: 'freeplay.completeTitle',
         messageKey: 'freeplay.completeMessage',
@@ -3326,7 +3510,7 @@ class HoloSweeperGame {
     }
     const mission = this.taskMission;
     if (mission === 'ultimate') {
-      this.showSilverWolfDialogue([
+    this.showGuideDialogue([
         {
           artKey: 'main',
           titleKey: 'task.ultimate.completeTitle',
@@ -3360,7 +3544,7 @@ class HoloSweeperGame {
     const nextMission = mission === 'easy'
       ? 'medium'
       : (mission === 'medium' ? 'hard' : (mission === 'hard' ? 'ultimate' : null));
-    this.showSilverWolfDialogue(steps, {
+    this.showGuideDialogue(steps, {
       allowReplay: true,
       onComplete: nextMission ? () => this.advanceTaskMission(nextMission) : null,
     });
@@ -3424,7 +3608,7 @@ class HoloSweeperGame {
     this.applyStoryArt(this.gameMode, this.taskMission);
     this.updateSoloGuide();
     this.updateMissionGuide();
-    this.updateUltimateHackLaunchAvailability(this.roomSnapshot);
+    this.updateAutoSurveyLaunchAvailability(this.roomSnapshot);
   }
 
   renderPlayers(players) {
@@ -4202,7 +4386,7 @@ class HoloSweeperGame {
     this.applyRoomSnapshot(snapshot, true);
     if (snapshot.phase !== 'won' && this.dialogueState?.allowReplay) this.dialogueState = null;
     if (snapshot.phase === 'won' && returnSurface === 'dialogue' && this.dialogueState) {
-      this.renderSilverWolfDialogue();
+      this.renderGuideDialogue();
     } else if (snapshot.phase === 'won' && returnSurface === 'modal') {
       document.getElementById('modal-overlay').classList.remove('hidden');
     }
@@ -4221,11 +4405,11 @@ class HoloSweeperGame {
         this.toggleFlagLocal(action.data.x, action.data.y, action.data.z);
         break;
       case 'trigger_mine':
-        this.appendChatMessage({ system: true, message: `[系统] 🚨 ${name} 踩到了反物质地雷！全体警报！` });
+        this.appendChatMessage({ system: true, message: `[系统] 🚨 ${name} 踩到了异常地雷！全体警报！` });
         this.triggerMineLocal(action.data.x, action.data.y, action.data.z);
         break;
       case 'watch_ad':
-        this.appendChatMessage({ system: true, message: `[系统] 📺 ${name} 选择了观看广告，全员进入量子回溯状态...` });
+        this.appendChatMessage({ system: true, message: `[系统] 📺 ${name} 选择了观看广告，全员进入坐标回溯状态...` });
         this.startAdRevivalLocal();
         break;
       case 'end_game':
@@ -4394,7 +4578,7 @@ class HoloSweeperGame {
       color: 0xff174d,
       side: THREE.DoubleSide,
     });
-    automatedFlagGroup.userData.ultimateHackAutomated = true;
+    automatedFlagGroup.userData.autoSurveyAutomated = true;
     this.geometries.automatedFlag = automatedFlagGroup;
 
     // 初始化重用材质
@@ -4488,7 +4672,7 @@ class HoloSweeperGame {
           target: currentTarget,
           clientX: e.clientX,
           clientY: e.clientY,
-          cameraDirection: this.cameraDirectionFromTarget(),
+          maxDragDistance: 0,
         };
         return;
       }
@@ -4500,13 +4684,11 @@ class HoloSweeperGame {
       const anchorDistance = anchor
         ? Math.hypot(e.clientX - anchor.clientX, e.clientY - anchor.clientY)
         : 0;
-      const currentCameraDirection = this.cameraDirectionFromTarget();
-      const cameraMoved = Boolean(anchor?.cameraDirection && currentCameraDirection
-        && anchor.cameraDirection.angleTo(currentCameraDirection) >= 0.002);
+      const dragDistance = Math.max(anchorDistance, anchor?.maxDragDistance ?? 0);
       this.handleTwoButtonActionAtPointer(e, {
         focusTarget: this.mouseChordFocusTarget,
         anchorTarget: anchor?.target ?? null,
-        dragDistance: cameraMoved ? Number.POSITIVE_INFINITY : anchorDistance,
+        dragDistance,
         dragThreshold: 10,
       });
       this.clearPointerHighlights();
@@ -4524,18 +4706,40 @@ class HoloSweeperGame {
       this.mouseDownPos.y = e.clientY;
       this.mouseDownTime = performance.now();
       this.cameraPointerStartDirection = this.cameraDirectionFromTarget();
+      this.cameraPointerStartTarget = this.controls.target.clone();
       this.touchHoldTriggered = false;
       this.touchInspectionActive = false;
       clearTimeout(this.touchHoldTimer);
+      if (e.pointerType === 'mouse' && e.button === 2
+        && this.controlSettings.centerMode === 'movable') {
+        this.beginMousePanCandidate(e);
+      } else if (e.pointerType === 'mouse' && e.button === 2) {
+        this.endMousePan();
+      }
       if (e.pointerType === 'mouse' && e.button === 1) {
         this.clearPointerHighlights();
       } else if (e.button === 2) {
         this.startNeighborInspection(e);
       } else if (e.pointerType === 'touch') {
         this.activeTouchPointers.add(e.pointerId);
-        if (this.activeTouchPointers.size > 1) {
+        this.touchHoldLatestPosition = {
+          clientX: e.clientX,
+          clientY: e.clientY,
+          pointerType: 'touch',
+          pointerId: e.pointerId,
+        };
+        if (this.activeTouchPointers.size > 1 && touchHoldDecision({
+          activePointerCount: this.activeTouchPointers.size,
+          hadMultiplePointers: true,
+          start: this.mouseDownPos,
+          current: this.touchHoldLatestPosition,
+        }) === 'cancel') {
           this.touchGestureHadMultiplePointers = true;
+          clearTimeout(this.touchHoldTimer);
           this.touchHoldTimer = null;
+          this.touchHoldLatestPosition = null;
+          this.endTouchPan({ force: true });
+          this.controls.enablePan = false;
           this.clearPointerHighlights();
           return;
         }
@@ -4544,8 +4748,23 @@ class HoloSweeperGame {
           this.touchHoldTimer = null;
           this.touchHoldTriggered = true;
           window.getSelection?.()?.removeAllRanges();
-          this.startNeighborInspection(touchPoint);
-          this.touchInspectionActive = Boolean(this.activeHighlightCenter);
+          const heldPoint = this.touchHoldLatestPosition?.pointerId === e.pointerId
+            ? this.touchHoldLatestPosition
+            : { ...touchPoint, pointerId: e.pointerId };
+          if (touchHoldDecision({
+            elapsedMs: 420,
+            start: this.mouseDownPos,
+            current: heldPoint,
+            activePointerCount: this.activeTouchPointers.size,
+            hadMultiplePointers: this.touchGestureHadMultiplePointers,
+          }) !== 'trigger') {
+            this.touchHoldTriggered = false;
+            return;
+          }
+          this.touchInspectionActive = this.startNeighborInspection(heldPoint);
+          if (!this.touchInspectionActive && this.controlSettings.centerMode === 'movable') {
+            this.beginTouchPan(heldPoint);
+          }
           if (this.touchInspectionActive) navigator.vibrate?.(18);
         }, 420);
       }
@@ -4553,6 +4772,19 @@ class HoloSweeperGame {
     dom.addEventListener('pointerup', (e) => {
       clearTimeout(this.touchHoldTimer);
       this.touchHoldTimer = null;
+      const wasMousePan = e.pointerType === 'mouse'
+        && this.mousePanPointerId === e.pointerId
+        && this.endMousePan();
+      const wasTouchPan = e.pointerType === 'touch'
+        && this.touchPanActive
+        && this.touchPanPointerId === e.pointerId;
+      if (wasMousePan) {
+        this.cameraPointerStartDirection = null;
+        this.cameraPointerStartTarget = null;
+        this.resetMouseChordState();
+        this.clearPointerHighlights();
+        return;
+      }
       if (e.pointerType === 'mouse' && this.mouseChordTriggered) {
         if ((e.buttons & 3) === 0) this.resetMouseChordState();
         this.clearPointerHighlights();
@@ -4562,6 +4794,14 @@ class HoloSweeperGame {
         this.touchGestureHadMultiplePointers || this.activeTouchPointers.size > 1
       );
       if (e.pointerType === 'touch') this.activeTouchPointers.delete(e.pointerId);
+      if (this.touchHoldLatestPosition?.pointerId === e.pointerId) this.touchHoldLatestPosition = null;
+      if (wasTouchPan) {
+        this.endTouchPan();
+        this.touchInspectionActive = false;
+        this.touchHoldTriggered = false;
+        if (this.activeTouchPointers.size === 0) this.touchGestureHadMultiplePointers = false;
+        return;
+      }
       if (e.pointerType === 'touch' && this.touchHoldTriggered) {
         if (this.touchInspectionActive) {
           this.clearPointerHighlights({ completeInspection: true });
@@ -4572,7 +4812,11 @@ class HoloSweeperGame {
         return;
       }
       if (wasMultiTouchGesture) {
-        if (this.activeTouchPointers.size === 0) this.touchGestureHadMultiplePointers = false;
+        if (this.activeTouchPointers.size === 0) {
+          this.touchGestureHadMultiplePointers = false;
+          this.endTouchPan({ force: true });
+          this.applyControlBindings();
+        }
         return;
       }
       const dx = e.clientX - this.mouseDownPos.x;
@@ -4584,7 +4828,11 @@ class HoloSweeperGame {
         ? this.cameraPointerStartDirection.angleTo(currentCameraDirection)
         : 0;
       const rotatedMatrix = distance >= 5 && cameraAngle >= 0.002;
+      const pannedMatrix = distance >= 5
+        && this.cameraPointerStartTarget
+        && this.cameraPointerStartTarget.distanceTo(this.controls.target) >= 0.002;
       this.cameraPointerStartDirection = null;
+      this.cameraPointerStartTarget = null;
       if (e.pointerType === 'mouse' && e.button === 1) {
         this.clearPointerHighlights();
         return;
@@ -4592,7 +4840,7 @@ class HoloSweeperGame {
       
       const clickDistance = e.pointerType === 'touch' ? 12 : 5;
       const clickDuration = e.pointerType === 'touch' ? 500 : 250;
-      if (!rotatedMatrix && distance < clickDistance && timeElapsed < clickDuration) {
+      if (!rotatedMatrix && !pannedMatrix && distance < clickDistance && timeElapsed < clickDuration) {
         this.handleCanvasClick(e);
       }
       if (e.pointerType === 'touch' && this.activeTouchPointers.size === 0) {
@@ -4603,13 +4851,25 @@ class HoloSweeperGame {
     const stopNeighborInspection = (event) => {
       if (event.pointerType === 'mouse' && (event.buttons & 3) === 0) this.resetMouseChordState();
       if (event.type === 'pointercancel') {
-        if (event.pointerType === 'mouse') this.resetMouseChordState();
+        if (event.pointerType === 'mouse') {
+          this.endMousePan();
+          this.resetMouseChordState();
+        }
         clearTimeout(this.touchHoldTimer);
         this.touchHoldTimer = null;
         this.touchHoldTriggered = false;
         this.touchInspectionActive = false;
         if (event.pointerType === 'touch') this.activeTouchPointers.delete(event.pointerId);
-        if (this.activeTouchPointers.size === 0) this.touchGestureHadMultiplePointers = false;
+        if (this.touchHoldLatestPosition?.pointerId === event.pointerId) this.touchHoldLatestPosition = null;
+        if (event.pointerType === 'touch') this.endTouchPan();
+        Object.assign(this, interruptedGesturePatch({
+          pointerType: event.pointerType,
+          clearMultiTouch: this.activeTouchPointers.size === 0,
+        }));
+        if (this.activeTouchPointers.size === 0) {
+          this.touchGestureHadMultiplePointers = false;
+          this.applyControlBindings();
+        }
       }
       if (event.type === 'pointerup' && event.button !== 2) return;
       this.clearPointerHighlights({
@@ -4625,30 +4885,122 @@ class HoloSweeperGame {
       if (this.mouseChordButtons === 0) this.resetMouseChordState();
     }, { capture: true });
     window.addEventListener('blur', () => {
+      this.endMousePan();
       this.resetMouseChordState();
+      clearTimeout(this.touchHoldTimer);
+      this.touchHoldTimer = null;
+      this.touchHoldTriggered = false;
+      this.touchInspectionActive = false;
+      this.touchHoldLatestPosition = null;
+      this.activeTouchPointers.clear();
+      this.touchGestureHadMultiplePointers = false;
+      this.endTouchPan({ force: true });
+      Object.assign(this, interruptedGesturePatch());
+      this.applyControlBindings();
       this.clearPointerHighlights();
     });
     dom.addEventListener('lostpointercapture', (event) => {
-      if (event.pointerType === 'mouse') this.resetMouseChordState();
+      if (event.pointerType === 'mouse') {
+        this.endMousePan();
+        this.resetMouseChordState();
+      }
+      if (event.pointerType === 'touch') {
+        this.activeTouchPointers.delete(event.pointerId);
+        if (this.touchHoldLatestPosition?.pointerId === event.pointerId) this.touchHoldLatestPosition = null;
+        if (this.activeTouchPointers.size === 0) this.touchGestureHadMultiplePointers = false;
+        this.endTouchPan({ force: true });
+        this.applyControlBindings();
+      }
     });
 
     // 鼠标移动监听，用于方块 Hover 效果
     dom.addEventListener('pointermove', (e) => {
+      if (e.pointerType === 'mouse' && this.mouseChordAnchor && (e.buttons & 3) !== 0) {
+        const distance = Math.hypot(
+          e.clientX - this.mouseChordAnchor.clientX,
+          e.clientY - this.mouseChordAnchor.clientY,
+        );
+        this.mouseChordAnchor.maxDragDistance = Math.max(
+          this.mouseChordAnchor.maxDragDistance ?? 0,
+          distance,
+        );
+      }
+      if (e.pointerType === 'touch' && this.touchHoldLatestPosition?.pointerId === e.pointerId) {
+        this.touchHoldLatestPosition = {
+          clientX: e.clientX,
+          clientY: e.clientY,
+          pointerType: 'touch',
+          pointerId: e.pointerId,
+        };
+      }
+      if (e.pointerType === 'touch' && this.touchHoldTriggered && !this.touchPanActive
+        && this.controlSettings.centerMode === 'movable') {
+        const dx = e.clientX - this.mouseDownPos.x;
+        const dy = e.clientY - this.mouseDownPos.y;
+        if (Math.hypot(dx, dy) >= 6 && shouldStartTouchPan({
+          centerMode: this.controlSettings.centerMode,
+          holdTriggered: this.touchHoldTriggered,
+          panActive: this.touchPanActive,
+          pointerId: e.pointerId,
+          holdPointerId: this.touchHoldLatestPosition?.pointerId,
+          activePointerCount: this.activeTouchPointers.size,
+          hadMultiplePointers: this.touchGestureHadMultiplePointers,
+          start: this.mouseDownPos,
+          current: e,
+        })) {
+          if (this.touchInspectionActive) this.clearPointerHighlights();
+          this.touchInspectionActive = false;
+          this.beginTouchPan({
+            clientX: e.clientX,
+            clientY: e.clientY,
+            pointerId: e.pointerId,
+          });
+        }
+      }
+      if (e.pointerType === 'touch' && this.touchPanActive && this.touchPanPointerId === e.pointerId) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const previous = this.touchPanLastPosition ?? { x: e.clientX, y: e.clientY };
+        this.panCameraByPixels(e.clientX - previous.x, e.clientY - previous.y);
+        this.touchPanLastPosition = { x: e.clientX, y: e.clientY };
+        return;
+      }
       if (e.pointerType === 'mouse' && (e.buttons & 4) !== 0) {
         this.clearPointerHighlights();
         return;
       }
       if (e.pointerType === 'mouse' && this.mouseChordTriggered) {
+        this.endMousePan();
         this.clearPointerHighlights();
         return;
       }
       if (e.pointerType === 'mouse'
-        && this.controlSettings.rightDragAction !== 'none'
+        && this.controlSettings.centerMode === 'movable'
+        && this.mousePanPointerId === e.pointerId
         && (e.buttons & 2) !== 0) {
         const dx = e.clientX - this.mouseDownPos.x;
         const dy = e.clientY - this.mouseDownPos.y;
-        if (Math.sqrt(dx * dx + dy * dy) >= 5) {
+        if (!this.mousePanActive && Math.hypot(dx, dy) >= 5 && shouldStartMousePan({
+          centerMode: this.controlSettings.centerMode,
+          pointerType: e.pointerType,
+          pointerId: e.pointerId,
+          panPointerId: this.mousePanPointerId,
+          buttons: e.buttons,
+          chordTriggered: this.mouseChordTriggered || (this.mouseChordButtons & 3) === 3,
+          start: this.mousePanStartPosition,
+          current: e,
+        })) {
+          this.mousePanActive = true;
+          document.body.classList.add('matrix-mouse-panning');
           this.clearPointerHighlights();
+        }
+        if (this.mousePanActive) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          const previous = this.mousePanLastPosition ?? this.mousePanStartPosition
+            ?? { x: e.clientX, y: e.clientY };
+          this.panCameraByPixels(e.clientX - previous.x, e.clientY - previous.y);
+          this.mousePanLastPosition = { x: e.clientX, y: e.clientY };
           return;
         }
       }
@@ -4659,7 +5011,13 @@ class HoloSweeperGame {
       if (e.pointerType === 'touch' && this.touchHoldTimer) {
         const dx = e.clientX - this.mouseDownPos.x;
         const dy = e.clientY - this.mouseDownPos.y;
-        if (Math.sqrt(dx * dx + dy * dy) > 10) {
+        if (Math.sqrt(dx * dx + dy * dy) > 10 && touchHoldDecision({
+          elapsedMs: 0,
+          start: this.mouseDownPos,
+          current: e,
+          activePointerCount: this.activeTouchPointers.size,
+          hadMultiplePointers: this.touchGestureHadMultiplePointers,
+        }) === 'cancel') {
           clearTimeout(this.touchHoldTimer);
           this.touchHoldTimer = null;
         }
@@ -4671,8 +5029,14 @@ class HoloSweeperGame {
       this.touchHoldTimer = null;
       this.touchHoldTriggered = false;
       this.touchInspectionActive = false;
+      if (event.pointerType === 'mouse') this.endMousePan();
       if (event.pointerType === 'touch') this.activeTouchPointers.delete(event.pointerId);
-      if (this.activeTouchPointers.size === 0) this.touchGestureHadMultiplePointers = false;
+      if (this.touchHoldLatestPosition?.pointerId === event.pointerId) this.touchHoldLatestPosition = null;
+      if (event.pointerType === 'touch') this.endTouchPan({ force: true });
+      if (this.activeTouchPointers.size === 0) {
+        this.touchGestureHadMultiplePointers = false;
+        this.applyControlBindings();
+      }
       if (event.pointerType === 'mouse' && (event.buttons & 3) === 0) this.resetMouseChordState();
       this.clearPointerHighlights();
     });
@@ -4688,7 +5052,7 @@ class HoloSweeperGame {
   // 5. 游戏引擎：扫雷核心算法
   // -------------------------------------------------------------
   startNewGame() {
-    if (this.successReplay || this.ultimateHackRunning()) return;
+    if (this.successReplay || this.autoSurveyRunning()) return;
     // Invalidate every delayed reveal / victory callback as soon as restart is
     // requested. Waiting for the authoritative snapshot leaves a network-sized
     // window where effects from the previous board could enter the new game.
@@ -5006,6 +5370,71 @@ class HoloSweeperGame {
     }, this.mobileCellDoubleTapMs);
   }
 
+  beginMousePanCandidate({ clientX, clientY, pointerId }) {
+    if (this.controlSettings.centerMode !== 'movable' || !this.controls) return false;
+    this.mousePanActive = false;
+    this.mousePanPointerId = pointerId;
+    this.mousePanStartPosition = { x: clientX, y: clientY };
+    this.mousePanLastPosition = { x: clientX, y: clientY };
+    return true;
+  }
+
+  endMousePan() {
+    const wasActive = this.mousePanActive;
+    this.mousePanActive = false;
+    this.mousePanPointerId = null;
+    this.mousePanStartPosition = null;
+    this.mousePanLastPosition = null;
+    document.body.classList.remove('matrix-mouse-panning');
+    return wasActive;
+  }
+
+  beginTouchPan({ clientX, clientY, pointerId }) {
+    if (this.controlSettings.centerMode !== 'movable' || !this.controls) return false;
+    clearTimeout(this.lastMobileCellTap?.timer);
+    this.lastMobileCellTap = null;
+    this.lastMobileNumberTap = null;
+    this.touchPanActive = true;
+    this.touchPanPointerId = pointerId;
+    this.touchPanLastPosition = { x: clientX, y: clientY };
+    this.controls.enabled = false;
+    document.body.classList.add('matrix-touch-panning');
+    navigator.vibrate?.(12);
+    return true;
+  }
+
+  endTouchPan({ force = false } = {}) {
+    this.touchPanActive = false;
+    this.touchPanPointerId = null;
+    this.touchPanLastPosition = null;
+    document.body.classList.remove('matrix-touch-panning');
+    if (this.controls && (force || this.activeTouchPointers.size === 0)) {
+      this.controls.enabled = true;
+    }
+  }
+
+  panCameraByPixels(deltaX, deltaY) {
+    if (!this.camera || !this.controls || !this.renderer || (!deltaX && !deltaY)) return;
+    const viewportHeight = this.renderer.domElement.clientHeight || window.innerHeight || 1;
+    const targetDistance = Math.max(0.01, this.camera.position.distanceTo(this.controls.target));
+    const screenRight = new THREE.Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
+    const screenUp = new THREE.Vector3(0, 1, 0).applyQuaternion(this.camera.quaternion);
+    const pan = screenPanTranslation({
+      deltaX,
+      deltaY,
+      viewportHeight,
+      targetDistance,
+      verticalFovDegrees: this.camera.fov,
+      screenRight,
+      screenUp,
+    });
+    const translation = new THREE.Vector3(pan.x, pan.y, pan.z);
+    this.camera.position.add(translation);
+    this.controls.target.add(translation);
+    this.controls.update();
+    this.positionReasoningCoordinateAxes(true);
+  }
+
   resetMouseChordState() {
     this.mouseChordTriggered = false;
     this.mouseChordButtons = 0;
@@ -5171,11 +5600,11 @@ class HoloSweeperGame {
   }
 
   startNeighborInspection(event) {
-    if (this.isInteractionLocked || this.isGameOver || this.isGameWon) return;
+    if (this.isInteractionLocked || this.isGameOver || this.isGameWon) return false;
     const target = this.pickTwoButtonTargetAtPointer(event, {
       includeClueProxy: event.pointerType === 'touch',
     });
-    if (target?.type !== 'number') return;
+    if (target?.type !== 'number') return false;
     const { x, y, z } = target;
     this.focusNumberCell(this.grid[x]?.[y]?.[z]);
     if (this.hoveredCell && !this.hoveredCell.isRevealed) {
@@ -5185,6 +5614,7 @@ class HoloSweeperGame {
     this.hoveredCell = null;
     this.highlightNeighborsOn(x, y, z);
     this.activeHighlightCenter = { x, y, z };
+    return true;
   }
 
   // 右键按住数字时高亮显示周围的邻居格子
@@ -5566,7 +5996,7 @@ class HoloSweeperGame {
 
     // 数字颜色映射表
     const colorMap = {
-      1: '#29e7ff', // 量子青
+      1: '#29e7ff', // 零域青
       2: '#39ff14', // 绿
       3: '#ff3366', // 鲜红
       4: '#b026ff', // 紫
@@ -5653,7 +6083,7 @@ class HoloSweeperGame {
         btnAd.innerText = `广告播放中 (${countdown})...`;
       } else {
         clearInterval(interval);
-        // 复活成功：量子回溯，恢复刚才踩中的方块
+        // 复活成功：坐标回溯，恢复刚才踩中的方块
         if (this.pendingGameOver) {
           const { x, y, z } = this.pendingGameOver;
           const cell = this.grid[x][y][z];
@@ -5840,7 +6270,7 @@ class HoloSweeperGame {
         }, 400);
       }, waveAnimationWait);
 
-      // 任务模式由银狼亲自给出章节结算；多人模式保留战绩弹窗
+      // 任务模式由引导角色给出章节结算；多人模式保留战绩弹窗
       if (this.gameMode === 'solo') {
         setTimeout(() => {
           if (this.boardAnimationGeneration === animationGeneration) this.showTaskCompletion();
@@ -5874,7 +6304,7 @@ class HoloSweeperGame {
   // 10. 本地切片视图
   // -------------------------------------------------------------
   handleSliceChange(axis, type) {
-    if (this.ultimateHackRunning()) return;
+    if (this.autoSurveyRunning()) return;
     const minElement = document.getElementById(`slice-${axis}-min`);
     const maxElement = document.getElementById(`slice-${axis}-max`);
     let minValue = Number.parseInt(minElement.value, 10);
@@ -6072,15 +6502,41 @@ class HoloSweeperGame {
   // -------------------------------------------------------------
   // 12. 摄像机控制
   // -------------------------------------------------------------
+  centerCameraTarget() {
+    if (!this.camera || !this.controls) return;
+    const offset = this.camera.position.clone().sub(this.controls.target);
+    const recentered = recenterCameraKeepingOffset(this.camera.position, this.controls.target);
+    offset.set(
+      recentered.cameraPosition.x,
+      recentered.cameraPosition.y,
+      recentered.cameraPosition.z,
+    );
+    const dampingEnabled = this.controls.enableDamping;
+    this.controls.enableDamping = false;
+    this.controls.target.set(0, 0, 0);
+    this.camera.position.copy(offset);
+    this.camera.lookAt(this.controls.target);
+    this.controls.update();
+    this.controls.enableDamping = dampingEnabled;
+    this.positionReasoningCoordinateAxes(true);
+  }
+
   resetCamera() {
     // 计算合适观赏相机的对角线距离
     const maxDim = Math.max(this.width, this.height, this.depth);
     const distance = maxDim * 2.2;
     
     // 设置斜向下看 45 度的初始透视视角
+    this.endMousePan();
+    this.endTouchPan({ force: true });
+    const dampingEnabled = this.controls.enableDamping;
+    this.controls.enableDamping = false;
     this.camera.position.set(distance, distance * 0.9, distance);
     this.controls.target.set(0, 0, 0);
+    this.camera.lookAt(this.controls.target);
     this.controls.update();
+    this.controls.enableDamping = dampingEnabled;
+    this.positionReasoningCoordinateAxes(true);
   }
 
   // 屏幕缩放自适应

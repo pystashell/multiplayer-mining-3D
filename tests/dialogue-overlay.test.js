@@ -16,5 +16,5 @@ test('ignores the compatibility click left behind by a mobile board gesture', ()
   assert.match(overlayBinding, /event\.isPrimary !== false/);
   assert.match(overlayBinding, /event\.target === tutorialOverlay/);
   assert.match(overlayBinding, /event\.preventDefault\(\)/);
-  assert.match(overlayBinding, /this\.advanceSilverWolfDialogue\(\)/);
+  assert.match(overlayBinding, /this\.advanceGuideDialogue\(\)/);
 });

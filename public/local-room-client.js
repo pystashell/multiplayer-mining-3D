@@ -1,4 +1,4 @@
-import { RoomClient as NetworkRoomClient, RoomClientError, createClientRequestId } from './room-client.js?v=20260717-reduction-hint-4';
+import { RoomClient as NetworkRoomClient, RoomClientError, createClientRequestId } from './room-client.js?v=4.0.0';
 import { ROOM_TTL_MS, RoomEngine } from './vendor/game-core/room-engine.js';
 
 const PROTOCOL_VERSION = 1;

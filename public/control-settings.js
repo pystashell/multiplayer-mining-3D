@@ -20,6 +20,7 @@ function freezePreset(settings) {
 
 export const CONTROL_PRESETS = Object.freeze({
   classic: freezePreset({
+    centerMode: 'fixed',
     middleDragAction: 'rotate',
     rightDragAction: 'rotate',
     wheelAction: 'zoom',
@@ -30,6 +31,7 @@ export const CONTROL_PRESETS = Object.freeze({
     resetKey: 'Space',
   }),
   wheelFlip: freezePreset({
+    centerMode: 'fixed',
     middleDragAction: 'rotate',
     rightDragAction: 'rotate',
     wheelAction: 'pitch',
@@ -40,6 +42,7 @@ export const CONTROL_PRESETS = Object.freeze({
     resetKey: 'Space',
   }),
   modeling: freezePreset({
+    centerMode: 'fixed',
     middleDragAction: 'zoom',
     rightDragAction: 'rotate',
     wheelAction: 'yaw',
@@ -50,6 +53,7 @@ export const CONTROL_PRESETS = Object.freeze({
     resetKey: 'Space',
   }),
   rightOrbit: freezePreset({
+    centerMode: 'fixed',
     middleDragAction: 'none',
     rightDragAction: 'rotate',
     wheelAction: 'zoom',
@@ -74,6 +78,7 @@ export function cloneControlSettings(settings = DEFAULT_CONTROL_SETTINGS) {
 export function normalizeControlSettings(candidate = {}) {
   const source = candidate && typeof candidate === 'object' ? candidate : {};
   const normalized = {
+    centerMode: source.centerMode === 'movable' ? 'movable' : 'fixed',
     middleDragAction: DRAG_ACTIONS.includes(source.middleDragAction)
       ? source.middleDragAction
       : DEFAULT_CONTROL_SETTINGS.middleDragAction,
@@ -103,13 +108,36 @@ export function validateControlSettings(candidate) {
   if (new Set(keys).size !== keys.length) errors.push('duplicateKeys');
 
   const wheelActions = [settings.wheelAction, settings.shiftWheelAction, settings.ctrlWheelAction];
-  const dragActions = [settings.middleDragAction, settings.rightDragAction];
+  const dragActions = [settings.middleDragAction, effectiveRightDragAction(settings)];
   const hasRotation = dragActions.includes('rotate')
     || wheelActions.some(action => action === 'yaw' || action === 'pitch');
   const hasZoom = dragActions.includes('zoom') || wheelActions.includes('zoom');
   if (!hasRotation) errors.push('missingRotation');
   if (!hasZoom) errors.push('missingZoom');
   return { valid: errors.length === 0, errors, settings };
+}
+
+export function effectiveRightDragAction(candidate) {
+  const settings = normalizeControlSettings(candidate);
+  return settings.centerMode === 'movable' ? 'pan' : settings.rightDragAction;
+}
+
+export function settingsWithCenterMode(candidate, centerMode) {
+  const settings = normalizeControlSettings({
+    ...candidate,
+    centerMode: centerMode === 'movable' ? 'movable' : 'fixed',
+  });
+  if (settings.centerMode !== 'movable') return settings;
+
+  // Unlocking the center reserves right-drag for panning. If right-drag was
+  // the only rotation binding, preserve a usable camera by moving rotation to
+  // the middle button instead of leaving an invalid profile that cannot save.
+  const wheelKeepsRotation = [settings.wheelAction, settings.shiftWheelAction, settings.ctrlWheelAction]
+    .some(action => action === 'yaw' || action === 'pitch');
+  if (settings.middleDragAction !== 'rotate' && !wheelKeepsRotation) {
+    settings.middleDragAction = 'rotate';
+  }
+  return settings;
 }
 
 export function controlPresetForSettings(candidate) {

@@ -6,29 +6,57 @@ const appSource = readFileSync(new URL('../public/app.js', import.meta.url), 'ut
 const indexSource = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
 const styleSource = readFileSync(new URL('../public/style.css', import.meta.url), 'utf8');
 
-test('keeps the matrix centered while desktop camera bindings remain runtime-configurable', () => {
+test('lets players lock or pan the matrix center while camera bindings remain runtime-configurable', () => {
   assert.match(appSource, /this\.controls\.enablePan\s*=\s*false/);
   assert.match(appSource, /this\.controls\.enableRotate\s*=\s*true/);
   assert.match(appSource, /this\.controls\.enableZoom\s*=\s*true/);
   assert.match(appSource, /this\.controls\.rotateSpeed\s*=\s*0\.9/);
   assert.match(appSource, /this\.controls\.touches\.ONE\s*=\s*THREE\.TOUCH\.ROTATE/);
   assert.match(appSource, /this\.controls\.touches\.TWO\s*=\s*THREE\.TOUCH\.DOLLY_PAN/);
-  assert.match(appSource, /applyControlBindings\(\)[\s\S]*const dragActions = \{[\s\S]*rotate:\s*THREE\.MOUSE\.ROTATE[\s\S]*zoom:\s*THREE\.MOUSE\.DOLLY[\s\S]*none:\s*null/);
-  assert.match(appSource, /this\.controls\.mouseButtons\.LEFT\s*=\s*null[\s\S]*this\.controls\.mouseButtons\.RIGHT\s*=\s*dragActions\[this\.controlSettings\.rightDragAction\][\s\S]*this\.controls\.mouseButtons\.MIDDLE\s*=\s*dragActions\[this\.controlSettings\.middleDragAction\]/);
+  assert.match(appSource, /applyControlBindings\(\)[\s\S]*this\.controls\.enablePan\s*=\s*this\.controlSettings\.centerMode === 'movable'[\s\S]*const dragActions = \{[\s\S]*rotate:\s*THREE\.MOUSE\.ROTATE[\s\S]*zoom:\s*THREE\.MOUSE\.DOLLY[\s\S]*pan:\s*THREE\.MOUSE\.PAN[\s\S]*none:\s*null/);
+  assert.match(appSource, /this\.controls\.mouseButtons\.LEFT\s*=\s*null[\s\S]*this\.controls\.mouseButtons\.RIGHT\s*=\s*this\.controlSettings\.centerMode === 'movable'[\s\S]*\?\s*null[\s\S]*dragActions\[effectiveRightDragAction\(this\.controlSettings\)\][\s\S]*this\.controls\.mouseButtons\.MIDDLE\s*=\s*dragActions\[this\.controlSettings\.middleDragAction\]/);
   assert.match(appSource, /this\.controls\.target\.set\(0, 0, 0\)/);
   assert.match(appSource, /addEventListener\('wheel',[\s\S]*handleConfiguredWheel\(event\)[\s\S]*capture:\s*true,\s*passive:\s*false/);
   assert.match(appSource, /handleConfiguredWheel\(event\)[\s\S]*wheelActionForEvent\(this\.controlSettings, event\)[\s\S]*normalizeWheelDelta\(event, window\.innerHeight\)/);
-  assert.match(appSource, /const rotatedMatrix = distance >= 5 && cameraAngle >= 0\.002[\s\S]*if \(!rotatedMatrix && distance < clickDistance && timeElapsed < clickDuration\)/);
+  assert.match(appSource, /const rotatedMatrix = distance >= 5 && cameraAngle >= 0\.002[\s\S]*const pannedMatrix = distance >= 5[\s\S]*cameraPointerStartTarget\.distanceTo\(this\.controls\.target\) >= 0\.002[\s\S]*if \(!rotatedMatrix && !pannedMatrix && distance < clickDistance && timeElapsed < clickDuration\)/);
   assert.match(appSource, /e\.pointerType === 'mouse' && e\.button === 1[\s\S]*this\.clearPointerHighlights\(\);[\s\S]*return;[\s\S]*const clickDistance/);
   assert.match(appSource, /addEventListener\('auxclick',[\s\S]*event\.button === 1[\s\S]*event\.preventDefault\(\)/);
+  assert.match(appSource, /const wasMovable = this\.controlSettings\.centerMode === 'movable'[\s\S]*wasMovable && this\.controlSettings\.centerMode === 'fixed'[\s\S]*this\.centerCameraTarget\(\)/);
+  assert.match(appSource, /centerCameraTarget\(\)[\s\S]*camera\.position\.clone\(\)\.sub\(this\.controls\.target\)[\s\S]*this\.controls\.target\.set\(0, 0, 0\)[\s\S]*this\.camera\.position\.copy\(offset\)/);
+  assert.match(appSource, /resetCamera\(\)[\s\S]*this\.camera\.position\.set\(distance, distance \* 0\.9, distance\)[\s\S]*this\.controls\.target\.set\(0, 0, 0\)[\s\S]*this\.positionReasoningCoordinateAxes\(true\)/);
+  assert.match(appSource, /control-center-mode-toggle[\s\S]*settingsWithCenterMode\(this\.controlSettings, nextCenterMode\)[\s\S]*saveControlSettings\(liveSettings\)[\s\S]*this\.applyControlBindings\(\)/);
+  assert.match(styleSource, /body\.matrix-center-unlocked #canvas-container canvas\s*\{\s*cursor:grab/);
 });
 
 test('keeps view controls discoverable without making rotation a beginner task', () => {
-  assert.match(appSource, /startSilverWolfTutorial\(\)[\s\S]*messageKey: 'tutorial\.intro'[\s\S]*factKey: 'tutorial\.controlsNote'/);
+  assert.match(appSource, /startGuideTutorial\(\)[\s\S]*messageKey: 'tutorial\.intro'[\s\S]*factKey: 'tutorial\.controlsNote'/);
   assert.doesNotMatch(appSource, /action: 'observe'|hasObservedMatrix|recordCameraRotation|completeTutorialAction\('observe'\)|tutorial\.actionHint\.observe/);
   assert.match(appSource, /blockBeginnerBoardInput\(\)[\s\S]*this\.setTutorialActionHint\(this\.waitingTutorialAction\)/);
   assert.match(indexSource, /id="btn-control-settings"[\s\S]*data-i18n="controls\.open"/);
   assert.match(indexSource, /id="btn-control-settings-lobby"[\s\S]*data-i18n-aria-label="controls\.open"/);
+});
+
+test('keeps control-setting actions inside the dialog and themes its scrollbar', () => {
+  assert.match(styleSource, /\.control-settings-scroll\s*\{[^}]*scrollbar-gutter:\s*stable[^}]*scrollbar-width:\s*thin[^}]*scrollbar-color:/s);
+  assert.match(styleSource, /\.control-settings-scroll::-webkit-scrollbar\s*\{[^}]*width:\s*8px/s);
+  assert.match(styleSource, /\.control-settings-scroll::-webkit-scrollbar-track\s*\{[^}]*rgba\(5,3,18,\.24\)/s);
+  assert.match(styleSource, /\.control-settings-scroll::-webkit-scrollbar-thumb\s*\{[^}]*rgba\(139,126,235,\.42\)[^}]*rgba\(92,80,185,\.5\)/s);
+  assert.match(styleSource, /\.control-settings-scroll::-webkit-scrollbar-thumb:hover\s*\{[^}]*rgba\(151,139,242,\.62\)[^}]*rgba\(109,93,252,\.68\)/s);
+  assert.match(styleSource, /\.control-settings-footer button\s*\{[^}]*width:\s*auto[^}]*max-width:\s*100%[^}]*white-space:\s*nowrap/s);
+});
+
+test('keeps the lobby compact and makes its fallback scrollbar unobtrusive', () => {
+  assert.match(styleSource, /\.guide-lobby\s*\{[^}]*padding:\s*clamp\(22px,\s*3\.2dvh,\s*40px\)\s*40px\s*!important[^}]*gap:\s*clamp\(6px,\s*1\.25dvh,\s*12px\)[^}]*scrollbar-width:\s*thin[^}]*scrollbar-color:\s*rgba\(109,\s*93,\s*252,\s*\.28\)\s*transparent/s);
+  assert.match(styleSource, /\.guide-lobby::-webkit-scrollbar\s*\{\s*width:\s*3px/s);
+  assert.match(styleSource, /\.guide-lobby::-webkit-scrollbar-track\s*\{\s*background:\s*transparent/s);
+  assert.match(styleSource, /\.guide-lobby::-webkit-scrollbar-thumb\s*\{[^}]*rgba\(41,231,255,\.24\)[^}]*rgba\(255,79,216,\.2\)/s);
+  assert.match(styleSource, /\.guide-lobby\s*>\s*\.input-row\s*\{\s*margin-bottom:\s*clamp\(2px,\s*\.8dvh,\s*10px\)\s*!important/s);
+  assert.match(styleSource, /\.guide-lobby\s*>\s*#lobby-status:empty\s*\{\s*display:\s*none/s);
+  assert.match(styleSource, /\.lobby-main-action\s*\{[^}]*margin-top:\s*clamp\(10px,\s*2dvh,\s*18px\)/s);
+  assert.match(styleSource, /\.task-flow-switch\s*\{[^}]*margin:\s*clamp\(5px,\s*1dvh,\s*9px\)\s*0/s);
+  assert.match(styleSource, /\.task-mission-picker\s*\{[^}]*gap:\s*clamp\(4px,\s*\.7dvh,\s*6px\)[^}]*margin-top:\s*clamp\(5px,\s*1dvh,\s*9px\)/s);
+  assert.match(styleSource, /@media\s*\(max-width:\s*900px\)[\s\S]*?\.guide-lobby\s*\{[^}]*padding:\s*clamp\(14px,\s*2\.8dvh,\s*24px\)\s*14px\s*!important[^}]*gap:\s*clamp\(6px,\s*1\.25dvh,\s*12px\)/s);
+  assert.match(styleSource, /@media\s*\(max-width:\s*900px\)\s*and\s*\(max-height:\s*620px\)[\s\S]*?\.guide-lobby\s*\{[^}]*padding:\s*14px\s*!important[^}]*gap:\s*6px[^}]*\}[\s\S]*?\.lobby-main-action\s*\{\s*margin-top:\s*10px/s);
 });
 
 test('keeps the beginner flag step reachable and visibly raises its flag', () => {
@@ -47,16 +75,21 @@ test('preserves left, right, and two-button minesweeper actions across camera pr
   assert.match(appSource, /pointerdown',[\s\S]*this\.handlePointerMove\(e\);[\s\S]*mouseChordFocusTarget = this\.currentPointerFocusTarget\(\)/);
   assert.match(appSource, /event\.button === 2 \|\| this\.activeMode === 'flag'[\s\S]*this\.toggleFlag\(x, y, z\)[\s\S]*this\.dig\(x, y, z\)/);
   assert.match(appSource, /e\.pointerType === 'mouse' && \(e\.buttons & 4\) !== 0[\s\S]*this\.clearPointerHighlights\(\);[\s\S]*return;/);
-  assert.match(appSource, /this\.controlSettings\.rightDragAction !== 'none'[\s\S]*\(e\.buttons & 2\) !== 0[\s\S]*Math\.sqrt\(dx \* dx \+ dy \* dy\) >= 5[\s\S]*this\.clearPointerHighlights\(\)/);
+  assert.match(appSource, /beginMousePanCandidate\(e\)[\s\S]*startNeighborInspection\(e\)/);
+  assert.match(appSource, /this\.controlSettings\.centerMode === 'movable'[\s\S]*this\.mousePanPointerId === e\.pointerId[\s\S]*\(e\.buttons & 2\) !== 0[\s\S]*Math\.hypot\(dx, dy\) >= 5[\s\S]*this\.mousePanActive = true[\s\S]*this\.panCameraByPixels/);
+  assert.match(appSource, /wasMousePan[\s\S]*this\.endMousePan\(\)[\s\S]*this\.resetMouseChordState\(\)[\s\S]*this\.clearPointerHighlights\(\)/);
   assert.match(appSource, /if \(e\.pointerType === 'mouse' && \(this\.mouseChordButtons & 3\) !== 0\) return;/);
-  assert.match(appSource, /if \(!rotatedMatrix && distance < clickDistance && timeElapsed < clickDuration\)/);
+  assert.match(appSource, /if \(!rotatedMatrix && !pannedMatrix && distance < clickDistance && timeElapsed < clickDuration\)/);
 });
 
 test('keeps desktop two-button actions reliable across oblique views and interrupted input', () => {
   assert.match(appSource, /pickTwoButtonTargetAtPointer\(event, \{ includeClueProxy = false \} = \{\}\)[\s\S]*primaryTargets[\s\S]*clueProxyTargets[\s\S]*resolveTwoButtonRayHits/);
   assert.match(appSource, /currentPointerFocusTarget\(\)[\s\S]*targetFromFocusedCell\(this\.hoveredCell\)/);
   assert.match(appSource, /resolveTwoButtonGestureTargets\(\{ \.\.\.gesture, currentTarget \}, getCell\)/);
-  assert.match(appSource, /cameraMoved \? Number\.POSITIVE_INFINITY : anchorDistance/);
+  assert.match(appSource, /maxDragDistance:\s*0/);
+  assert.match(appSource, /const distance = Math\.hypot\([\s\S]*e\.clientX - this\.mouseChordAnchor\.clientX,[\s\S]*e\.clientY - this\.mouseChordAnchor\.clientY/);
+  assert.match(appSource, /this\.mouseChordAnchor\.maxDragDistance\s*=\s*Math\.max\([\s\S]*this\.mouseChordAnchor\.maxDragDistance \?\? 0,[\s\S]*distance/);
+  assert.match(appSource, /const dragDistance = Math\.max\(anchorDistance, anchor\?\.maxDragDistance \?\? 0\)[\s\S]*dragThreshold:\s*10/);
   assert.match(appSource, /progress >= 1[\s\S]*animation\.mesh\.visible = false[\s\S]*animation\.mesh\.scale\.setScalar\(1\)/);
   assert.match(appSource, /window\.addEventListener\('mouseup',[\s\S]*resetMouseChordState/);
   assert.match(appSource, /window\.addEventListener\('blur', \(\) => \{[\s\S]*resetMouseChordState\(\);[\s\S]*clearPointerHighlights\(\);[\s\S]*\}\)/);
@@ -97,7 +130,7 @@ test('renders practical verification inside the current task panel', () => {
   assert.match(styleSource, /\.mission-action-hint\s*\{[^}]*border-left:2px solid var\(--neon-cyan\)[^}]*text-align:left/s);
   assert.match(styleSource, /\.solo-guide-steps\s*\{[^}]*grid-template-columns:\s*1fr/s);
   assert.match(styleSource, /\.solo-guide-steps li\s*\{[^}]*border-radius:\s*0[^}]*background:\s*transparent/s);
-  assert.match(styleSource, /body\[data-game-mode="task"\] #social-panel > \.silver-wolf-comms,[\s\S]*#social-panel > \.guide-section\s*\{\s*display:\s*none/s);
+  assert.match(styleSource, /body\[data-game-mode="task"\] #social-panel > \.guide-comms,[\s\S]*#social-panel > \.guide-section\s*\{\s*display:\s*none/s);
   assert.match(appSource, /renderTutorialActionHint\(message = ''\)[\s\S]*mission-action-hint[\s\S]*tutorial-action-hint/);
   assert.match(appSource, /renderGuidedHint\(correction = false[\s\S]*this\.renderTutorialActionHint\(message\)/);
 });
@@ -121,10 +154,8 @@ test('plays the squad mine sound once when a player gives up revival', () => {
 });
 
 test('keeps the illustrated background inside the dialogue frame without covering text', () => {
-  assert.match(appSource, /easy: Object\.freeze\(\{[\s\S]*?main: STORY_ART\.easy,[\s\S]*?neighbors: 'assets\/silver-wolf-easy-neighbors\.webp'/);
-  assert.match(appSource, /medium: Object\.freeze\(\{[\s\S]*?main: STORY_ART\.medium,[\s\S]*?tip: 'assets\/silver-wolf-medium-tip\.webp'/);
-  assert.doesNotMatch(appSource, /assets\/silver-wolf-[^'\n]*-cutout-v2\.webp/);
-  assert.match(indexSource, /id="tutorial-art" src="assets\/silver-wolf-quantum-pathfinder\.png"/);
+  assert.match(indexSource, /id="tutorial-art"/);
+  assert.doesNotMatch(indexSource, /id="tutorial-art"[^>]*\ssrc=/);
   assert.doesNotMatch(indexSource, /id="tutorial-art"[^>]*class="is-cutout"/);
   assert.match(appSource, /tutorialArt\.classList\.toggle\('is-cutout', source\.includes\('-cutout-'\)\)/);
   assert.match(styleSource, /\.tutorial-dialog\s*\{[^}]*grid-template-columns:\s*180px minmax\(0, 560px\)[^}]*overflow:\s*hidden[^}]*background:\s*rgba\(11,7,30,\.94\)/s);

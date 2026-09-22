@@ -49,7 +49,7 @@ test('makes successful replay a prominent primary action on both completion surf
   assert.match(replayStyleSource, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*animation:none/);
 });
 
-test('offers replay only for won snapshots and routes squad wins to the modal and solo wins to Silver Wolf', () => {
+test('offers replay only for won snapshots and routes squad wins to the modal and solo wins to the guide', () => {
   const availabilitySource = sourceBetween(
     appSource,
     '  hasSuccessReplay(snapshot = this.roomSnapshot) {',
@@ -131,24 +131,24 @@ test('finishes with replay celebration and restores the newest authoritative sna
   assert.match(stopSource, /this\.successReplay = null;[\s\S]*this\.pendingReplaySnapshot = null/);
   assert.match(stopSource, /document\.body\.classList\.remove\('replay-active'\)/);
   assert.match(stopSource, /this\.applyConfig\(snapshot\.config\);[\s\S]*this\.buildGridLocal\(\);[\s\S]*this\.applyRoomSnapshot\(snapshot, true\)/);
-  assert.match(stopSource, /snapshot\.phase === 'won' && returnSurface === 'dialogue'[\s\S]*this\.renderSilverWolfDialogue\(\)/);
+  assert.match(stopSource, /snapshot\.phase === 'won' && returnSurface === 'dialogue'[\s\S]*this\.renderGuideDialogue\(\)/);
   assert.match(stopSource, /snapshot\.phase === 'won' && returnSurface === 'modal'[\s\S]*modal-overlay[\s\S]*classList\.remove\('hidden'\)/);
 });
 
 test('keeps replay independent from the hard-to-Ultimate-to-Free-Mode campaign progression', () => {
   const completionSource = sourceBetween(appSource, '  showTaskCompletion() {', '  enterFreeModeAfterCampaign() {');
   const replayLifecycleSource = sourceBetween(appSource, '  startSuccessReplay() {', '  handleNetworkAction(action) {');
-  const dialogueFinishSource = sourceBetween(appSource, '  finishSilverWolfDialogue() {', '  skipTutorial() {');
+  const dialogueFinishSource = sourceBetween(appSource, '  finishGuideDialogue() {', '  skipTutorial() {');
 
   assert.match(completionSource, /taskFlow === 'freeplay'[\s\S]*titleKey:\s*'freeplay\.completeTitle'[\s\S]*messageKey:\s*'freeplay\.completeMessage'[\s\S]*factText:\s*this\.t\('tutorial\.completionFact',\s*\{\s*time:\s*this\.formatTime\(this\.timer\)\s*\}\)[\s\S]*allowReplay: true/);
-  assert.match(completionSource, /this\.showSilverWolfDialogue\(steps, \{[\s\S]*allowReplay: true/);
+  assert.match(completionSource, /this\.showGuideDialogue\(steps, \{[\s\S]*allowReplay: true/);
   assert.match(completionSource, /mission === 'hard'[\s\S]*task\.hard\.complete\.3[\s\S]*tutorial\.enterUltimate/);
   assert.match(completionSource, /mission === 'hard' \? 'ultimate' : null/);
   assert.match(completionSource, /onComplete: nextMission \? \(\) => this\.advanceTaskMission\(nextMission\) : null/);
   assert.match(completionSource, /mission === 'ultimate'[\s\S]*task\.ultimate\.complete\.1[\s\S]*task\.ultimate\.complete\.2[\s\S]*tutorial\.enterFreeplay[\s\S]*onComplete: \(\) => this\.enterFreeModeAfterCampaign\(\)/);
   assert.doesNotMatch(replayLifecycleSource, /enterFreeModeAfterCampaign\s*\(/);
   assert.doesNotMatch(replayLifecycleSource, /advanceTaskMission\s*\(/);
-  assert.doesNotMatch(replayLifecycleSource, /finishSilverWolfDialogue\s*\(/);
+  assert.doesNotMatch(replayLifecycleSource, /finishGuideDialogue\s*\(/);
   assert.match(dialogueFinishSource, /const onComplete = this\.dialogueState\?\.onComplete[\s\S]*onComplete\?\.\(\)/);
 
   assert.match(i18nSource, /'tutorial\.completionFact':\s*'[^']*\{time\}[^']*100%'/);

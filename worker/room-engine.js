@@ -311,7 +311,7 @@ export class RoomEngine {
       receipts: [],
       replayDraft: createReplayDraft(DEFAULT_CONFIG),
       completedReplay: null,
-      ultimateHack: null,
+      autoSurvey: null,
       expiresAt: now + ROOM_TTL_MS,
     });
   }
@@ -330,7 +330,7 @@ export class RoomEngine {
     restored.pendingFailureKind ??= restored.pendingMine == null ? null : "mine";
     restored.replayDraft = restoreReplayDraft(restored.replayDraft, restored.config);
     restored.completedReplay ??= null;
-    restored.ultimateHack ??= null;
+    restored.autoSurvey ??= null;
     return new RoomEngine(restored, random);
   }
 
@@ -360,8 +360,8 @@ export class RoomEngine {
     const wasHost = this.state.hostId === playerId;
     if (wasHost) this.state.hostId = this.state.members[0]?.id ?? null;
     if (this.state.reviveStartedBy === playerId) this.state.reviveStartedBy = null;
-    if (this.state.ultimateHack?.startedBy === playerId && this.ultimateHackRunning()) {
-      this.state.ultimateHack.status = "cancelled";
+    if (this.state.autoSurvey?.startedBy === playerId && this.autoSurveyRunning()) {
+      this.state.autoSurvey.status = "cancelled";
     }
     this.state.receipts = this.state.receipts.filter((receipt) => receipt.playerId !== playerId);
     this.addActivity("left", { name: member.name }, now);
@@ -543,19 +543,19 @@ export class RoomEngine {
     };
   }
 
-  ultimateHackRunning() {
-    return this.state.ultimateHack?.status === "running";
+  autoSurveyRunning() {
+    return this.state.autoSurvey?.status === "running";
   }
 
-  assertUltimateHackController(playerId) {
+  assertAutoSurveyController(playerId) {
     if (playerId !== this.state.hostId) throw new Error("HOST_ONLY");
     if (this.state.mode !== "solo") throw new Error("SOLO_ONLY");
   }
 
-  startUltimateHack(playerId, now) {
-    this.assertUltimateHackController(playerId);
+  startAutoSurvey(playerId, now) {
+    this.assertAutoSurveyController(playerId);
     if (!["ready", "playing"].includes(this.state.phase)) throw new Error("WRONG_PHASE");
-    if (this.ultimateHackRunning()) throw new Error("ULTIMATE_HACK_ACTIVE");
+    if (this.autoSurveyRunning()) throw new Error("AUTO_SURVEY_ACTIVE");
 
     // Flags placed before the first dig are guesses because no minefield exists
     // yet. On an in-progress board retain only flags that hidden truth confirms.
@@ -565,7 +565,7 @@ export class RoomEngine {
       this.state.flags = this.state.flags.filter((index) => mineSet.has(index));
     }
     const mineSet = new Set(this.state.mines);
-    this.state.ultimateHack = {
+    this.state.autoSurvey = {
       runId: createRuntimeId(),
       status: "running",
       strategy: this.reductionEnabled() ? "compression" : "scan",
@@ -573,11 +573,11 @@ export class RoomEngine {
       startedBy: playerId,
       hasVisibleFlag: this.state.flags.some((index) => mineSet.has(index)),
     };
-    this.addActivity("ultimateHackStarted", { name: this.member(playerId).name }, now);
-    return "终极骇客已启动";
+    this.addActivity("autoSurveyStarted", { name: this.member(playerId).name }, now);
+    return "自动测绘已启动";
   }
 
-  nextUltimateHackCommand() {
+  nextAutoSurveyCommand() {
     const config = this.state.config;
     const total = config.width * config.height * config.depth;
     const purgedSet = new Set(this.state.purged);
@@ -595,7 +595,7 @@ export class RoomEngine {
       const target = outerFirst(config, this.state.mines)
         .find((index) => !purgedSet.has(index) && this.state.revealed[index] === undefined);
       if (target !== undefined) return { op: "reduce", ...pointOf(config, target) };
-    } else if (!this.state.ultimateHack.hasVisibleFlag) {
+    } else if (!this.state.autoSurvey.hasVisibleFlag) {
       // Force one server-confirmed flag to survive a full snapshot before any
       // later dig is allowed to trigger Auto-Purge.
       const target = outerFirst(config, this.state.mines)
@@ -608,22 +608,22 @@ export class RoomEngine {
     return { op: mineSet.has(target) ? "flag" : "dig", ...pointOf(config, target) };
   }
 
-  stepUltimateHack(playerId, runId, now, expectedStep) {
-    this.assertUltimateHackController(playerId);
-    const hack = this.state.ultimateHack;
-    if (!hack || hack.runId !== runId) throw new Error("STALE_ULTIMATE_HACK");
+  stepAutoSurvey(playerId, runId, now, expectedStep) {
+    this.assertAutoSurveyController(playerId);
+    const survey = this.state.autoSurvey;
+    if (!survey || survey.runId !== runId) throw new Error("STALE_AUTO_SURVEY");
     // A reconnect or timer race may retry the same logical pull under a new
     // transport command id. Treat an observed-step mismatch as an idempotent
     // acknowledgement so that one rendered snapshot can advance at most once.
-    if (expectedStep !== undefined && expectedStep !== hack.step) return "终极骇客进度已同步";
-    if (hack.status !== "running") throw new Error("WRONG_PHASE");
+    if (expectedStep !== undefined && expectedStep !== survey.step) return "自动测绘进度已同步";
+    if (survey.status !== "running") throw new Error("WRONG_PHASE");
     if (!["ready", "playing"].includes(this.state.phase)) throw new Error("WRONG_PHASE");
 
-    const command = this.nextUltimateHackCommand();
+    const command = this.nextAutoSurveyCommand();
     if (!command) {
-      if (this.checkWin(now)) hack.status = "completed";
-      else hack.status = "stalled";
-      return hack.status === "completed" ? "终极骇客已完成" : "终极骇客无法继续";
+      if (this.checkWin(now)) survey.status = "completed";
+      else survey.status = "stalled";
+      return survey.status === "completed" ? "自动测绘已完成" : "自动测绘无法继续";
     }
 
     const before = this.captureReplayState();
@@ -631,32 +631,32 @@ export class RoomEngine {
     else if (command.op === "reduce") this.reduceCell(playerId, command, now);
     else if (command.op === "flag") {
       this.flag(playerId, command, now, { deferPurge: true });
-      hack.hasVisibleFlag = true;
+      survey.hasVisibleFlag = true;
     }
     this.recordReplayTransition(playerId, command, before, now);
-    hack.step += 1;
+    survey.step += 1;
     if (this.state.phase === "won") {
-      hack.status = "completed";
-      this.addActivity("ultimateHackCompleted", { name: this.member(playerId).name, steps: hack.step }, now);
+      survey.status = "completed";
+      this.addActivity("autoSurveyCompleted", { name: this.member(playerId).name, steps: survey.step }, now);
     }
-    return hack.status === "completed" ? "终极骇客已完成" : "终极骇客步骤完成";
+    return survey.status === "completed" ? "自动测绘已完成" : "自动测绘步骤完成";
   }
 
-  cancelUltimateHack(playerId, runId, now) {
-    this.assertUltimateHackController(playerId);
-    const hack = this.state.ultimateHack;
-    if (!hack || hack.runId !== runId) throw new Error("STALE_ULTIMATE_HACK");
-    if (hack.status !== "running") throw new Error("WRONG_PHASE");
-    hack.status = "cancelled";
-    this.addActivity("ultimateHackCancelled", { name: this.member(playerId).name, steps: hack.step }, now);
-    return "终极骇客已中止";
+  cancelAutoSurvey(playerId, runId, now) {
+    this.assertAutoSurveyController(playerId);
+    const survey = this.state.autoSurvey;
+    if (!survey || survey.runId !== runId) throw new Error("STALE_AUTO_SURVEY");
+    if (survey.status !== "running") throw new Error("WRONG_PHASE");
+    survey.status = "cancelled";
+    this.addActivity("autoSurveyCancelled", { name: this.member(playerId).name, steps: survey.step }, now);
+    return "自动测绘已中止";
   }
 
   apply(playerId, command, { id, sequence, now = Date.now() } = {}) {
     const decision = this.inspectSequence(playerId, id, sequence);
     if (decision.kind !== "new") return decision;
-    if (this.ultimateHackRunning() && ["dig", "chord", "reduce", "flag"].includes(command.op)) {
-      throw new Error("ULTIMATE_HACK_ACTIVE");
+    if (this.autoSurveyRunning() && ["dig", "chord", "reduce", "flag"].includes(command.op)) {
+      throw new Error("AUTO_SURVEY_ACTIVE");
     }
     const replayBefore = ["dig", "chord", "reduce", "flag"].includes(command.op)
       ? this.captureReplayState()
@@ -671,11 +671,11 @@ export class RoomEngine {
     else if (command.op === "rewind") message = this.rewind(playerId, now);
     else if (command.op === "watch_ad") message = this.watchAd(playerId, now);
     else if (command.op === "end_game") message = this.endGame(playerId, now);
-    else if (command.op === "ultimate_hack_start") message = this.startUltimateHack(playerId, now);
-    else if (command.op === "ultimate_hack_step") {
-      message = this.stepUltimateHack(playerId, command.runId, now, command.expectedStep);
+    else if (command.op === "auto_survey_start") message = this.startAutoSurvey(playerId, now);
+    else if (command.op === "auto_survey_step") {
+      message = this.stepAutoSurvey(playerId, command.runId, now, command.expectedStep);
     }
-    else if (command.op === "ultimate_hack_cancel") message = this.cancelUltimateHack(playerId, command.runId, now);
+    else if (command.op === "auto_survey_cancel") message = this.cancelAutoSurvey(playerId, command.runId, now);
     else if (command.op === "leave") message = this.leaveRoom(playerId, now);
     else if (command.op === "sync") message = "同步完成";
     else throw new Error("UNKNOWN_COMMAND");
@@ -708,7 +708,7 @@ export class RoomEngine {
     this.state.startedAt = null;
     this.state.replayDraft = createReplayDraft(this.state.config);
     this.state.completedReplay = null;
-    this.state.ultimateHack = null;
+    this.state.autoSurvey = null;
     this.addActivity("restarted", { name: member.name }, now);
     return "矩阵已重新初始化";
   }
@@ -945,7 +945,7 @@ export class RoomEngine {
     ], now);
     const member = this.member(playerId);
     this.addActivity("sectorPurged", {
-      name: member?.name ?? "Silver Wolf",
+      name: member?.name ?? "Navigator",
       kind: operationKind,
       sectors: sectorCount,
       mines: mineIndexes.length,
@@ -1093,7 +1093,7 @@ export class RoomEngine {
     this.state.reviveEndsAt = now + 10_000;
     this.state.reviveStartedBy = playerId;
     this.addActivity("reviveStarted", { name: this.member(playerId).name }, now);
-    return "量子回溯已启动";
+    return "坐标回溯已启动";
   }
 
   endGame(playerId, now) {
@@ -1185,14 +1185,14 @@ export class RoomEngine {
     const replay = this.state.phase === "won" && this.state.completedReplay
       ? this.publicReplay(this.state.completedReplay)
       : null;
-    const ultimateHackStarter = this.member(this.state.ultimateHack?.startedBy);
-    const ultimateHack = this.state.ultimateHack ? {
-      runId: this.state.ultimateHack.runId,
-      status: this.state.ultimateHack.status,
-      strategy: this.state.ultimateHack.strategy,
-      step: this.state.ultimateHack.step,
-      startedBy: ultimateHackStarter
-        ? { id: ultimateHackStarter.id, name: ultimateHackStarter.name }
+    const autoSurveyStarter = this.member(this.state.autoSurvey?.startedBy);
+    const autoSurvey = this.state.autoSurvey ? {
+      runId: this.state.autoSurvey.runId,
+      status: this.state.autoSurvey.status,
+      strategy: this.state.autoSurvey.strategy,
+      step: this.state.autoSurvey.step,
+      startedBy: autoSurveyStarter
+        ? { id: autoSurveyStarter.id, name: autoSurveyStarter.name }
         : null,
     } : null;
     return {
@@ -1225,7 +1225,7 @@ export class RoomEngine {
       chat: cloneGameState(this.state.chat),
       activity: cloneGameState(this.state.activity),
       serverTime: now,
-      ultimateHack,
+      autoSurvey,
       ...(replay ? { replay } : {}),
     };
   }

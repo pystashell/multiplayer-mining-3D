@@ -1,6 +1,6 @@
 {
   "name": "3d-multiplayer-mining",
-  "version": "1.0.0",
+  "version": "4.0.0",
   "description": "",
   "private": true,
   "engines": {
@@ -11,10 +11,21 @@
     "start": "wrangler dev",
     "vendor:sync": "node scripts/sync-vendor-assets.mjs",
     "vendor:check": "node scripts/sync-vendor-assets.mjs --check",
-    "test": "npm run vendor:check && node --test tests/*.test.js",
+    "version": "node scripts/sync-release-version.mjs",
+    "version:check": "node scripts/check-release.mjs",
+    "release:check": "node scripts/check-release.mjs",
+    "test:catalog": "node scripts/generate-test-catalog.mjs",
+    "test:catalog:check": "node scripts/generate-test-catalog.mjs --check",
+    "ui:manual": "node scripts/generate-ui-manual.mjs",
+    "ui:manual:check": "node scripts/generate-ui-manual.mjs --check",
+    "ui:approve": "node scripts/record-ui-approval.mjs",
+    "ui:check": "node scripts/check-ui-approval.mjs",
+    "test": "npm run test:catalog:check && npm run ui:manual:check && npm run vendor:check && npm run version:check && node --test tests/*.test.js",
     "test:live": "node tests/live-room-smoke.js",
+    "verify:live-version": "node scripts/verify-live-version.mjs",
     "deploy:dry": "wrangler deploy --dry-run",
-    "deploy": "npm test && wrangler deploy"
+    "predeploy": "npm test && npm run deploy:dry && npm run ui:check",
+    "deploy": "npm run predeploy && wrangler deploy"
   },
   "keywords": [],
   "author": "",
