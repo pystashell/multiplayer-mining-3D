@@ -1,12 +1,12 @@
 import * as THREE from './vendor/three-0.150.0/build/three.module.js';
 import { OrbitControls } from './vendor/three-0.150.0/examples/jsm/controls/OrbitControls.js';
-import { HybridRoomClient } from './local-room-client.js?v=4.0.0';
-import { initialLanguage, randomNickname, translateForInput } from './i18n.js?v=4.0.0';
+import { HybridRoomClient } from './local-room-client.js?v=4.0.1';
+import { initialLanguage, randomNickname, translateForInput } from './i18n.js?v=4.0.1';
 import { GUIDE_ART } from './guide-character.js';
 import {
   detectInitialInputMode,
   inputModeFromPointerType,
-} from './input-mode.js?v=4.0.0';
+} from './input-mode.js?v=4.0.1';
 import {
   interruptedGesturePatch,
   recenterCameraKeepingOffset,
@@ -14,14 +14,14 @@ import {
   shouldStartMousePan,
   shouldStartTouchPan,
   touchHoldDecision,
-} from './camera-gestures.js?v=4.0.0';
+} from './camera-gestures.js?v=4.0.1';
 import { solveMinesweeperHint } from './minesweeper-solver.js';
 import {
   chordOpportunityAt,
   findChordOpportunity,
   findNewChordOpportunity,
   isNewSuccessfulChord,
-} from './tutorial-triggers.js?v=4.0.0';
+} from './tutorial-triggers.js?v=4.0.1';
 import { chooseFloatingAxisPlacement, chooseGuidedCalloutPlacement } from './guided-callout.js';
 import {
   BOARD_ANIMATION_TIMING,
@@ -49,7 +49,7 @@ import {
   settingsWithCenterMode,
   validateControlSettings,
   wheelActionForEvent,
-} from './control-settings.js?v=4.0.0';
+} from './control-settings.js?v=4.0.1';
 import {
   SciFiMusicDirector,
   getSharedAudioContext,
@@ -59,7 +59,8 @@ import {
   persistSfxEnabled,
   persistSfxVolume,
   resumeSharedAudioContext,
-} from './soundtrack.js?v=4.0.0';
+} from './soundtrack.js?v=4.0.1';
+import { MineHitSound } from './mine-hit-sound.js?v=4.0.1';
 
 const TASK_MISSIONS = Object.freeze({
   easy: Object.freeze({ width: 3, height: 3, depth: 3, mineCount: 3, ruleset: 'classic', autoPurge: false, reduction: false, campaign: true }),
@@ -102,6 +103,8 @@ class SoundSynthesizer {
     this.master = null;
     this.volume = loadSfxVolume(storage);
     this.enabled = loadSfxEnabled(storage) && this.volume > 0;
+    this.explosionSound = new MineHitSound({ scope });
+    void this.explosionSound.preload();
   }
 
   init() {
@@ -109,12 +112,13 @@ class SoundSynthesizer {
     if (!this.ctx) return null;
     if (!this.master || this.master.context !== this.ctx) {
       this.master = this.ctx.createGain();
-      this.master.gain.setValueAtTime(this.volume, this.ctx.currentTime);
+      this.master.gain.setValueAtTime(this.enabled ? this.volume : 0, this.ctx.currentTime);
       this.master.connect(this.ctx.destination);
     }
     // Resume from the user gesture when possible. SFX and music share one
     // context so iOS/Safari does not need to keep two audio engines alive.
     void resumeSharedAudioContext(this.scope);
+    void this.explosionSound.load(this.ctx);
     return this.ctx;
   }
 
@@ -198,49 +202,11 @@ class SoundSynthesizer {
   playExplosion() {
     if (!this.enabled) return;
     if (!this.init()) return;
-    
-    const now = this.ctx.currentTime;
-    const bufferSize = this.ctx.sampleRate * 1.5; // 1.5秒爆炸声
-    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    
-    // 生成白噪音
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1;
-    }
-    
-    const noiseNode = this.ctx.createBufferSource();
-    noiseNode.buffer = buffer;
-    
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(800, now);
-    filter.frequency.exponentialRampToValueAtTime(40, now + 1.2);
-    
-    const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(0.4, now);
-    gain.gain.linearRampToValueAtTime(0.01, now + 1.4);
-    
-    // 增加低频震荡增强震撼度
-    const subOsc = this.ctx.createOscillator();
-    const subGain = this.ctx.createGain();
-    subOsc.type = 'sawtooth';
-    subOsc.frequency.setValueAtTime(90, now);
-    subOsc.frequency.linearRampToValueAtTime(30, now + 0.8);
-    subGain.gain.setValueAtTime(0.3, now);
-    subGain.gain.linearRampToValueAtTime(0.01, now + 0.8);
-    
-    noiseNode.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.master);
-    
-    subOsc.connect(subGain);
-    subGain.connect(this.master);
-    
-    noiseNode.start(now);
-    noiseNode.stop(now + 1.5);
-    subOsc.start(now);
-    subOsc.stop(now + 0.8);
+    return this.explosionSound.play(
+      this.ctx,
+      this.master,
+      () => this.enabled && this.volume > 0,
+    );
   }
 
   playWin() {
@@ -584,6 +550,7 @@ class HoloSweeperGame {
     this.bindInputModeTracking();
     const unlockAudioFromGesture = () => {
       if (!music.unlocked || music.context?.state !== 'running') void music.unlock();
+      if (sfx.enabled) sfx.init();
     };
     document.addEventListener('pointerdown', unlockAudioFromGesture, { capture: true, passive: true });
     document.addEventListener('keydown', unlockAudioFromGesture, { capture: true });
@@ -3505,7 +3472,10 @@ class HoloSweeperGame {
         messageKey: 'freeplay.completeMessage',
         factText: this.t('tutorial.completionFact', { time: this.formatTime(this.timer) }),
         buttonKey: 'tutorial.continue',
-      }], { allowReplay: true });
+      }], {
+        allowReplay: true,
+        onComplete: () => this.startNewGame(),
+      });
       return;
     }
     const mission = this.taskMission;

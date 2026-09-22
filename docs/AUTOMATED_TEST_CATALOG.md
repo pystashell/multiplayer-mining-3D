@@ -5,7 +5,7 @@
 
 ## 如何使用
 
-当前登记 **42 个测试套件、302 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
+当前登记 **42 个测试套件、309 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
 
 - “测试内容”直接取自可执行用例名称，因此目录不会与代码分叉。
 - 每个套件都明确说明失败处理和测试何时可能需要评审。
@@ -689,19 +689,24 @@
 
 | 源码 | 测试内容 |
 | --- | --- |
-| [L224](../tests/soundtrack.test.js#L224) | `routes the lobby, every campaign chapter, and multiplayer to its own score` |
-| [L244](../tests/soundtrack.test.js#L244) | `free and custom boards follow their real matrix scale` |
-| [L257](../tests/soundtrack.test.js#L257) | `all six original score profiles have distinct composition signatures` |
-| [L279](../tests/soundtrack.test.js#L279) | `music preference defaults on and persists independently from sound effects` |
-| [L301](../tests/soundtrack.test.js#L301) | `normalizes and persists independent music and sound-effect volumes` |
-| [L331](../tests/soundtrack.test.js#L331) | `doubles the score master again while keeping sound effects independent` |
-| [L349](../tests/soundtrack.test.js#L349) | `fails quiet when AudioContext is unavailable or cannot resume` |
-| [L375](../tests/soundtrack.test.js#L375) | `starts a complete graph, keeps identical scenes, and cleans switched sessions` |
-| [L428](../tests/soundtrack.test.js#L428) | `volume zero stops playback and a restored volume resumes the desired score` |
-| [L464](../tests/soundtrack.test.js#L464) | `changes a running music graph volume without restarting its track` |
-| [L481](../tests/soundtrack.test.js#L481) | `integrates the score with shared Safari-safe audio, room state, and lobby exit` |
-| [L495](../tests/soundtrack.test.js#L495) | `keeps music independently controllable on desktop and in the mobile controls drawer` |
-| [L510](../tests/soundtrack.test.js#L510) | `offers persistent live volume sliders for music and every synthesized sound effect` |
+| [L233](../tests/soundtrack.test.js#L233) | `routes the lobby, every campaign chapter, and multiplayer to its own score` |
+| [L253](../tests/soundtrack.test.js#L253) | `free and custom boards follow their real matrix scale` |
+| [L266](../tests/soundtrack.test.js#L266) | `all six original score profiles have distinct composition signatures` |
+| [L288](../tests/soundtrack.test.js#L288) | `music preference defaults on and persists independently from sound effects` |
+| [L310](../tests/soundtrack.test.js#L310) | `normalizes and persists independent music and sound-effect volumes` |
+| [L340](../tests/soundtrack.test.js#L340) | `doubles the score master again while keeping sound effects independent` |
+| [L358](../tests/soundtrack.test.js#L358) | `fails quiet when AudioContext is unavailable or cannot resume` |
+| [L384](../tests/soundtrack.test.js#L384) | `starts a complete graph, keeps identical scenes, and cleans switched sessions` |
+| [L437](../tests/soundtrack.test.js#L437) | `volume zero stops playback and a restored volume resumes the desired score` |
+| [L473](../tests/soundtrack.test.js#L473) | `changes a running music graph volume without restarting its track` |
+| [L490](../tests/soundtrack.test.js#L490) | `integrates the score with shared Safari-safe audio, room state, and lobby exit` |
+| [L504](../tests/soundtrack.test.js#L504) | `keeps music independently controllable on desktop and in the mobile controls drawer` |
+| [L519](../tests/soundtrack.test.js#L519) | `offers persistent live volume sliders for music and every sound effect` |
+| [L548](../tests/soundtrack.test.js#L548) | `ships the selected mine-hit PCM sample as a shared relative web and Steam asset` |
+| [L563](../tests/soundtrack.test.js#L563) | `mine-hit playback fetches and decodes once, uses the SFX bus, and disconnects ended sources` |
+| [L593](../tests/soundtrack.test.js#L593) | `mine-hit loading fails quietly and retries after fetch or decode errors` |
+| [L615](../tests/soundtrack.test.js#L615) | `mine-hit playback respects mute changes during loading and unavailable audio contexts` |
+| [L635](../tests/soundtrack.test.js#L635) | `the game plays the selected sample through live volume and mute controls without the old synth` |
 
 ### story-art.test.js
 
@@ -727,16 +732,18 @@
 
 | 源码 | 测试内容 |
 | --- | --- |
-| [L18](../tests/success-replay-ui.test.js#L18) | `exposes separate solo and multiplayer replay entries plus an accessible replay HUD` |
-| [L32](../tests/success-replay-ui.test.js#L32) | `makes successful replay a prominent primary action on both completion surfaces` |
-| [L52](../tests/success-replay-ui.test.js#L52) | `offers replay only for won snapshots and routes squad wins to the modal and solo wins to the guide` |
-| [L66](../tests/success-replay-ui.test.js#L66) | `runs replay locally without sending gameplay commands and buffers authoritative snapshots while it plays` |
-| [L85](../tests/success-replay-ui.test.js#L85) | `starts from a clean visual board, locks interaction, and uses the existing reveal and purge animation paths` |
-| [L105](../tests/success-replay-ui.test.js#L105) | `pauses between replay steps, resumes explicitly, and exposes a direct exit` |
-| [L120](../tests/success-replay-ui.test.js#L120) | `finishes with replay celebration and restores the newest authoritative snapshot on completion or exit` |
-| [L138](../tests/success-replay-ui.test.js#L138) | `keeps replay independent from the hard-to-Ultimate-to-Free-Mode campaign progression` |
-| [L158](../tests/success-replay-ui.test.js#L158) | `keeps the replay controls compact on phones and removes competing mobile chrome during playback` |
-| [L174](../tests/success-replay-ui.test.js#L174) | `localizes replay entry, progress, pause, resume, exit, and completion copy in both languages` |
+| [L70](../tests/success-replay-ui.test.js#L70) | `Free Mode Continue Exploration starts exactly one fresh board with the current preset or custom settings` |
+| [L128](../tests/success-replay-ui.test.js#L128) | `campaign completion still advances chapters instead of using the Free Mode restart` |
+| [L145](../tests/success-replay-ui.test.js#L145) | `exposes separate solo and multiplayer replay entries plus an accessible replay HUD` |
+| [L159](../tests/success-replay-ui.test.js#L159) | `makes successful replay a prominent primary action on both completion surfaces` |
+| [L179](../tests/success-replay-ui.test.js#L179) | `offers replay only for won snapshots and routes squad wins to the modal and solo wins to the guide` |
+| [L193](../tests/success-replay-ui.test.js#L193) | `runs replay locally without sending gameplay commands and buffers authoritative snapshots while it plays` |
+| [L212](../tests/success-replay-ui.test.js#L212) | `starts from a clean visual board, locks interaction, and uses the existing reveal and purge animation paths` |
+| [L232](../tests/success-replay-ui.test.js#L232) | `pauses between replay steps, resumes explicitly, and exposes a direct exit` |
+| [L247](../tests/success-replay-ui.test.js#L247) | `finishes with replay celebration and restores the newest authoritative snapshot on completion or exit` |
+| [L265](../tests/success-replay-ui.test.js#L265) | `keeps replay independent from the hard-to-Ultimate-to-Free-Mode campaign progression` |
+| [L285](../tests/success-replay-ui.test.js#L285) | `keeps the replay controls compact on phones and removes competing mobile chrome during playback` |
+| [L301](../tests/success-replay-ui.test.js#L301) | `localizes replay entry, progress, pause, resume, exit, and completion copy in both languages` |
 
 ### tutorial-triggers.test.js
 

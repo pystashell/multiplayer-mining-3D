@@ -28,8 +28,8 @@ test('release identity is synchronized across package, lockfile, and public meta
     publicRelease: publicVersion.release,
   });
 
-  assert.equal(release.version, '4.0.0');
-  assert.equal(release.tag, 'v4.0.0');
+  assert.equal(release.version, packageJson.version);
+  assert.equal(release.tag, releaseTagFor(packageJson.version));
 });
 
 test('release tags use semantic versions and reject mismatches', () => {
@@ -64,9 +64,12 @@ test('all browser cache parameters use the product release version', () => {
 
 test('release check accepts the matching tag and rejects a different tag', () => {
   const root = new URL('..', import.meta.url);
+  const matchingTag = releaseTagFor(packageJson.version);
+  const [major, minor, patch] = packageJson.version.split('.').map(Number);
+  const differentTag = `v${major}.${minor}.${patch + 1}`;
   const success = spawnSync(
     process.execPath,
-    ['scripts/check-release.mjs', 'v4.0.0'],
+    ['scripts/check-release.mjs', matchingTag],
     { cwd: root, encoding: 'utf8' },
   );
   assert.equal(success.status, 0, success.stderr);
@@ -74,9 +77,9 @@ test('release check accepts the matching tag and rejects a different tag', () =>
 
   const failure = spawnSync(
     process.execPath,
-    ['scripts/check-release.mjs', 'v4.0.1'],
+    ['scripts/check-release.mjs', differentTag],
     { cwd: root, encoding: 'utf8' },
   );
   assert.notEqual(failure.status, 0);
-  assert.match(failure.stderr, /release tag v4\.0\.1 != v4\.0\.0/);
+  assert.ok(failure.stderr.includes(`release tag ${differentTag} != ${matchingTag}`), failure.stderr);
 });

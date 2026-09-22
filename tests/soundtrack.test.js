@@ -9,6 +9,7 @@ import {
   SFX_ENABLED_STORAGE_KEY,
   SFX_VOLUME_STORAGE_KEY,
   SciFiMusicDirector,
+  getSharedAudioContext,
   loadAudioVolume,
   loadMusicEnabled,
   loadMusicVolume,
@@ -19,8 +20,10 @@ import {
   persistMusicVolume,
   persistSfxEnabled,
   persistSfxVolume,
+  resumeSharedAudioContext,
 } from '../public/soundtrack.js';
 import { translate } from '../public/i18n.js';
+import { MineHitSound, MINE_HIT_SOUND_PATH } from '../public/mine-hit-sound.js';
 
 const appSource = readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
 const indexSource = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
@@ -133,6 +136,12 @@ class CompleteFakeAudioContext {
     const source = new FakeScheduledSource(this);
     this.sources.push(source);
     return source;
+  }
+
+  async decodeAudioData(bytes) {
+    this.decodedInputs ??= [];
+    this.decodedInputs.push(bytes);
+    return { sample: bytes, duration: 0.436 };
   }
 
   async resume() {
@@ -507,7 +516,7 @@ test('keeps music independently controllable on desktop and in the mobile contro
   assert.match(appSource, /updateAudioControls\(\)[\s\S]*action\.musicOn[\s\S]*action\.musicOff/);
 });
 
-test('offers persistent live volume sliders for music and every synthesized sound effect', () => {
+test('offers persistent live volume sliders for music and every sound effect', () => {
   assert.match(indexSource, /id="sound-volume"[^>]*type="range"[^>]*min="0"[^>]*max="100"[^>]*step="1"/);
   assert.match(indexSource, /id="music-volume"[^>]*type="range"[^>]*min="0"[^>]*max="100"[^>]*step="1"/);
   assert.match(indexSource, /id="sound-volume-value"[^>]*for="sound-volume"/);
@@ -521,8 +530,9 @@ test('offers persistent live volume sliders for music and every synthesized soun
     appSource.indexOf('const sfx = new SoundSynthesizer'),
   );
   assert.equal((sfxSource.match(/connect\(this\.ctx\.destination\)/g) ?? []).length, 1);
-  assert.ok((sfxSource.match(/connect\(this\.master\)/g) ?? []).length >= 6);
-  assert.match(sfxSource, /subGain\.connect\(this\.master\)/);
+  assert.equal((sfxSource.match(/connect\(this\.master\)/g) ?? []).length, 4);
+  assert.match(sfxSource, /this\.explosionSound\.play\(\s*this\.ctx,\s*this\.master/);
+  assert.doesNotMatch(sfxSource, /subOsc|subGain|bufferSize = this\.ctx\.sampleRate \* 1\.5/);
   assert.match(sfxSource, /const nextValue = this\.enabled \? this\.volume : 0/);
   assert.match(styleSource, /\.audio-volume-controls\s*\{[^}]*grid-column:\s*1 \/ -1/s);
   assert.match(styleSource, /auto-survey-active[\s\S]*#sound-volume[\s\S]*#music-volume[\s\S]*replay-active/s);
@@ -533,4 +543,129 @@ test('offers persistent live volume sliders for music and every synthesized soun
   assert.equal(translate('en', 'action.audioLevels'), 'Audio Levels');
   assert.equal(translate('en', 'action.soundVolume'), 'Sound Effects Volume');
   assert.equal(translate('en', 'action.musicVolume'), 'Music Volume');
+});
+
+test('ships the selected mine-hit PCM sample as a shared relative web and Steam asset', () => {
+  const wav = readFileSync(new URL(`../public/${MINE_HIT_SOUND_PATH}`, import.meta.url));
+  assert.equal(wav.toString('ascii', 0, 4), 'RIFF');
+  assert.equal(wav.toString('ascii', 8, 12), 'WAVE');
+  assert.equal(wav.readUInt16LE(20), 1);
+  assert.equal(wav.readUInt16LE(22), 1);
+  assert.equal(wav.readUInt32LE(24), 44100);
+  assert.equal(wav.readUInt16LE(34), 16);
+  assert.equal(wav.readUInt32LE(40), wav.length - 44);
+  assert.ok(wav.length > 44);
+  assert.match(appSource, /import \{ MineHitSound \} from '\.\/mine-hit-sound\.js\?v=/);
+  assert.match(appSource, /void this\.explosionSound\.preload\(\)/);
+  assert.match(appSource, /unlockAudioFromGesture[\s\S]*if \(sfx\.enabled\) sfx\.init\(\)/);
+});
+
+test('mine-hit playback fetches and decodes once, uses the SFX bus, and disconnects ended sources', async () => {
+  const requests = [];
+  const bytes = new ArrayBuffer(12);
+  const sound = new MineHitSound({ scope: { fetch: async (url) => {
+    requests.push(url);
+    return { ok: true, arrayBuffer: async () => bytes };
+  } } });
+  const context = new CompleteFakeAudioContext();
+  const master = context.createGain();
+  await Promise.all([sound.preload(), sound.load(context), sound.play(context, master)]);
+  assert.equal(await sound.play(context, master), true);
+  assert.equal(requests.length, 1);
+  assert.ok(requests[0].endsWith(MINE_HIT_SOUND_PATH));
+  assert.equal(context.decodedInputs.length, 1);
+  assert.notEqual(context.decodedInputs[0], bytes);
+  assert.equal(context.sources.length, 2);
+  for (const source of context.sources) {
+    assert.equal(source.buffer, await sound.load(context));
+    assert.deepEqual(source.connections, [master]);
+    assert.deepEqual(source.startedAt, [context.currentTime]);
+    source.listeners.get('ended')();
+    assert.equal(source.disconnected, true);
+  }
+  const replacement = new CompleteFakeAudioContext();
+  await sound.load(replacement);
+  assert.equal(replacement.decodedInputs.length, 1);
+  assert.equal(requests.length, 1);
+  assert.equal(bytes.byteLength, 12);
+});
+
+test('mine-hit loading fails quietly and retries after fetch or decode errors', async () => {
+  let calls = 0;
+  const sound = new MineHitSound({ scope: { fetch: async () => {
+    calls += 1;
+    if (calls === 1) return { ok: false, status: 404 };
+    return { ok: true, arrayBuffer: async () => new ArrayBuffer(12) };
+  } } });
+  const context = new CompleteFakeAudioContext();
+  const master = context.createGain();
+  assert.equal(await sound.play(context, master), false);
+  assert.equal(await sound.play(context, master), true);
+  assert.equal(calls, 2);
+  const failedContext = new CompleteFakeAudioContext();
+  failedContext.decodeAudioData = async () => { throw new Error('invalid WAV'); };
+  assert.equal(await sound.load(failedContext), null);
+  failedContext.decodeAudioData = CompleteFakeAudioContext.prototype.decodeAudioData;
+  assert.ok(await sound.load(failedContext));
+  assert.equal(calls, 2);
+  const missingFetch = new MineHitSound({ scope: {} });
+  assert.equal(await missingFetch.play(context, master), false);
+});
+
+test('mine-hit playback respects mute changes during loading and unavailable audio contexts', async () => {
+  let resolveBytes;
+  const pending = new Promise((resolve) => { resolveBytes = resolve; });
+  const sound = new MineHitSound({ scope: { fetch: async () => ({ ok: true, arrayBuffer: () => pending }) } });
+  const context = new CompleteFakeAudioContext();
+  const master = context.createGain();
+  let enabled = true;
+  const playing = sound.play(context, master, () => enabled);
+  enabled = false;
+  resolveBytes(new ArrayBuffer(12));
+  assert.equal(await playing, false);
+  assert.equal(context.sources.length, 0);
+  assert.equal(await sound.play(null, master), false);
+  context.state = 'suspended';
+  assert.equal(await sound.play(context, master), false);
+  context.state = 'closed';
+  assert.equal(await sound.play(context, master), false);
+  assert.equal(context.sources.length, 0);
+});
+
+test('the game plays the selected sample through live volume and mute controls without the old synth', async () => {
+  const sfxSource = appSource.slice(
+    appSource.indexOf('class SoundSynthesizer'),
+    appSource.indexOf('const sfx = new SoundSynthesizer'),
+  );
+  const SoundSynthesizer = new Function(
+    'MineHitSound', 'getSharedAudioContext', 'resumeSharedAudioContext',
+    'loadSfxVolume', 'loadSfxEnabled', 'persistSfxVolume', 'persistSfxEnabled',
+    `${sfxSource}\nreturn SoundSynthesizer;`,
+  )(MineHitSound, getSharedAudioContext, resumeSharedAudioContext,
+    loadSfxVolume, loadSfxEnabled, persistSfxVolume, persistSfxEnabled);
+  const harness = createAudioHarness();
+  harness.scope.fetch = async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(12) });
+  try {
+    const sfx = new SoundSynthesizer({ scope: harness.scope, storage: null });
+    sfx.setVolume(0.4);
+    assert.equal(await sfx.playExplosion(), true);
+    const context = harness.contexts[0];
+    assert.equal(context.sources.length, 1);
+    assert.ok(context.sources[0].buffer);
+    assert.deepEqual(context.sources[0].connections, [sfx.master]);
+    assert.equal(sfx.master.gain.value, 0.4);
+    sfx.setVolume(0.2);
+    assert.equal(sfx.master.gain.value, 0.2);
+    sfx.setEnabled(false);
+    await sfx.playExplosion();
+    assert.equal(sfx.master.gain.value, 0);
+    assert.equal(context.sources.length, 1);
+    sfx.setEnabled(true);
+    assert.equal(await sfx.playExplosion(), true);
+    sfx.setVolume(0);
+    await sfx.playExplosion();
+    assert.equal(context.sources.length, 2);
+  } finally {
+    harness.close();
+  }
 });
