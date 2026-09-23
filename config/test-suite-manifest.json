@@ -193,6 +193,10 @@
       "category": "media-assets",
       "purposeZh": "验证各场景配乐路由、音色差异、偏好与音量持久化、音频失败回退和 UI 控制。"
     },
+    "steam-packaging.test.js": {
+      "category": "release-security",
+      "purposeZh": "验证 Steam 单机运行时锁定、桌面安全边界、存档恢复 URL、SteamPipe 预览配置和网页资源打包一致性。"
+    },
     "story-art.test.js": {
       "category": "media-assets",
       "purposeZh": "验证每条故事路线都有配置化插图、对话图尺寸适用，并禁止应用代码写死当前素材路径。"

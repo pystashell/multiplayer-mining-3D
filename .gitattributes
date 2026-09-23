@@ -1,0 +1,6 @@
+# Generated text is checked byte-for-byte by the release gates on Windows.
+docs/AUTOMATED_TEST_CATALOG.md text eol=lf
+docs/PREDEPLOY_UI_MANUAL.md text eol=lf
+public/vendor/**/*.js text eol=lf
+public/vendor/**/LICENSE text eol=lf
+public/vendor/manifest.json text eol=lf

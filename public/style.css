@@ -1321,6 +1321,10 @@ body[data-story-art="squad"] .tutorial-portrait img { object-position: 48% 29%; 
   gap: 8px;
 }
 
+body[data-multiplayer-enabled="false"] .lobby-mode-switch {
+  grid-template-columns: 1fr;
+}
+
 .lobby-mode-card {
   display: flex;
   align-items: center;

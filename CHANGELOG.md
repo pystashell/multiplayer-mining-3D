@@ -2,6 +2,11 @@
 
 ## [4.1.0] - Unreleased
 
+### Added
+
+- An offline Windows Steam content build generated from the same web `public/` source,
+  with a desktop shell, package verification, and executable smoke test.
+
 ### Changed
 
 - The in-game Zero Domain brand and lobby protocol label follow the selected

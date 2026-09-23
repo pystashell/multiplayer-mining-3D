@@ -1,0 +1,42 @@
+name: Steam Windows package
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - "codex/v*-steam-*"
+
+permissions:
+  contents: read
+
+jobs:
+  package-windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Build and smoke-test Steam content
+        run: npm run steam:build
+
+      - name: Upload SteamPipe content
+        uses: actions/upload-artifact@v4
+        with:
+          name: zero-domain-protocol-steam-windows-x64-${{ github.sha }}
+          path: |
+            dist/steam/content
+            dist/steam/build-manifest.json
+          if-no-files-found: error
+          retention-days: 14

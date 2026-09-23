@@ -33,6 +33,26 @@ npm run dev
 
 打开 `http://127.0.0.1:8787`。
 
+## Steam 桌面版
+
+Steam 版直接包装同一份 `public/`，不会维护第二套前端。桌面包版本直接继承网页版 `package.json`，没有独立 Steam 版本号。日常主力开发网页版后，
+用一个命令同步版本号、共享规则并生成完整 Windows Steam 内容包：
+
+```bash
+npm run steam:dev
+npm run steam:from-web
+```
+
+`steam:from-web` 依次执行版本同步、`worker/room-engine.js` 到浏览器/Steam
+规则镜像同步、完整回归测试、Electron 打包、内容校验和真实 EXE 烟测。
+底层的 `npm run steam:build` 保持严格模式，供 CI 检查仓库中的生成文件是否已经提交。
+
+构建产物位于 `dist/steam/content/`。当前 Steam 发布目标严格锁定为本地单机：多人入口
+不可见、桌面壳拒绝外部网络请求，并且打包校验会阻止 Lobby、P2P 和 Steamworks 桥接
+模块进入交付物。现有网页版 Cloudflare 多人模式保持不变。未来如增加 Steam 联机，将
+作为独立版本重新设计、测试和发布。Steam Direct、商店素材与 SteamPipe 见
+[Steam 包装与上架流程](docs/STEAM_RELEASE.md)。
+
 ## 验证
 
 ```bash
