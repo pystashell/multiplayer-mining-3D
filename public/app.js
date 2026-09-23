@@ -60,6 +60,7 @@ import {
   persistSfxVolume,
   resumeSharedAudioContext,
 } from './soundtrack.js?v=4.1.0';
+import { resolveRuntimeProfile } from './runtime-profile.js?v=4.1.0';
 import { MineHitSound } from './mine-hit-sound.js?v=4.1.0';
 import { installModalFocusManager } from './modal-focus.js?v=4.1.0';
 
@@ -387,6 +388,7 @@ class ParticleSystem {
 class HoloSweeperGame {
   constructor() {
     this.language = initialLanguage();
+    this.runtimeProfile = resolveRuntimeProfile();
     this.inputMode = detectInitialInputMode({
       matchMedia: window.matchMedia?.bind(window),
       maxTouchPoints: navigator.maxTouchPoints,
@@ -531,6 +533,7 @@ class HoloSweeperGame {
     this.clock = new THREE.Clock();
     
     // UI 绑定
+    this.applyRuntimeProfile();
     this.bindUI();
     this.syncModalFocus = installModalFocusManager();
     this.applyStoryArt();
@@ -539,7 +542,9 @@ class HoloSweeperGame {
     this.initThree();
     // 开启循环渲染
     this.animate();
-    const invitedRoom = this.roomClient.roomFromUrl();
+    const invitedRoom = this.runtimeProfile.multiplayerEnabled
+      ? this.roomClient.roomFromUrl()
+      : '';
     if (invitedRoom) {
       document.getElementById('input-room').value = invitedRoom;
       this.selectLobbyMode('squad');
@@ -865,6 +870,28 @@ class HoloSweeperGame {
     window.addEventListener('keydown', (event) => this.handleControlShortcut(event));
   }
 
+  applyRuntimeProfile() {
+    document.body.dataset.distribution = this.runtimeProfile.distribution;
+    document.body.dataset.multiplayerEnabled = String(this.runtimeProfile.multiplayerEnabled);
+    document.body.dataset.multiplayerTransport = this.runtimeProfile.multiplayerTransport;
+    if (this.runtimeProfile.multiplayerEnabled) return;
+
+    const multiplayerButton = document.getElementById('btn-lobby-multiplayer');
+    multiplayerButton.hidden = true;
+    multiplayerButton.disabled = true;
+    multiplayerButton.setAttribute('aria-hidden', 'true');
+    multiplayerButton.setAttribute('aria-disabled', 'true');
+    document.getElementById('lobby-multiplayer-panel').classList.add('hidden');
+    document.querySelector('.lobby-subtitle')
+      ?.setAttribute('data-i18n', 'lobby.subtitle.singlePlayer');
+
+    const url = new URL(location.href);
+    if (url.searchParams.has('room')) {
+      url.searchParams.delete('room');
+      history.replaceState(null, '', url);
+    }
+  }
+
   openControlSettings() {
     this.closeMobilePanels();
     this.pendingControlSettings = cloneControlSettings(this.controlSettings);
@@ -1117,6 +1144,7 @@ class HoloSweeperGame {
   }
 
   selectLobbyMode(mode) {
+    if (mode === 'squad' && !this.runtimeProfile.multiplayerEnabled) mode = 'solo';
     const solo = mode !== 'squad';
     document.getElementById('btn-lobby-task').classList.toggle('active', solo);
     document.getElementById('btn-lobby-task').setAttribute('aria-selected', String(solo));

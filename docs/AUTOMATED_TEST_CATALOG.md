@@ -5,7 +5,7 @@
 
 ## 如何使用
 
-当前登记 **42 个测试套件、311 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
+当前登记 **43 个测试套件、315 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
 
 - “测试内容”直接取自可执行用例名称，因此目录不会与代码分叉。
 - 每个套件都明确说明失败处理和测试何时可能需要评审。
@@ -709,6 +709,21 @@
 | [L593](../tests/soundtrack.test.js#L593) | `mine-hit loading fails quietly and retries after fetch or decode errors` |
 | [L615](../tests/soundtrack.test.js#L615) | `mine-hit playback respects mute changes during loading and unavailable audio contexts` |
 | [L635](../tests/soundtrack.test.js#L635) | `the game plays the selected sample through live volume and mute controls without the old synth` |
+
+### steam-packaging.test.js
+
+- 分类：版本、供应链、安全与发布门禁
+- 自动化层级：交付链自动化
+- 套件目的：验证 Steam 单机运行时锁定、桌面安全边界、存档恢复 URL、SteamPipe 预览配置和网页资源打包一致性。
+- 任一用例失败：停止发布，定位版本漂移、依赖漂移、安全头、工作流顺序或部署门禁缺失。不得跳过失败步骤；修复后从完整测试重新开始。
+- 有效性评审：仅在正式更换发布平台、版本规则、安全基线或依赖管理方式时评审更新，并保留同等或更强的门禁。
+
+| 源码 | 测试内容 |
+| --- | --- |
+| [L23](../tests/steam-packaging.test.js#L23) | `runtime profiles keep web multiplayer separate from the locked Steam single-player release` |
+| [L42](../tests/steam-packaging.test.js#L42) | `desktop resume URLs persist only canonical local solo save identifiers` |
+| [L54](../tests/steam-packaging.test.js#L54) | `SteamPipe configuration defaults to preview and maps the verified content directory recursively` |
+| [L83](../tests/steam-packaging.test.js#L83) | `desktop shell and package scripts enforce an offline-only Steam release boundary` |
 
 ### story-art.test.js
 

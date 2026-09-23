@@ -1,8 +1,10 @@
 {
   "name": "3d-multiplayer-mining",
+  "productName": "Zero Domain Protocol: Sector Purge",
   "version": "4.1.0",
   "description": "A local-first 3D minesweeper campaign with an optional web multiplayer mode.",
   "private": true,
+  "main": "desktop/main.mjs",
   "engines": {
     "node": ">=22.13.0"
   },
@@ -25,7 +27,14 @@
     "verify:live-version": "node scripts/verify-live-version.mjs",
     "deploy:dry": "wrangler deploy --dry-run",
     "predeploy": "npm test && npm run deploy:dry && npm run ui:check",
-    "deploy": "npm run predeploy && wrangler deploy"
+    "deploy": "npm run predeploy && wrangler deploy",
+    "steam:dev": "electron .",
+    "steam:package": "npm test && node scripts/package-steam.mjs",
+    "steam:verify": "node scripts/verify-steam-package.mjs",
+    "steam:smoke": "node scripts/smoke-steam-package.mjs",
+    "steam:build": "npm run steam:package && npm run steam:verify && npm run steam:smoke",
+    "steam:from-web": "npm run version && npm run vendor:sync && npm run steam:build",
+    "steam:steampipe:config": "node scripts/generate-steampipe-config.mjs"
   },
   "keywords": [],
   "author": "",
@@ -36,6 +45,8 @@
     "@fontsource/orbitron": "5.2.8",
     "@fontsource/share-tech-mono": "5.2.7",
     "three": "0.150.0",
-    "wrangler": "4.110.0"
+    "wrangler": "4.110.0",
+    "@electron/packager": "20.0.4",
+    "electron": "43.2.0"
   }
 }
