@@ -1,0 +1,22 @@
+{
+  "browser": "153.0.8010.53",
+  "testedAt": "2026-09-23T00:22:57.962Z",
+  "results": [
+    {
+      "profile": "desktop",
+      "consecutiveRestarts": 2,
+      "replayPauseResumeExit": "passed",
+      "errors": [],
+      "failed": [],
+      "sampleRequests": 1
+    },
+    {
+      "profile": "mobile",
+      "consecutiveRestarts": 2,
+      "replayPauseResumeExit": "passed",
+      "errors": [],
+      "failed": [],
+      "sampleRequests": 1
+    }
+  ]
+}

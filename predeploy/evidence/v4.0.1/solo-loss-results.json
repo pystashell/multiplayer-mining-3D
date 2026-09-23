@@ -1,0 +1,19 @@
+{
+  "browser": "153.0.8010.53",
+  "testedAt": "2026-09-23T00:37:21.719Z",
+  "rounds": [
+    {
+      "round": 0,
+      "attempts": 22,
+      "progress": "29%",
+      "lost": true,
+      "won": false
+    }
+  ],
+  "lossProgress": "29%",
+  "rewindProgress": "29%",
+  "rewindPassed": true,
+  "errors": [],
+  "failed": [],
+  "passed": true
+}

@@ -1,0 +1,101 @@
+{
+  "browser": "153.0.8010.53",
+  "testedAt": "2026-09-23T00:47:45.447Z",
+  "cases": [
+    {
+      "name": "desktop-easy",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "mission": "easy",
+      "selectedArt": "url(\"assets/guide-zero-domain-cartographer.png\")",
+      "horizontalOverflow": 0,
+      "dialogueTitle": "陆霁",
+      "art": "assets/guide-zero-domain-cartographer.png",
+      "message": "“接下来我会直接接入你的任务频道。别只看说明书——每个操作都亲手做一次，我们再进入真正的零域航道。”",
+      "dialogInsideViewport": true,
+      "buttonInsideViewport": true,
+      "focusInside": true,
+      "errors": [],
+      "failed": [],
+      "passed": true
+    },
+    {
+      "name": "compact-medium",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "mission": "medium",
+      "selectedArt": "url(\"assets/parallax-neighbor-perspective.png\")",
+      "horizontalOverflow": 0,
+      "dialogueTitle": "MISSION 02 // 握手迷宫",
+      "art": "assets/parallax-neighbor-perspective.png",
+      "message": "“幻影端口给出的坐标有效。握手迷宫把路径信标拆进了五层矩阵，必须从不同角度逐层验证。”",
+      "dialogInsideViewport": true,
+      "buttonInsideViewport": true,
+      "focusInside": true,
+      "errors": [],
+      "failed": [],
+      "passed": true
+    },
+    {
+      "name": "desktop-hard",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "mission": "hard",
+      "selectedArt": "url(\"assets/parallax-final-protocol.png\")",
+      "horizontalOverflow": 0,
+      "dialogueTitle": "MISSION 03 // 终末协议",
+      "art": "assets/parallax-final-protocol.png",
+      "message": "“最终目标确认。七层核心矩阵、三十个异常节点，坐标正在持续漂移。”",
+      "dialogInsideViewport": true,
+      "buttonInsideViewport": true,
+      "focusInside": true,
+      "errors": [],
+      "failed": [],
+      "passed": true
+    },
+    {
+      "name": "mobile-390",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "mission": "easy",
+      "selectedArt": "url(\"assets/guide-zero-domain-cartographer.png\")",
+      "horizontalOverflow": 0,
+      "dialogueTitle": "陆霁",
+      "art": "assets/guide-zero-domain-cartographer.png",
+      "message": "“接下来我会直接接入你的任务频道。别只看说明书——每个操作都亲手做一次，我们再进入真正的零域航道。”",
+      "dialogInsideViewport": true,
+      "buttonInsideViewport": true,
+      "focusInside": true,
+      "errors": [],
+      "failed": [],
+      "passed": true
+    },
+    {
+      "name": "mobile-360",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "mission": "easy",
+      "selectedArt": "url(\"assets/guide-zero-domain-cartographer.png\")",
+      "horizontalOverflow": 0,
+      "dialogueTitle": "陆霁",
+      "art": "assets/guide-zero-domain-cartographer.png",
+      "message": "“接下来我会直接接入你的任务频道。别只看说明书——每个操作都亲手做一次，我们再进入真正的零域航道。”",
+      "dialogInsideViewport": true,
+      "buttonInsideViewport": true,
+      "focusInside": true,
+      "errors": [],
+      "failed": [],
+      "passed": true
+    }
+  ]
+}

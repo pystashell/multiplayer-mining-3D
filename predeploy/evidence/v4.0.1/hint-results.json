@@ -1,0 +1,22 @@
+{
+  "browser": "153.0.8010.53",
+  "testedAt": "2026-09-23T00:41:37.798Z",
+  "cases": [
+    {
+      "name": "desktop",
+      "hintLength": 104,
+      "collapsedExpandedClosed": true,
+      "errors": [],
+      "failed": [],
+      "passed": true
+    },
+    {
+      "name": "mobile",
+      "hintLength": 104,
+      "collapsedExpandedClosed": true,
+      "errors": [],
+      "failed": [],
+      "passed": true
+    }
+  ]
+}

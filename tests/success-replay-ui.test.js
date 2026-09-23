@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { RoomEngine } from '../public/vendor/game-core/room-engine.js';
 
 const appSource = readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
 const indexSource = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
@@ -14,6 +15,132 @@ function sourceBetween(source, startMarker, endMarker) {
   assert.ok(end > start, `missing source marker: ${endMarker}`);
   return source.slice(start, end);
 }
+
+function completionHarness(config, { custom = false } = {}) {
+  const elements = new Map();
+  const document = {
+    getElementById(id) {
+      if (!elements.has(id)) {
+        const classes = new Set();
+        elements.set(id, {
+          style: {}, value: '', textContent: '',
+          classList: {
+            add: (name) => classes.add(name),
+            remove: (name) => classes.delete(name),
+            contains: (name) => classes.has(name),
+            toggle: (name, force) => force ? classes.add(name) : classes.delete(name),
+          },
+        });
+      }
+      return elements.get(id);
+    },
+    querySelector: () => custom ? null : {
+      dataset: { w: String(config.width), h: String(config.height), d: String(config.depth), m: String(config.mineCount) },
+    },
+  };
+  if (custom) document.getElementById('custom-toggle').classList.add('active');
+  for (const [id, value] of Object.entries({
+    'input-w': config.width, 'input-h': config.height, 'input-d': config.depth, 'input-m': config.mineCount,
+  })) document.getElementById(id).value = String(value);
+  const methods = new Function('document', `return {
+    ${sourceBetween(appSource, '  showTaskCompletion() {', '  enterFreeModeAfterCampaign() {').trim()},
+    ${sourceBetween(appSource, '  showGuideDialogue(', '  renderGuideDialogue() {').trim()},
+    ${sourceBetween(appSource, '  renderGuideDialogue() {', '  currentDialogueRequiresExplicitAction() {').trim()},
+    ${sourceBetween(appSource, '  advanceGuideDialogue() {', '  finishGuideDialogue() {').trim()},
+    ${sourceBetween(appSource, '  finishGuideDialogue() {', '  skipTutorial() {').trim()},
+    ${sourceBetween(appSource, '  startNewGame() {', '  buildGridLocal() {').trim()},
+    ${sourceBetween(appSource, '  missionFromConfig(config) {', '  configMatchesMission(').trim()},
+  };`)(document);
+  const game = Object.assign(methods, {
+    gameMode: 'solo', taskFlow: 'freeplay', taskMission: 'hard', timer: 251,
+    width: config.width, height: config.height, depth: config.depth, mineCount: config.mineCount,
+    ruleset: config.ruleset, autoPurgeEnabled: config.autoPurge, reductionEnabled: config.reduction,
+    currentPlayerId: 'host', boardAnimationGeneration: 7,
+    cellRevealAnimations: ['old-reveal'], sectorPurgeAnimations: ['old-purge'], revealAnimationEndsAt: 123,
+    isInteractionLocked: true, dialogueState: null,
+    autoSurveyRunning: () => false,
+    hasSuccessReplay: () => true,
+    setTutorialArt() {}, setTutorialActionHint() {},
+    t: (key) => key, formatTime: () => '04:11',
+    handleRoomError(error) { throw error; },
+  });
+  return { game, document };
+}
+
+test('Free Mode Continue Exploration starts exactly one fresh board with the current preset or custom settings', () => {
+  const configs = [
+    { width: 3, height: 3, depth: 3, mineCount: 3, ruleset: 'classic', autoPurge: false, reduction: false },
+    { width: 5, height: 5, depth: 5, mineCount: 10, ruleset: 'sector', autoPurge: true, reduction: false },
+    { width: 7, height: 7, depth: 7, mineCount: 30, ruleset: 'reduction', autoPurge: true, reduction: true },
+    { width: 4, height: 6, depth: 3, mineCount: 11, ruleset: 'reduction', autoPurge: false, reduction: true },
+  ].map((config) => ({ ...config, campaign: false }));
+  for (const [index, config] of configs.entries()) {
+    const engine = RoomEngine.create({ code: 'NEXT01', hostId: 'host', hostName: 'Host', tokenHash: 'test', mode: 'solo', now: 1000 });
+    let sequence = 0;
+    const apply = (command) => {
+      sequence += 1;
+      return engine.apply('host', command, { id: `continue-${sequence}`, sequence, now: 1000 + sequence }).snapshot;
+    };
+    const { game, document } = completionHarness(config, { custom: index === 3 });
+    const commands = [];
+    game.roomClient = { send(command) { commands.push(command); apply(command); return Promise.resolve(); } };
+    apply({ op: 'restart', config });
+    // Run two consecutive wins to protect the repeatable Free Mode loop.
+    for (let round = 0; round < 2; round += 1) {
+      let snapshot = apply({ op: 'auto_survey_start' });
+      const limit = config.width * config.height * config.depth * 2 + 10;
+      for (let step = 0; snapshot.phase !== 'won' && step < limit; step += 1) {
+        snapshot = apply({ op: 'auto_survey_step', runId: snapshot.autoSurvey.runId });
+      }
+      assert.equal(snapshot.phase, 'won');
+      assert.ok(snapshot.replay?.steps.length > 0);
+      game.roomSnapshot = snapshot;
+      game.showTaskCompletion();
+      assert.equal(game.dialogueState.allowReplay, true);
+      assert.equal(commands.length, round, 'showing completion must not discard the replay');
+      game.renderGuideDialogue();
+      assert.equal(commands.length, round, 'rerendering completion must not restart the game');
+      assert.equal(document.getElementById('btn-tutorial-next').textContent, 'tutorial.continue');
+      game.advanceGuideDialogue();
+      assert.equal(commands.length, round + 1, 'Continue Exploration must send a restart');
+      assert.deepEqual(commands.at(-1), { op: 'restart', config });
+      assert.equal(game.dialogueState, null);
+      assert.equal(document.getElementById('tutorial-overlay').classList.contains('hidden'), true);
+      assert.equal(game.isInteractionLocked, true, 'wait for the new authoritative snapshot');
+      assert.deepEqual(game.cellRevealAnimations, []);
+      assert.deepEqual(game.sectorPurgeAnimations, []);
+      assert.equal(game.revealAnimationEndsAt, 0);
+      const fresh = engine.snapshot(1000 + sequence);
+      assert.equal(fresh.phase, 'ready');
+      assert.deepEqual(fresh.config, config);
+      assert.equal(fresh.remainingMineCount, config.mineCount);
+      assert.deepEqual(fresh.revealed, []);
+      assert.deepEqual(fresh.flags, []);
+      assert.deepEqual(fresh.purged, []);
+      assert.equal(fresh.startedAt, null);
+      assert.equal(fresh.replay, undefined);
+      game.advanceGuideDialogue();
+      assert.equal(commands.length, round + 1, 'duplicate clicks cannot start another board');
+    }
+  }
+});
+
+test('campaign completion still advances chapters instead of using the Free Mode restart', () => {
+  for (const [mission, next] of [['easy', 'medium'], ['medium', 'hard'], ['hard', 'ultimate'], ['ultimate', 'freeplay']]) {
+    const { game } = completionHarness({ width: 3, height: 3, depth: 3, mineCount: 3 });
+    const transitions = [];
+    game.taskFlow = 'campaign';
+    game.taskMission = mission;
+    game.startNewGame = () => assert.fail('campaign must not use Free Mode restart');
+    game.advanceTaskMission = (value) => transitions.push(value);
+    game.enterFreeModeAfterCampaign = () => transitions.push('freeplay');
+    game.showTaskCompletion();
+    assert.deepEqual(transitions, []);
+    const count = game.dialogueState.steps.length;
+    for (let step = 0; step < count; step += 1) game.advanceGuideDialogue();
+    assert.deepEqual(transitions, [next]);
+  }
+});
 
 test('exposes separate solo and multiplayer replay entries plus an accessible replay HUD', () => {
   assert.match(indexSource, /id="btn-modal-replay"[^>]*replay-entry-button[^>]*hidden[^>]*data-i18n="replay\.button"/);

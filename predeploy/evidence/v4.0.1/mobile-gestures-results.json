@@ -1,0 +1,27 @@
+{
+  "browser": "153.0.8010.53",
+  "testedAt": "2026-09-23T00:34:43.797Z",
+  "checks": [
+    {
+      "id": "flag-mode-tap",
+      "minesBefore": "0 / 3",
+      "minesAfter": "1 / 3",
+      "passed": true
+    },
+    {
+      "id": "long-hold-does-not-dig-or-flag",
+      "passed": true
+    },
+    {
+      "id": "hold-then-pan-does-not-dig",
+      "passed": true
+    },
+    {
+      "id": "two-finger-gesture",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "failed": [],
+  "passed": true
+}

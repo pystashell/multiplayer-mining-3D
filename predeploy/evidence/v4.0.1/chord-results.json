@@ -1,0 +1,20 @@
+{
+  "browser": "153.0.8010.53",
+  "testedAt": "2026-09-23T00:50:25.362Z",
+  "method": "real Chrome left+right gesture on a visible numbered cube; game instance exposed only for measurement",
+  "target": {
+    "x": 720,
+    "y": 449.9049229362202,
+    "cell": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "clue": 3
+  },
+  "chordCount": 1,
+  "progress": "50%",
+  "errors": [],
+  "failed": [],
+  "passed": true
+}

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Zero Domain Protocol: Sector Purge</title>
   <meta name="description" content="旋转零域矩阵，从不同视角验证数字证据并清除异常节点。">
-  <link rel="stylesheet" href="style.css?v=4.0.0">
+  <link rel="stylesheet" href="style.css?v=4.0.1">
   <!-- 错误捕获脚本：如果发生任何 JS 运行错误，在页面顶部弹出红色提示栏 -->
   <script>
     window.addEventListener('error', function(e) {
@@ -339,7 +339,7 @@
   </nav>
 
   <!-- 游戏结束/胜利 悬浮遮罩层 -->
-  <div id="modal-overlay" class="modal-overlay hidden">
+  <div id="modal-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1">
     <div id="game-modal" class="game-modal glass">
       <div class="modal-icon" id="modal-icon">💀</div>
       <h2 id="modal-title" class="modal-title text-glow-red" data-i18n="result.lostTitle">矩阵崩溃</h2>
@@ -364,7 +364,7 @@
     </div>
   </div>
   <!-- 恶搞：看广告复活 悬浮遮罩层 -->
-  <div id="ad-modal-overlay" class="modal-overlay hidden">
+  <div id="ad-modal-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="ad-modal-title" tabindex="-1">
     <div id="ad-modal" class="game-modal glass">
       <div class="modal-icon" style="color: #ffaa00; text-shadow: 0 0 20px #ffaa00;">📺</div>
       <h2 id="ad-modal-title" class="modal-title" style="color: #ffaa00; text-shadow: 0 0 10px #ffaa00;" data-i18n="revive.title">看广告复活？</h2>
@@ -379,13 +379,13 @@
 
   
   <!-- 联机大厅 悬浮遮罩层 -->
-  <div id="lobby-overlay" class="modal-overlay">
+  <div id="lobby-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="lobby-title" tabindex="-1">
     <div id="lobby-modal" class="game-modal glass guide-lobby" style="width: 420px; padding: 40px;">
       <div class="lobby-protocol" data-i18n="lobby.protocol">ZERO DOMAIN // 测绘终端</div>
       <div class="modal-icon lobby-icon">⌁</div>
       <button id="btn-control-settings-lobby" class="btn-secondary lobby-control-settings" type="button" aria-label="键位设置" title="键位设置" data-i18n-aria-label="controls.open" data-i18n-title="controls.openTitle">⚙</button>
       <button id="btn-language-toggle-lobby" class="btn-secondary" style="position:absolute; top:16px; right:16px; padding:5px 9px; min-height:0; font-size:12px;" data-i18n="language.toggle">EN</button>
-      <h2 class="modal-title lobby-title" data-i18n="lobby.title">零域：测绘协议</h2>
+      <h2 id="lobby-title" class="modal-title lobby-title" data-i18n="lobby.title">零域：测绘协议</h2>
       <p class="modal-message lobby-subtitle" data-i18n="lobby.subtitle">选择任务模式接受导航员的个人引导，或进入多人联机模式组建测绘小队。</p>
 
       <div class="lobby-mode-switch" role="tablist" aria-label="游戏模式" data-i18n-aria-label="lobby.modeLabel">
@@ -459,7 +459,7 @@
     </div>
   </div>
 
-  <div id="control-settings-overlay" class="control-settings-overlay hidden">
+  <div id="control-settings-overlay" class="control-settings-overlay hidden" tabindex="-1">
     <section class="control-settings-dialog glass" role="dialog" aria-modal="true" aria-labelledby="control-settings-title" aria-describedby="control-settings-subtitle">
       <header class="control-settings-header">
         <div>
@@ -570,7 +570,7 @@
   </div>
 
   <!-- 引导角色任务对话与交互式教程 -->
-  <div id="tutorial-overlay" class="tutorial-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="tutorial-title">
+  <div id="tutorial-overlay" class="tutorial-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="tutorial-title" tabindex="-1">
     <div class="tutorial-dialog glass">
       <div class="tutorial-portrait">
         <img id="tutorial-art" alt="导航员通讯影像" data-i18n-alt="mission.portraitAlt">
@@ -670,6 +670,6 @@
     <span>▼</span>
   </button>
 
-  <script type="module" src="app.js?v=4.0.0"></script>
+  <script type="module" src="app.js?v=4.0.1"></script>
 </body>
 </html>

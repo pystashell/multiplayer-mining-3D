@@ -1,0 +1,86 @@
+{
+  "browser": "153.0.8010.53",
+  "testedAt": "2026-09-23T00:22:20.751Z",
+  "checks": [
+    {
+      "id": "lobby-overlay",
+      "key": "Tab",
+      "count": 25,
+      "passed": true
+    },
+    {
+      "id": "lobby-overlay",
+      "key": "Shift+Tab",
+      "count": 10,
+      "passed": true
+    },
+    {
+      "id": "control-settings-overlay",
+      "key": "Tab",
+      "count": 25,
+      "passed": true
+    },
+    {
+      "id": "control-settings-overlay",
+      "key": "Shift+Tab",
+      "count": 10,
+      "passed": true
+    },
+    {
+      "id": "settings-return-to-lobby-opener",
+      "passed": true
+    },
+    {
+      "id": "tutorial-overlay",
+      "key": "Tab",
+      "count": 20,
+      "passed": true
+    },
+    {
+      "id": "tutorial-overlay",
+      "key": "Shift+Tab",
+      "count": 10,
+      "passed": true
+    },
+    {
+      "id": "dialogue-advance-keeps-focus",
+      "passed": true
+    },
+    {
+      "id": "hidden-dialogue-inert",
+      "passed": true
+    },
+    {
+      "id": "settings-return-to-board-opener",
+      "passed": true
+    },
+    {
+      "id": "modal-overlay",
+      "key": "Tab",
+      "count": 12,
+      "passed": true
+    },
+    {
+      "id": "modal-overlay",
+      "key": "Shift+Tab",
+      "count": 6,
+      "passed": true
+    },
+    {
+      "id": "result-dialog-return-focus",
+      "passed": true
+    },
+    {
+      "id": "ad-modal-overlay",
+      "key": "Tab",
+      "count": 8,
+      "passed": true
+    },
+    {
+      "id": "ad-dialog-inert-on-close",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "passed": true
+}

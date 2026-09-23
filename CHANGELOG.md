@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.0.1] - 2026-09-23
+
+### Fixed
+
+- Free Mode's Continue Exploration action starts a fresh board while preserving
+  the selected difficulty, custom dimensions, mine count, and add-on settings.
+- Mine hits play the selected 11-tile-hit.wav sample through the existing SFX
+  volume and mute controls, replacing the previous synthesized explosion.
+- Added regression coverage for repeated Free Mode restarts and sample playback,
+  and made release-identity checks follow the declared package version.
+
+This web patch does not include Steam packaging, desktop runtime, multiplayer
+transport, artwork, or unrelated interface changes.
+
 ## [4.0.0] - 2026-07-28
 
 ### Added
