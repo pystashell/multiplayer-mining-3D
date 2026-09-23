@@ -1,7 +1,7 @@
 {
   "name": "3d-multiplayer-mining",
-  "version": "4.0.1",
-  "description": "",
+  "version": "4.1.0",
+  "description": "A local-first 3D minesweeper campaign with an optional web multiplayer mode.",
   "private": true,
   "engines": {
     "node": ">=22.13.0"

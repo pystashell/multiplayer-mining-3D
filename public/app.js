@@ -1,12 +1,12 @@
 import * as THREE from './vendor/three-0.150.0/build/three.module.js';
 import { OrbitControls } from './vendor/three-0.150.0/examples/jsm/controls/OrbitControls.js';
-import { HybridRoomClient } from './local-room-client.js?v=4.0.1';
-import { initialLanguage, randomNickname, translateForInput } from './i18n.js?v=4.0.1';
+import { HybridRoomClient } from './local-room-client.js?v=4.1.0';
+import { initialLanguage, randomNickname, translateForInput } from './i18n.js?v=4.1.0';
 import { GUIDE_ART } from './guide-character.js';
 import {
   detectInitialInputMode,
   inputModeFromPointerType,
-} from './input-mode.js?v=4.0.1';
+} from './input-mode.js?v=4.1.0';
 import {
   interruptedGesturePatch,
   recenterCameraKeepingOffset,
@@ -14,14 +14,14 @@ import {
   shouldStartMousePan,
   shouldStartTouchPan,
   touchHoldDecision,
-} from './camera-gestures.js?v=4.0.1';
+} from './camera-gestures.js?v=4.1.0';
 import { solveMinesweeperHint } from './minesweeper-solver.js';
 import {
   chordOpportunityAt,
   findChordOpportunity,
   findNewChordOpportunity,
   isNewSuccessfulChord,
-} from './tutorial-triggers.js?v=4.0.1';
+} from './tutorial-triggers.js?v=4.1.0';
 import { chooseFloatingAxisPlacement, chooseGuidedCalloutPlacement } from './guided-callout.js';
 import {
   BOARD_ANIMATION_TIMING,
@@ -49,7 +49,7 @@ import {
   settingsWithCenterMode,
   validateControlSettings,
   wheelActionForEvent,
-} from './control-settings.js?v=4.0.1';
+} from './control-settings.js?v=4.1.0';
 import {
   SciFiMusicDirector,
   getSharedAudioContext,
@@ -59,9 +59,9 @@ import {
   persistSfxEnabled,
   persistSfxVolume,
   resumeSharedAudioContext,
-} from './soundtrack.js?v=4.0.1';
-import { MineHitSound } from './mine-hit-sound.js?v=4.0.1';
-import { installModalFocusManager } from './modal-focus.js?v=4.0.1';
+} from './soundtrack.js?v=4.1.0';
+import { MineHitSound } from './mine-hit-sound.js?v=4.1.0';
+import { installModalFocusManager } from './modal-focus.js?v=4.1.0';
 
 const TASK_MISSIONS = Object.freeze({
   easy: Object.freeze({ width: 3, height: 3, depth: 3, mineCount: 3, ruleset: 'classic', autoPurge: false, reduction: false, campaign: true }),

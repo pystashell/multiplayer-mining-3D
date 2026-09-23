@@ -11,7 +11,7 @@ const revealAnimationSource = readFileSync(new URL('../public/reveal-animation.j
 test('renders the Sector Purge identity and live elimination banner', () => {
   assert.match(indexSource, /Zero Domain Protocol: Sector Purge/);
   assert.match(indexSource, /id="sector-purge-banner"[^>]*role="status"[^>]*aria-live="assertive"/);
-  assert.match(indexSource, /ZERO\/\/DOMAIN\s*<span>PURGE<\/span>/);
+  assert.match(indexSource, /data-i18n="brand\.protocol">零域协议<\/b>\s*<span data-i18n="brand\.variant">清除<\/span>/);
   assert.match(styleSource, /\.sector-purge-banner\s*\{[^}]*position:\s*fixed[^}]*pointer-events:\s*none/s);
 });
 

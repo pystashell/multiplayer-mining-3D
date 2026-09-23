@@ -29,6 +29,15 @@ test('selects Chinese only for Chinese browser language tags', () => {
   assert.equal(normalizeLanguage('ja-JP'), 'en');
 });
 
+test('localizes the Zero Domain brand instead of leaving English in Chinese mode', () => {
+  assert.equal(translate('zh', 'brand.protocol'), '零域协议');
+  assert.equal(translate('zh', 'brand.variant'), '清除');
+  assert.equal(translate('zh', 'lobby.protocol'), '零域协议 // 测绘终端');
+  assert.equal(translate('en', 'brand.protocol'), 'ZERO//DOMAIN');
+  assert.equal(translate('en', 'brand.variant'), 'PURGE');
+  assert.equal(translate('en', 'lobby.protocol'), 'ZERO DOMAIN // SURVEY TERMINAL');
+});
+
 test('uses the Sector Purge version title', () => {
   assert.equal(translate('zh', 'document.title'), `零域协议：区块清除 | ${zhGuide.name}任务`);
   assert.equal(translate('en', 'document.title'), `Zero Domain Protocol: Sector Purge | ${enGuide.codename}`);
