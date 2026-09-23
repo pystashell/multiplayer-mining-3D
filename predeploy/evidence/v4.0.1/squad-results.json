@@ -1,0 +1,49 @@
+{
+  "browser": "153.0.8010.53",
+  "testedAt": "2026-09-23T00:35:27.743Z",
+  "checks": [
+    {
+      "id": "host-created-room",
+      "passed": true
+    },
+    {
+      "id": "both-clients-see-members",
+      "passed": true
+    },
+    {
+      "id": "chat-sync",
+      "passed": true
+    },
+    {
+      "id": "guest-flag-sync",
+      "beforeGuestFlag": "0 / 3",
+      "afterGuestFlag": "1 / 3",
+      "passed": true
+    },
+    {
+      "id": "flag-sync",
+      "minesBeforeFlag": "0 / 3",
+      "hostFlagged": "1 / 3",
+      "passed": true
+    },
+    {
+      "id": "board-state-sync-after-dig-attempt",
+      "hostProgress": "4%",
+      "guestProgress": "4%",
+      "passed": true
+    },
+    {
+      "id": "guest-reconnect",
+      "passed": true
+    },
+    {
+      "id": "host-leave-transfers-room",
+      "passed": true
+    }
+  ],
+  "roomCode": "S9XY6D",
+  "inviteLink": "http://127.0.0.1:8798/?room=S9XY6D",
+  "errors": [],
+  "failed": [],
+  "passed": true
+}

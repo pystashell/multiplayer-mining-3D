@@ -1,0 +1,17 @@
+{
+  "browser": "153.0.8010.53",
+  "testedAt": "2026-09-23T00:46:44.005Z",
+  "method": "same app code with instance exposed and selectTaskMission(ultimate) invoked; campaign progression not replayed",
+  "selectedArt": "url(\"assets/parallax-final-protocol.png\")",
+  "state": {
+    "title": "MISSION EX // 回声矩阵",
+    "art": "assets/parallax-final-protocol.png",
+    "horizontalOverflow": 0,
+    "dialogInsideViewport": true,
+    "buttonInsideViewport": true,
+    "focusInside": true
+  },
+  "errors": [],
+  "failed": [],
+  "passed": true
+}

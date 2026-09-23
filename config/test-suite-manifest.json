@@ -75,7 +75,7 @@
     },
     "dialogue-overlay.test.js": {
       "category": "client-runtime",
-      "purposeZh": "验证移动端棋盘手势留下的兼容点击不会误关闭剧情对话。"
+      "purposeZh": "验证移动端兼容点击不会误关闭剧情对话，且弹窗键盘焦点按可见控件循环。"
     },
     "game-core-vendor.test.js": {
       "category": "release-security",

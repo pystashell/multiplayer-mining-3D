@@ -61,6 +61,7 @@ import {
   resumeSharedAudioContext,
 } from './soundtrack.js?v=4.0.1';
 import { MineHitSound } from './mine-hit-sound.js?v=4.0.1';
+import { installModalFocusManager } from './modal-focus.js?v=4.0.1';
 
 const TASK_MISSIONS = Object.freeze({
   easy: Object.freeze({ width: 3, height: 3, depth: 3, mineCount: 3, ruleset: 'classic', autoPurge: false, reduction: false, campaign: true }),
@@ -531,6 +532,7 @@ class HoloSweeperGame {
     
     // UI 绑定
     this.bindUI();
+    this.syncModalFocus = installModalFocusManager();
     this.applyStoryArt();
     this.applyLanguage(this.language, true);
     // 初始化 3D 渲染环境
@@ -870,6 +872,7 @@ class HoloSweeperGame {
     this.setControlSettingsStatus('');
     this.renderControlSettings();
     document.getElementById('control-settings-overlay').classList.remove('hidden');
+    this.syncModalFocus();
     document.getElementById('btn-control-settings-close').focus();
   }
 

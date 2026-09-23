@@ -5,7 +5,7 @@
 
 ## 如何使用
 
-当前登记 **42 个测试套件、309 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
+当前登记 **42 个测试套件、310 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
 
 - “测试内容”直接取自可执行用例名称，因此目录不会与代码分叉。
 - 每个套件都明确说明失败处理和测试何时可能需要评审。
@@ -149,13 +149,14 @@
 
 - 分类：客户端运行时与交互逻辑
 - 自动化层级：行为级或源码契约自动化
-- 套件目的：验证移动端棋盘手势留下的兼容点击不会误关闭剧情对话。
+- 套件目的：验证移动端兼容点击不会误关闭剧情对话，且弹窗键盘焦点按可见控件循环。
 - 任一用例失败：先判断是浏览器行为、会话状态还是事件路由发生回归，再修复实现。若仅重构内部结构，应把断言迁移到等价的公开行为，不能直接删除保护。
 - 有效性评审：用户可观察行为不变时测试仍应有效；事件模型、输入协议或持久化边界正式改变时才评审更新。
 
 | 源码 | 测试内容 |
 | --- | --- |
-| [L7](../tests/dialogue-overlay.test.js#L7) | `ignores the compatibility click left behind by a mobile board gesture` |
+| [L8](../tests/dialogue-overlay.test.js#L8) | `ignores the compatibility click left behind by a mobile board gesture` |
+| [L23](../tests/dialogue-overlay.test.js#L23) | `cycles keyboard focus through visible dialog controls` |
 
 ### game-core-vendor.test.js
 

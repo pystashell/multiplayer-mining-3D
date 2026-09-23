@@ -1,0 +1,70 @@
+{
+  "baseline": false,
+  "browser": "153.0.8010.53",
+  "testedAt": "2026-09-23T00:18:22.730Z",
+  "lobbyPath": [
+    {
+      "id": "btn-language-toggle-lobby",
+      "text": "EN",
+      "inLobby": true
+    },
+    {
+      "id": "btn-lobby-task",
+      "text": "▰\n          任务模式陆霁全程引导 · 个人剧情",
+      "inLobby": true
+    },
+    {
+      "id": "btn-lobby-multiplayer",
+      "text": "⌘\n          多人联机组建小队 · 协同测绘",
+      "inLobby": true
+    },
+    {
+      "id": "input-nickname",
+      "text": "",
+      "inLobby": true
+    },
+    {
+      "id": "btn-random-nickname",
+      "text": "🎲",
+      "inLobby": true
+    },
+    {
+      "id": "btn-task-campaign",
+      "text": "剧情战役",
+      "inLobby": true
+    }
+  ],
+  "dialoguePath": [
+    {
+      "id": "btn-tutorial-next",
+      "text": "继续",
+      "inDialogue": true
+    },
+    {
+      "id": "btn-skip-tutorial",
+      "text": "⏭ 跳过初级关",
+      "inDialogue": true
+    },
+    {
+      "id": "btn-tutorial-next",
+      "text": "继续",
+      "inDialogue": true
+    },
+    {
+      "id": "btn-skip-tutorial",
+      "text": "⏭ 跳过初级关",
+      "inDialogue": true
+    },
+    {
+      "id": "btn-tutorial-next",
+      "text": "继续",
+      "inDialogue": true
+    },
+    {
+      "id": "btn-skip-tutorial",
+      "text": "⏭ 跳过初级关",
+      "inDialogue": true
+    }
+  ],
+  "passed": true
+}
