@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; form-action 'self'; script-src 'self' 'unsafe-inline'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' ws: wss:; worker-src 'self' blob:; manifest-src 'self'">
   <title>Zero Domain Protocol: Sector Purge</title>
   <meta name="description" content="旋转零域矩阵，从不同视角验证数字证据并清除异常节点。">
-  <link rel="stylesheet" href="style.css?v=4.0.1">
+  <link rel="stylesheet" href="style.css?v=4.1.0">
   <!-- 错误捕获脚本：如果发生任何 JS 运行错误，在页面顶部弹出红色提示栏 -->
   <script>
     window.addEventListener('error', function(e) {
@@ -58,7 +59,7 @@
     <aside class="panel left-panel glass" id="control-panel">
       <header class="panel-header">
         <div class="header-title-row">
-          <h1 class="logo">ZERO//DOMAIN <span>PURGE</span></h1>
+          <h1 class="logo"><b data-i18n="brand.protocol">零域协议</b> <span data-i18n="brand.variant">清除</span></h1>
           <button id="btn-language-toggle" class="btn-secondary" style="padding:4px 7px; min-height:0; font-size:11px; flex:none;" data-i18n="language.toggle">EN</button>
         </div>
         <p class="subtitle" data-i18n="subtitle">引导角色 · 零域测绘终端</p>
@@ -381,7 +382,7 @@
   <!-- 联机大厅 悬浮遮罩层 -->
   <div id="lobby-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="lobby-title" tabindex="-1">
     <div id="lobby-modal" class="game-modal glass guide-lobby" style="width: 420px; padding: 40px;">
-      <div class="lobby-protocol" data-i18n="lobby.protocol">ZERO DOMAIN // 测绘终端</div>
+      <div class="lobby-protocol" data-i18n="lobby.protocol">零域协议 // 测绘终端</div>
       <div class="modal-icon lobby-icon">⌁</div>
       <button id="btn-control-settings-lobby" class="btn-secondary lobby-control-settings" type="button" aria-label="键位设置" title="键位设置" data-i18n-aria-label="controls.open" data-i18n-title="controls.openTitle">⚙</button>
       <button id="btn-language-toggle-lobby" class="btn-secondary" style="position:absolute; top:16px; right:16px; padding:5px 9px; min-height:0; font-size:12px;" data-i18n="language.toggle">EN</button>
@@ -670,6 +671,6 @@
     <span>▼</span>
   </button>
 
-  <script type="module" src="app.js?v=4.0.1"></script>
+  <script type="module" src="app.js?v=4.1.0"></script>
 </body>
 </html>

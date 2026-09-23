@@ -1,4 +1,4 @@
-# Holo-Sweeper 3D
+# Zero Domain Protocol: Sector Purge
 
 [![CI](https://github.com/pystashell/multiplayer-mining-3D/actions/workflows/ci.yml/badge.svg)](https://github.com/pystashell/multiplayer-mining-3D/actions/workflows/ci.yml)
 
@@ -6,7 +6,7 @@
 
 ## 在线试玩
 
-**[立即打开 Holo-Sweeper 3D](https://3d-multiplayer-mining.pystashell.workers.dev)**
+**[立即打开零域协议：区块清除](https://3d-multiplayer-mining.pystashell.workers.dev)**
 
 输入昵称后创建房间，点击“复制邀请”，把带有 `?room=房间码` 的链接发给朋友即可联机。
 

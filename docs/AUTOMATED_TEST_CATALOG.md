@@ -5,7 +5,7 @@
 
 ## 如何使用
 
-当前登记 **42 个测试套件、310 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
+当前登记 **42 个测试套件、311 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
 
 - “测试内容”直接取自可执行用例名称，因此目录不会与代码分叉。
 - 每个套件都明确说明失败处理和测试何时可能需要评审。
@@ -243,23 +243,24 @@
 | 源码 | 测试内容 |
 | --- | --- |
 | [L25](../tests/i18n.test.js#L25) | `selects Chinese only for Chinese browser language tags` |
-| [L32](../tests/i18n.test.js#L32) | `uses the Sector Purge version title` |
-| [L41](../tests/i18n.test.js#L41) | `explains the campaign, hidden Ultimate chapter, and independent Free Mode features` |
-| [L116](../tests/i18n.test.js#L116) | `uses the new public compression name everywhere while preserving internal protocol identifiers` |
-| [L127](../tests/i18n.test.js#L127) | `builds localized computer-themed nicknames from random parts` |
-| [L152](../tests/i18n.test.js#L152) | `localizes semantic room activities independently for each client` |
-| [L157](../tests/i18n.test.js#L157) | `distinguishes 3D neighbor positions from the beginner number ceiling` |
-| [L165](../tests/i18n.test.js#L165) | `teaches inspection once in beginner, transitions into guided reasoning, and only reminds once in medium` |
-| [L192](../tests/i18n.test.js#L192) | `keeps slice controls localized without any proactive slice tutorial copy` |
-| [L216](../tests/i18n.test.js#L216) | `teaches exact medium hint deductions and labels guesses honestly` |
-| [L262](../tests/i18n.test.js#L262) | `provides mobile touch controls and long-press guidance` |
-| [L305](../tests/i18n.test.js#L305) | `describes middle- and right-button camera drag choices in both languages` |
-| [L319](../tests/i18n.test.js#L319) | `localizes the matrix-center switch, pan gesture, and recenter action` |
-| [L350](../tests/i18n.test.js#L350) | `provides explicit click targets for the guided beginner board` |
-| [L364](../tests/i18n.test.js#L364) | `names the advanced mission Final Protocol in both languages` |
-| [L371](../tests/i18n.test.js#L371) | `localizes the dialogue backdrop dismissal hint` |
-| [L376](../tests/i18n.test.js#L376) | `uses a single rewind action for solo mission failure` |
-| [L388](../tests/i18n.test.js#L388) | `explains that a teammate ad locks the entire squad` |
+| [L32](../tests/i18n.test.js#L32) | `localizes the Zero Domain brand instead of leaving English in Chinese mode` |
+| [L41](../tests/i18n.test.js#L41) | `uses the Sector Purge version title` |
+| [L50](../tests/i18n.test.js#L50) | `explains the campaign, hidden Ultimate chapter, and independent Free Mode features` |
+| [L125](../tests/i18n.test.js#L125) | `uses the new public compression name everywhere while preserving internal protocol identifiers` |
+| [L136](../tests/i18n.test.js#L136) | `builds localized computer-themed nicknames from random parts` |
+| [L161](../tests/i18n.test.js#L161) | `localizes semantic room activities independently for each client` |
+| [L166](../tests/i18n.test.js#L166) | `distinguishes 3D neighbor positions from the beginner number ceiling` |
+| [L174](../tests/i18n.test.js#L174) | `teaches inspection once in beginner, transitions into guided reasoning, and only reminds once in medium` |
+| [L201](../tests/i18n.test.js#L201) | `keeps slice controls localized without any proactive slice tutorial copy` |
+| [L225](../tests/i18n.test.js#L225) | `teaches exact medium hint deductions and labels guesses honestly` |
+| [L271](../tests/i18n.test.js#L271) | `provides mobile touch controls and long-press guidance` |
+| [L314](../tests/i18n.test.js#L314) | `describes middle- and right-button camera drag choices in both languages` |
+| [L328](../tests/i18n.test.js#L328) | `localizes the matrix-center switch, pan gesture, and recenter action` |
+| [L359](../tests/i18n.test.js#L359) | `provides explicit click targets for the guided beginner board` |
+| [L373](../tests/i18n.test.js#L373) | `names the advanced mission Final Protocol in both languages` |
+| [L380](../tests/i18n.test.js#L380) | `localizes the dialogue backdrop dismissal hint` |
+| [L385](../tests/i18n.test.js#L385) | `uses a single rewind action for solo mission failure` |
+| [L397](../tests/i18n.test.js#L397) | `explains that a teammate ad locks the entire squad` |
 
 ### identity-agnostic-tests.test.js
 

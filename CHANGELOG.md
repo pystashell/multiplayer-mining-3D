@@ -1,5 +1,18 @@
 # Changelog
 
+## [4.1.0] - Unreleased
+
+### Changed
+
+- The in-game Zero Domain brand and lobby protocol label follow the selected
+  Chinese or English language, including the initial Chinese page copy.
+- Browser assets and public release metadata use the shared 4.1.0 product version.
+
+### Security
+
+- Added a page Content Security Policy while retaining the web multiplayer
+  WebSocket connection.
+
 ## [4.0.1] - 2026-09-23
 
 ### Fixed
