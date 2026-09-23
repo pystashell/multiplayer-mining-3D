@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "checklistVersion": "2026-09-23.1",
+  "releaseTag": "v4.1.0",
+  "status": "passed",
+  "uiDigest": "sha256:a910542c0b06f29920799697b1a7da3ddd409f18f136296ad2d7addf3399715f",
+  "reviewer": "Codex browser and screenshot review",
+  "reviewedAt": "2026-09-23T22:41:06.756Z",
+  "browsers": [
+    "Chrome 153.0.8010.53 on Windows"
+  ],
+  "results": [
+    {
+      "id": "desktop-lobby-bilingual",
+      "status": "passed",
+      "evidence": [
+        "predeploy/evidence/v4.1.0/README.md"
+      ]
+    },
+    {
+      "id": "story-guide-consistency",
+      "status": "passed",
+      "evidence": [
+        "predeploy/evidence/v4.1.0/README.md"
+      ]
+    },
+    {
+      "id": "desktop-dialogue-readability",
+      "status": "passed",
+      "evidence": [
+        "predeploy/evidence/v4.1.0/README.md"
+      ]
+    },
+    {
+      "id": "desktop-gameplay-controls",
+      "status": "passed",
+      "evidence": [
+        "predeploy/evidence/v4.1.0/README.md"
+      ]
+    },
+    {
+      "id": "mobile-lobby-dialogue",
+      "status": "passed",
+      "evidence": [
+        "predeploy/evidence/v4.1.0/README.md"
+      ]
+    },
+    {
+      "id": "mobile-gameplay-controls",
+      "status": "passed",
+      "evidence": [
+        "predeploy/evidence/v4.1.0/README.md"
+      ]
+    },
+    {
+      "id": "multiplayer-two-client",
+      "status": "passed",
+      "evidence": [
+        "predeploy/evidence/v4.1.0/README.md"
+      ]
+    },
+    {
+      "id": "failure-replay-recovery",
+      "status": "passed",
+      "evidence": [
+        "predeploy/evidence/v4.1.0/README.md"
+      ]
+    },
+    {
+      "id": "accessibility-keyboard",
+      "status": "passed",
+      "evidence": [
+        "predeploy/evidence/v4.1.0/README.md"
+      ]
+    },
+    {
+      "id": "console-network-clean",
+      "status": "passed",
+      "evidence": [
+        "predeploy/evidence/v4.1.0/README.md"
+      ]
+    }
+  ]
+}

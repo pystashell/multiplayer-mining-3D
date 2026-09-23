@@ -2574,6 +2574,10 @@ body.replay-active #slicing-panel {
   .replay-hud-actions { grid-column:2; grid-row:1 / span 2; gap:5px; }
   .replay-control-button { min-height:40px; padding:7px 9px; }
   .replay-control-button > strong { font-size:9px; }
+  body.replay-active .return-lobby-button {
+    display:none !important;
+    pointer-events:none !important;
+  }
   body.replay-active .mobile-statusbar,
   body.replay-active #mobile-control-dock,
   body.replay-active #mobile-panel-backdrop,

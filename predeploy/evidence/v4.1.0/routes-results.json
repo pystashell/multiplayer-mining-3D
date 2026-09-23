@@ -1,0 +1,199 @@
+{
+  "browser": "153.0.8010.53",
+  "testedAt": "2026-09-23T22:32:41.012Z",
+  "cases": [
+    {
+      "name": "desktop-wide",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "languages": [
+        "en",
+        "zh"
+      ],
+      "guide": "▰\n任务模式\n陆霁全程引导 · 个人剧情",
+      "horizontalOverflow": 0,
+      "focusChecks": 28,
+      "errors": [],
+      "failed": [],
+      "passed": true
+    },
+    {
+      "name": "desktop-compact",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "languages": [
+        "en",
+        "zh"
+      ],
+      "guide": "▰\n任务模式\n陆霁全程引导 · 个人剧情",
+      "horizontalOverflow": 0,
+      "focusChecks": 28,
+      "errors": [],
+      "failed": [],
+      "passed": true
+    },
+    {
+      "name": "mobile-standard",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "languages": [
+        "en",
+        "zh"
+      ],
+      "guide": "▰\n任务模式\n陆霁全程引导 · 个人剧情",
+      "horizontalOverflow": 0,
+      "focusChecks": 0,
+      "errors": [],
+      "failed": [],
+      "passed": true
+    },
+    {
+      "name": "mobile-small",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "languages": [
+        "en",
+        "zh"
+      ],
+      "guide": "▰\n任务模式\n陆霁全程引导 · 个人剧情",
+      "horizontalOverflow": 0,
+      "focusChecks": 0,
+      "errors": [],
+      "failed": [],
+      "passed": true
+    },
+    {
+      "name": "desktop-easy",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "mission": "easy",
+      "storyArt": "url(\"assets/guide-zero-domain-cartographer.png\")",
+      "tutorial": {
+        "title": "Lu Ji",
+        "art": "assets/guide-zero-domain-cartographer.png",
+        "artLoaded": true,
+        "message": "“I’m joining your mission channel. Don’t just read the manual—perform every action once before we enter a live zero-domain route.”",
+        "dialogueInside": false,
+        "nextInside": true,
+        "role": "dialog",
+        "ariaModal": "true"
+      },
+      "focusChecks": 24,
+      "gameVisible": true,
+      "horizontalOverflow": 0,
+      "errors": [],
+      "failed": [],
+      "passed": true
+    },
+    {
+      "name": "desktop-medium",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "mission": "medium",
+      "storyArt": "url(\"assets/parallax-neighbor-perspective.png\")",
+      "tutorial": {
+        "title": "MISSION 02 // HANDSHAKE MAZE",
+        "art": "assets/parallax-neighbor-perspective.png",
+        "artLoaded": true,
+        "message": "“The coordinates from Phantom Port are valid. The Handshake Maze split its path beacons across a five-layer matrix.”",
+        "dialogueInside": false,
+        "nextInside": true,
+        "role": "dialog",
+        "ariaModal": "true"
+      },
+      "focusChecks": 24,
+      "gameVisible": true,
+      "horizontalOverflow": 0,
+      "errors": [],
+      "failed": [],
+      "passed": true
+    },
+    {
+      "name": "desktop-hard",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "mission": "hard",
+      "storyArt": "url(\"assets/parallax-final-protocol.png\")",
+      "tutorial": {
+        "title": "MISSION 03 // FINAL PROTOCOL",
+        "art": "assets/parallax-final-protocol.png",
+        "artLoaded": true,
+        "message": "“Final target confirmed. Seven-layer core matrix, thirty anomaly nodes, and the coordinates keep drifting.”",
+        "dialogueInside": false,
+        "nextInside": true,
+        "role": "dialog",
+        "ariaModal": "true"
+      },
+      "focusChecks": 24,
+      "gameVisible": true,
+      "horizontalOverflow": 0,
+      "errors": [],
+      "failed": [],
+      "passed": true
+    },
+    {
+      "name": "mobile-easy",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "mission": "easy",
+      "storyArt": "url(\"assets/guide-zero-domain-cartographer.png\")",
+      "tutorial": {
+        "title": "陆霁",
+        "art": "assets/guide-zero-domain-cartographer.png",
+        "artLoaded": true,
+        "message": "“接下来我会直接接入你的任务频道。别只看说明书——每个操作都亲手做一次，我们再进入真正的零域航道。”",
+        "dialogueInside": false,
+        "nextInside": true,
+        "role": "dialog",
+        "ariaModal": "true"
+      },
+      "focusChecks": 24,
+      "gameVisible": true,
+      "horizontalOverflow": 0,
+      "errors": [],
+      "failed": [],
+      "passed": true
+    },
+    {
+      "name": "mobile-small-easy",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "mission": "easy",
+      "storyArt": "url(\"assets/guide-zero-domain-cartographer.png\")",
+      "tutorial": {
+        "title": "陆霁",
+        "art": "assets/guide-zero-domain-cartographer.png",
+        "artLoaded": true,
+        "message": "“接下来我会直接接入你的任务频道。别只看说明书——每个操作都亲手做一次，我们再进入真正的零域航道。”",
+        "dialogueInside": false,
+        "nextInside": true,
+        "role": "dialog",
+        "ariaModal": "true"
+      },
+      "focusChecks": 24,
+      "gameVisible": true,
+      "horizontalOverflow": 0,
+      "errors": [],
+      "failed": [],
+      "passed": true
+    }
+  ]
+}

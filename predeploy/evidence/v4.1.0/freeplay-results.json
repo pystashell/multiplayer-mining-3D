@@ -1,0 +1,45 @@
+{
+  "browser": "153.0.8010.53",
+  "testedAt": "2026-09-23T22:33:28.173Z",
+  "results": [
+    {
+      "name": "freeplay-desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "initialSave": "9194e0d9-f3a3-4b9b-ba1c-a075cb2fee30",
+      "nextSave": "9194e0d9-f3a3-4b9b-ba1c-a075cb2fee30",
+      "winTitle": "FREE MODE CLEARED",
+      "replayPauseResumeExit": true,
+      "errors": [],
+      "passed": true
+    },
+    {
+      "name": "freeplay-mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "initialSave": "8f556ebf-992d-4216-b822-bc8f8363ba67",
+      "nextSave": "8f556ebf-992d-4216-b822-bc8f8363ba67",
+      "winTitle": "自由模式通关",
+      "replayPauseResumeExit": true,
+      "errors": [],
+      "passed": true
+    },
+    {
+      "name": "freeplay-mobile-small",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "initialSave": "eacce5d3-e3aa-46a0-b935-d8a3a49469b6",
+      "nextSave": "eacce5d3-e3aa-46a0-b935-d8a3a49469b6",
+      "winTitle": "自由模式通关",
+      "replayPauseResumeExit": true,
+      "errors": [],
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "browser": "153.0.8010.53",
+  "testedAt": "2026-09-23T22:34:01.658Z",
+  "instrumentation": "Only assigns the existing HoloSweeperGame instance to window.__releaseQaGame in browser response; product files are unmodified.",
+  "results": [
+    {
+      "name": "ultimate-story-art",
+      "lobbyArt": "url(\"assets/parallax-final-protocol.png\")",
+      "title": "MISSION EX // 回声矩阵",
+      "art": "assets/parallax-final-protocol.png",
+      "artLoaded": true,
+      "message": "“坐标确认：9×9×9，六十个异常节点。它不在导航网内，却持续回传稳定信号。”",
+      "focusTrap": true,
+      "errors": [],
+      "passed": true
+    },
+    {
+      "name": "solo-failure-rewind-restart",
+      "attempts": 13,
+      "lossTitle": "任务演算失败",
+      "progressBefore": "66%",
+      "progressAfter": "66%",
+      "rewound": true,
+      "newTaskOpened": true,
+      "focusTrap": true,
+      "errors": [],
+      "passed": true
+    }
+  ]
+}
