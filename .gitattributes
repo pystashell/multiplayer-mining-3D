@@ -4,3 +4,5 @@ docs/PREDEPLOY_UI_MANUAL.md text eol=lf
 public/vendor/**/*.js text eol=lf
 public/vendor/**/LICENSE text eol=lf
 public/vendor/manifest.json text eol=lf
+worker/room-engine.js text eol=lf
+worker/beginner-layout.js text eol=lf
