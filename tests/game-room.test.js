@@ -2,7 +2,7 @@ import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 
-import { RoomEngine } from '../worker/room-engine.js';
+import { ROOM_TTL_MS, RoomEngine } from '../worker/room-engine.js';
 import {
   commandMessage,
   createGameRoom,
@@ -363,6 +363,30 @@ test('completes a squad revival when its alarm fires and keeps alarm writes idem
   assert.equal(guest.last('snapshot').snapshot.phase, 'playing');
   assert.equal(runtime.storage.get('room').phase, 'playing');
   assert.equal(runtime.alarm, room.engine.state.expiresAt);
+});
+
+test('derives command timestamps from the server clock instead of the client envelope', async (t) => {
+  const serverNow = 1_800_000_000_000;
+  t.mock.timers.enable({ apis: ['Date'], now: serverNow });
+  const { room, runtime, sessions } = await roomWithMembers(['Host', 'Guest']);
+  const host = await joinSocket(room, runtime, sessions[0]);
+  const guest = await joinSocket(room, runtime, sessions[1]);
+  const send = commandSender(room);
+
+  await send(host, { op: 'chat', content: 'hello' }, { now: serverNow + 1000 * ROOM_TTL_MS });
+  assert.equal(room.engine.state.chat.at(-1).at, serverNow);
+  assert.equal(room.engine.state.expiresAt, serverNow + ROOM_TTL_MS, 'a client cannot keep a room alive indefinitely');
+  assert.equal(runtime.alarm, serverNow + ROOM_TTL_MS);
+
+  await send(host, { op: 'restart', config: { width: 2, height: 2, depth: 2, mineCount: 4 } }, { now: 0 });
+  await send(host, { op: 'dig', x: 0, y: 0, z: 0 }, { now: 0 });
+  assert.equal(room.engine.state.startedAt, serverNow, 'the run timer starts at server time');
+  await send(guest, { op: 'dig', ...pointOf(room.engine.state.config, room.engine.state.mines[0]) });
+  await send(guest, { op: 'watch_ad' }, { now: 0 });
+  assert.equal(room.engine.state.reviveEndsAt, serverNow + 10_000, 'a forged clock cannot skip the revive countdown');
+
+  await room.alarm();
+  assert.equal(room.engine.state.phase, 'revive');
 });
 
 test('keeps processing queued room operations after a failed request', async (t) => {

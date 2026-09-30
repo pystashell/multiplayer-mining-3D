@@ -258,7 +258,13 @@ export class GameRoom {
       return;
     }
     try {
-      const result = this.engine.apply(attachment.playerId, message.command, message);
+      // Only the id and sequence come from the client; time is always the
+      // server's, or a crafted envelope could move expiry and revive deadlines.
+      const result = this.engine.apply(attachment.playerId, message.command, {
+        id: message.id,
+        sequence: message.sequence,
+        now: Date.now(),
+      });
       if (message.command.op === "leave") {
         socket.serializeAttachment({ ...attachment, joined: false, playerId: null });
       }

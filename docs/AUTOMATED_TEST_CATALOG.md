@@ -5,7 +5,7 @@
 
 ## 如何使用
 
-当前登记 **44 个测试套件、336 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
+当前登记 **44 个测试套件、337 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
 
 - “测试内容”直接取自可执行用例名称，因此目录不会与代码分叉。
 - 每个套件都明确说明失败处理和测试何时可能需要评审。
@@ -195,7 +195,8 @@
 | [L299](../tests/game-room.test.js#L299) | `broadcasts presence changes when sockets close or fail and tolerates dead sockets` |
 | [L321](../tests/game-room.test.js#L321) | `expires idle rooms from the alarm and deletes every stored record` |
 | [L335](../tests/game-room.test.js#L335) | `completes a squad revival when its alarm fires and keeps alarm writes idempotent` |
-| [L368](../tests/game-room.test.js#L368) | `keeps processing queued room operations after a failed request` |
+| [L368](../tests/game-room.test.js#L368) | `derives command timestamps from the server clock instead of the client envelope` |
+| [L392](../tests/game-room.test.js#L392) | `keeps processing queued room operations after a failed request` |
 
 ### guide-character.test.js
 
