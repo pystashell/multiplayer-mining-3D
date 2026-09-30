@@ -81,6 +81,10 @@
       "category": "release-security",
       "purposeZh": "验证浏览器端游戏核心与服务端权威引擎来源一致，避免规则分叉。"
     },
+    "game-room.test.js": {
+      "category": "game-engine",
+      "purposeZh": "验证联机房间 Durable Object 的状态恢复、会话校验、命令去重与顺序、在线状态广播、闹钟回收和复活计时。"
+    },
     "guide-character.test.js": {
       "category": "content-localization",
       "purposeZh": "用任意合成角色验证角色配置结构、派生文本、模板渲染和运行时代码无身份写死。"
@@ -212,6 +216,10 @@
     "vendor-assets.test.js": {
       "category": "media-assets",
       "purposeZh": "验证运行时不依赖外部字体/CDN，固定版本资源、字体权重和许可证完整。"
+    },
+    "worker-routes.test.js": {
+      "category": "release-security",
+      "purposeZh": "验证 Worker 建房、加入和 WebSocket 路由的昵称规范化、令牌哈希、来源校验、请求体上限、限流与错误码映射。"
     }
   },
   "gates": [

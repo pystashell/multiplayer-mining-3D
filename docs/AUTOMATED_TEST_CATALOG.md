@@ -5,7 +5,7 @@
 
 ## 如何使用
 
-当前登记 **42 个测试套件、311 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
+当前登记 **44 个测试套件、336 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
 
 - “测试内容”直接取自可执行用例名称，因此目录不会与代码分叉。
 - 每个套件都明确说明失败处理和测试何时可能需要评审。
@@ -171,6 +171,32 @@
 | [L12](../tests/game-core-vendor.test.js#L12) | `the browser game core is the exact worker engine source` |
 | [L16](../tests/game-core-vendor.test.js#L16) | `the browser beginner layout differs only by its solver import path` |
 
+### game-room.test.js
+
+- 分类：游戏规则与权威状态
+- 自动化层级：行为级自动化
+- 套件目的：验证联机房间 Durable Object 的状态恢复、会话校验、命令去重与顺序、在线状态广播、闹钟回收和复活计时。
+- 任一用例失败：先用失败用例的固定输入复现，再检查规则实现、状态迁移和测试夹具。若规则确实被产品决策修改，应在同一变更中同步需求、实现和断言，不能只放宽断言。
+- 有效性评审：内部重构不应使这类行为契约失效；只有公开规则、协议或兼容边界正式改变时才评审更新。
+
+| 源码 | 测试内容 |
+| --- | --- |
+| [L79](../tests/game-room.test.js#L79) | `restores persisted room state before serving and answers ping frames without waking the room` |
+| [L91](../tests/game-room.test.js#L91) | `initializes a room once, persists it, and schedules the expiry alarm` |
+| [L114](../tests/game-room.test.js#L114) | `reserves members through the internal join route and broadcasts the new roster` |
+| [L137](../tests/game-room.test.js#L137) | `accepts hibernatable WebSockets only for live rooms, real upgrades, and below the socket cap` |
+| [L158](../tests/game-room.test.js#L158) | `closes sockets that send binary, oversized, or malformed frames` |
+| [L174](../tests/game-room.test.js#L174) | `requires a valid session join before any command and rejects forged sessions` |
+| [L195](../tests/game-room.test.js#L195) | `welcomes a joined player and replaces an older socket for the same session` |
+| [L215](../tests/game-room.test.js#L215) | `acknowledges each command once, replays duplicate acknowledgements, and rejects stale sequences` |
+| [L240](../tests/game-room.test.js#L240) | `serializes concurrent commands from one socket in arrival order` |
+| [L252](../tests/game-room.test.js#L252) | `validates command envelopes and reports engine rejections with stable error codes` |
+| [L279](../tests/game-room.test.js#L279) | `lets a player leave by command and detaches the socket from the room` |
+| [L295](../tests/game-room.test.js#L295) | `broadcasts presence changes when sockets close or fail and tolerates dead sockets` |
+| [L317](../tests/game-room.test.js#L317) | `expires idle rooms from the alarm and deletes every stored record` |
+| [L331](../tests/game-room.test.js#L331) | `completes a squad revival when its alarm fires and keeps alarm writes idempotent` |
+| [L364](../tests/game-room.test.js#L364) | `keeps processing queued room operations after a failed request` |
+
 ### guide-character.test.js
 
 - 分类：角色配置、故事与中英文内容
@@ -324,7 +350,7 @@
 | [L124](../tests/interaction-layout.test.js#L124) | `renders practical verification inside the current task panel` |
 | [L138](../tests/interaction-layout.test.js#L138) | `keeps the solver at bottom center and restores squad communications` |
 | [L149](../tests/interaction-layout.test.js#L149) | `plays the squad mine sound once when a player gives up revival` |
-| [L156](../tests/interaction-layout.test.js#L156) | `keeps the illustrated background inside the dialogue frame without covering text` |
+| [L155](../tests/interaction-layout.test.js#L155) | `keeps the illustrated background inside the dialogue frame without covering text` |
 
 ### local-solo-client.test.js
 
@@ -798,3 +824,24 @@
 | [L39](../tests/vendor-assets.test.js#L39) | `vendored OrbitControls resolves the local pinned Three.js module` |
 | [L44](../tests/vendor-assets.test.js#L44) | `only the selected local WOFF2 weights are declared` |
 | [L58](../tests/vendor-assets.test.js#L58) | `vendored runtime files and upstream licenses are present` |
+
+### worker-routes.test.js
+
+- 分类：版本、供应链、安全与发布门禁
+- 自动化层级：交付链自动化
+- 套件目的：验证 Worker 建房、加入和 WebSocket 路由的昵称规范化、令牌哈希、来源校验、请求体上限、限流与错误码映射。
+- 任一用例失败：停止发布，定位版本漂移、依赖漂移、安全头、工作流顺序或部署门禁缺失。不得跳过失败步骤；修复后从完整测试重新开始。
+- 有效性评审：仅在正式更换发布平台、版本规则、安全基线或依赖管理方式时评审更新，并保留同等或更强的门禁。
+
+| 源码 | 测试内容 |
+| --- | --- |
+| [L39](../tests/worker-routes.test.js#L39) | `creates a room with a normalized nickname, a random room code, and a hashed session token` |
+| [L63](../tests/worker-routes.test.js#L63) | `rejects a room request without a usable nickname before touching Durable Objects` |
+| [L73](../tests/worker-routes.test.js#L73) | `retries room-code collisions and gives up with 503 after twelve attempts` |
+| [L102](../tests/worker-routes.test.js#L102) | `reports a Durable Object initialization failure with its status and no session` |
+| [L112](../tests/worker-routes.test.js#L112) | `joins an existing room and maps room errors to stable codes and HTTP statuses` |
+| [L147](../tests/worker-routes.test.js#L147) | `rejects cross-origin and malformed-origin requests on every room entry point` |
+| [L162](../tests/worker-routes.test.js#L162) | `enforces byte-based request body limits and JSON validity before creating rooms` |
+| [L185](../tests/worker-routes.test.js#L185) | `rate limits room creation, joins, and sockets per hashed client address and scope` |
+| [L221](../tests/worker-routes.test.js#L221) | `routes only well-formed room codes and returns JSON 404 for unknown API paths` |
+| [L243](../tests/worker-routes.test.js#L243) | `converts unexpected Worker failures into a generic 500 response` |
