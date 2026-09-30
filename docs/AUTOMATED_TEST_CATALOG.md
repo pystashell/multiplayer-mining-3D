@@ -5,7 +5,7 @@
 
 ## 如何使用
 
-当前登记 **46 个测试套件、390 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
+当前登记 **47 个测试套件、408 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
 
 - “测试内容”直接取自可执行用例名称，因此目录不会与代码分叉。
 - 每个套件都明确说明失败处理和测试何时可能需要评审。
@@ -131,6 +131,25 @@
 | [L292](../tests/control-settings.test.js#L292) | `normalizes wheel delta modes, dominant axes, directions, and extreme input` |
 | [L303](../tests/control-settings.test.js#L303) | `formats persisted physical key codes for the settings UI` |
 | [L311](../tests/control-settings.test.js#L311) | `unknown modifier wheel actions fall back to their defaults` |
+
+### coverage-report.test.js
+
+- 分类：版本、供应链、安全与发布门禁
+- 自动化层级：交付链自动化
+- 套件目的：验证确定性覆盖率报告：合并同一模块在不同缓存参数 URL 下的多次执行，把 vendor 副本归并到源码，把从未加载的文件计为零覆盖，并与真实 V8 输出一致。
+- 任一用例失败：停止发布，定位版本漂移、依赖漂移、安全头、工作流顺序或部署门禁缺失。不得跳过失败步骤；修复后从完整测试重新开始。
+- 有效性评审：仅在正式更换发布平台、版本规则、安全基线或依赖管理方式时评审更新，并保留同等或更强的门禁。
+
+| 源码 | 测试内容 |
+| --- | --- |
+| [L42](../tests/coverage-report.test.js#L42) | `counts only executable lines and ignores blank and comment-only lines` |
+| [L57](../tests/coverage-report.test.js#L57) | `applies nested V8 block ranges so inner counts override their parent` |
+| [L87](../tests/coverage-report.test.js#L87) | `merges executions line by line so any run that executed a line covers it` |
+| [L92](../tests/coverage-report.test.js#L92) | `maps coverage URLs to project files without cache-busting queries` |
+| [L101](../tests/coverage-report.test.js#L101) | `assigns files to report groups and skips generated vendor copies` |
+| [L122](../tests/coverage-report.test.js#L122) | `reports never-loaded files as uncovered and merges aliased copies by line` |
+| [L159](../tests/coverage-report.test.js#L159) | `formats uncovered line ranges and renders runtime and tooling totals separately` |
+| [L187](../tests/coverage-report.test.js#L187) | `merges real V8 coverage from a module imported under two cache-busting URLs` |
 
 ### deploy-gate.test.js
 
@@ -528,10 +547,14 @@
 
 | 源码 | 测试内容 |
 | --- | --- |
-| [L22](../tests/release-version.test.js#L22) | `release identity is synchronized across package, lockfile, and public metadata` |
-| [L35](../tests/release-version.test.js#L35) | `release tags use semantic versions and reject mismatches` |
-| [L51](../tests/release-version.test.js#L51) | `all browser cache parameters use the product release version` |
-| [L65](../tests/release-version.test.js#L65) | `release check accepts the matching tag and rejects a different tag` |
+| [L23](../tests/release-version.test.js#L23) | `release identity is synchronized across package, lockfile, and public metadata` |
+| [L36](../tests/release-version.test.js#L36) | `release tags use semantic versions and reject mismatches` |
+| [L52](../tests/release-version.test.js#L52) | `all browser cache parameters use the product release version` |
+| [L66](../tests/release-version.test.js#L66) | `release check accepts the matching tag and rejects a different tag` |
+| [L109](../tests/release-version.test.js#L109) | `reports every mismatched release field at once` |
+| [L132](../tests/release-version.test.js#L132) | `cache-version checks fail when parameters are missing or disagree` |
+| [L151](../tests/release-version.test.js#L151) | `release checks read the tag from RELEASE_TAG or a GitHub tag ref, not branch refs` |
+| [L168](../tests/release-version.test.js#L168) | `live verification accepts a deployment that serves the release version and needs a URL` |
 
 ### replay-engine.test.js
 
@@ -883,8 +906,14 @@
 
 | 源码 | 测试内容 |
 | --- | --- |
-| [L31](../tests/ui-approval.test.js#L31) | `accepts a complete approval only when every configured visual scenario passed` |
-| [L42](../tests/ui-approval.test.js#L42) | `rejects stale UI hashes, missing scenarios, and incomplete human evidence` |
+| [L37](../tests/ui-approval.test.js#L37) | `accepts a complete approval only when every configured visual scenario passed` |
+| [L48](../tests/ui-approval.test.js#L48) | `rejects stale UI hashes, missing scenarios, and incomplete human evidence` |
+| [L80](../tests/ui-approval.test.js#L80) | `normalizes release tags and maps each one to its approval record` |
+| [L86](../tests/ui-approval.test.js#L86) | `the UI digest is stable and changes when the covered file set changes` |
+| [L93](../tests/ui-approval.test.js#L93) | `rejects approvals for other releases, stale checklists, and malformed review metadata` |
+| [L119](../tests/ui-approval.test.js#L119) | `renders the committed UI manual from the checklist and rejects unknown viewport profiles` |
+| [L132](../tests/ui-approval.test.js#L132) | `refuses to record a UI approval without confirmation, a formal tag, a reviewer, a browser, and evidence` |
+| [L153](../tests/ui-approval.test.js#L153) | `fails closed when a release has no UI approval or only a stale one` |
 
 ### vendor-assets.test.js
 

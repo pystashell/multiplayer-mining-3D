@@ -69,6 +69,10 @@
       "category": "client-runtime",
       "purposeZh": "验证控制预设、持久化、非法值回退、滚轮手势和按键显示。"
     },
+    "coverage-report.test.js": {
+      "category": "release-security",
+      "purposeZh": "验证确定性覆盖率报告：合并同一模块在不同缓存参数 URL 下的多次执行，把 vendor 副本归并到源码，把从未加载的文件计为零覆盖，并与真实 V8 输出一致。"
+    },
     "deploy-gate.test.js": {
       "category": "release-security",
       "purposeZh": "验证本地生产部署命令必经完整自动化、Cloudflare dry-run 和有效 UI 人工验收。"
