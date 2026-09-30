@@ -1348,7 +1348,6 @@ class HoloSweeperGame {
       this.clearSolverHint();
       this.clearPointerHighlights();
       this.closeMobilePanels();
-      this.pendingGameOver = null;
       this.pendingTaskMission = null;
       this.pendingTaskConfig = null;
       this.taskExperienceStarted = false;
@@ -3971,7 +3970,6 @@ class HoloSweeperGame {
     cell.isRevealed = false;
     cell.neighborMines = 0;
     if (this.hoveredCell === cell) this.hoveredCell = null;
-    this.pendingGameOver = null;
   }
 
   applyConfig(config) {
@@ -4362,91 +4360,6 @@ class HoloSweeperGame {
       this.renderGuideDialogue();
     } else if (snapshot.phase === 'won' && returnSurface === 'modal') {
       document.getElementById('modal-overlay').classList.remove('hidden');
-    }
-  }
-
-  handleNetworkAction(action) {
-    // Generate accident log
-    const name = action.playerName || '未知玩家';
-    switch (action.type) {
-      case 'dig':
-        this.appendChatMessage({ system: true, message: `[系统] ${name} 挖开了一块方块` });
-        this.digLocal(action.data.x, action.data.y, action.data.z);
-        break;
-      case 'flag':
-        this.appendChatMessage({ system: true, message: `[系统] ${name} 切换了方块的标记` });
-        this.toggleFlagLocal(action.data.x, action.data.y, action.data.z);
-        break;
-      case 'trigger_mine':
-        this.appendChatMessage({ system: true, message: `[系统] 🚨 ${name} 踩到了异常地雷！全体警报！` });
-        this.triggerMineLocal(action.data.x, action.data.y, action.data.z);
-        break;
-      case 'watch_ad':
-        this.appendChatMessage({ system: true, message: `[系统] 📺 ${name} 选择了观看广告，全员进入坐标回溯状态...` });
-        this.startAdRevivalLocal();
-        break;
-      case 'end_game':
-        this.appendChatMessage({ system: true, message: `[系统] 💥 ${name} 放弃了治疗，矩阵崩溃！` });
-        if (this.pendingGameOver) {
-          this.triggerGameOver(this.pendingGameOver.x, this.pendingGameOver.y, this.pendingGameOver.z, {
-            playExplosionSound: false,
-          });
-          this.pendingGameOver = null;
-        }
-        break;
-      case 'first_click':
-        this.appendChatMessage({ system: true, message: `[系统] ${name} 踏出了第一步，地雷已生成` });
-        this.isFirstClick = false;
-        this.populateMinesNetwork(action.data.mines);
-        this.startTimer();
-        break;
-    }
-  }
-
-  replayHistory(history) {
-    // Disable animations and sounds during replay to make it fast and silent
-    const oldPlayDig = sfx.playDig;
-    const oldPlayExplosion = sfx.playExplosion;
-    const oldPlayFlag = sfx.playFlag;
-    sfx.playDig = () => {};
-    sfx.playExplosion = () => {};
-    sfx.playFlag = () => {};
-    
-    // Temporarily override animateCellReveal to snap instantly
-    const oldAnimate = this.animateCellReveal;
-    this.animateCellReveal = (cell) => {
-      cell.mesh.visible = false;
-      cell.outline.visible = false;
-    };
-    
-    history.forEach(action => this.handleNetworkAction(action));
-    
-    // Restore
-    sfx.playDig = oldPlayDig;
-    sfx.playExplosion = oldPlayExplosion;
-    sfx.playFlag = oldPlayFlag;
-    this.animateCellReveal = oldAnimate;
-  }
-
-  populateMinesNetwork(mines) {
-    mines.forEach(m => {
-       this.grid[m.x][m.y][m.z].isMine = true;
-    });
-    for (let x = 0; x < this.width; x++) {
-      for (let y = 0; y < this.height; y++) {
-        for (let z = 0; z < this.depth; z++) {
-          if (this.grid[x][y][z].isMine) continue;
-          
-          let count = 0;
-          const neighbors = this.getNeighbors(x, y, z);
-          neighbors.forEach(n => {
-            if (this.grid[n.x][n.y][n.z].isMine) {
-              count++;
-            }
-          });
-          this.grid[x][y][z].neighborMines = count;
-        }
-      }
     }
   }
 
@@ -5225,52 +5138,6 @@ class HoloSweeperGame {
     document.getElementById('modal-overlay').classList.add('hidden');
   }
 
-  // 生成雷区 (在第一次点击之后，确保首击及周围 26 格必安全)
-  generateMines(firstX, firstY, firstZ) {
-    const totalCells = this.width * this.height * this.depth;
-    let placedMines = 0;
-
-    // 为了防卡死，限制放置地雷的最大尝试次数
-    let attempts = 0;
-    const maxAttempts = 10000;
-
-    while (placedMines < this.mineCount && attempts < maxAttempts) {
-      attempts++;
-      const rx = Math.floor(Math.random() * this.width);
-      const ry = Math.floor(Math.random() * this.height);
-      const rz = Math.floor(Math.random() * this.depth);
-
-      // 首击安全：如果随机落点处于首击格子及其 26 邻域之内，则跳过
-      const isTooClose = Math.abs(rx - firstX) <= 1 && Math.abs(ry - firstY) <= 1 && Math.abs(rz - firstZ) <= 1;
-      
-      // 如果网格太小导致容纳不下雷，则退化为仅要求首击格子自身安全
-      const safeThreshold = (totalCells <= 27) ? (rx === firstX && ry === firstY && rz === firstZ) : isTooClose;
-
-      if (!safeThreshold && !this.grid[rx][ry][rz].isMine) {
-        this.grid[rx][ry][rz].isMine = true;
-        placedMines++;
-      }
-    }
-
-    // 重新计算每个格子的相邻雷数
-    for (let x = 0; x < this.width; x++) {
-      for (let y = 0; y < this.height; y++) {
-        for (let z = 0; z < this.depth; z++) {
-          if (this.grid[x][y][z].isMine) continue;
-          
-          let count = 0;
-          const neighbors = this.getNeighbors(x, y, z);
-          neighbors.forEach(n => {
-            if (this.grid[n.x][n.y][n.z].isMine) {
-              count++;
-            }
-          });
-          this.grid[x][y][z].neighborMines = count;
-        }
-      }
-    }
-  }
-
   // 获取 26 个相邻格子的坐标
   getNeighbors(cx, cy, cz) {
     const list = [];
@@ -5806,7 +5673,6 @@ class HoloSweeperGame {
     cell.group.getWorldPosition(worldPos);
     this.particles.createExplosion(worldPos, 0xff3366, 60);
 
-    this.pendingGameOver = { x, y, z };
     if (this.gameMode === 'solo') {
       this.isGameOver = true;
       setTimeout(() => this.showTaskRewindModal(), 1200);
@@ -5843,53 +5709,6 @@ class HoloSweeperGame {
     document.getElementById('modal-stat-time').innerText = this.formatTime(this.timer);
     document.getElementById('modal-stat-progress').innerText = `${this.currentBoardProgress().percent}%`;
     modal.classList.remove('hidden');
-  }
-
-  digLocal(x, y, z) {
-    const cell = this.grid[x][y][z];
-    
-    // 如果已经插旗标记或者已翻开，则不能挖掘
-    if (cell.isRevealed || cell.isFlagged) return;
-
-
-
-    // 播放点击音效
-    sfx.playDig();
-
-
-
-    // 递归自动扫雷队列
-    const queue = [{ x, y, z }];
-    
-    while (queue.length > 0) {
-      const current = queue.shift();
-      const cCell = this.grid[current.x][current.y][current.z];
-
-      if (cCell.isRevealed || cCell.isFlagged) continue;
-
-      cCell.isRevealed = true;
-      this.revealedCount++;
-      
-      // 动画淡出未发掘方块
-      this.animateCellReveal(cCell);
-
-      // 如果是空白方块(周围0颗雷)，深度优先自动连锁翻开周围 26 格
-      if (cCell.neighborMines === 0) {
-        const neighbors = this.getNeighbors(current.x, current.y, current.z);
-        neighbors.forEach(n => {
-          const nCell = this.grid[n.x][n.y][n.z];
-          if (!nCell.isRevealed && !nCell.isFlagged && !nCell.isMine) {
-            queue.push({ x: n.x, y: n.y, z: n.z });
-          }
-        });
-      } else {
-        // 创建漂浮的 3D 数字
-        this.createNumberSprite(cCell);
-      }
-    }
-
-    this.updateStats();
-    this.checkVictory();
   }
 
   // 翻开时的 3D 微缩退场动画
@@ -6035,65 +5854,6 @@ class HoloSweeperGame {
   }
 
   // -------------------------------------------------------------
-  // 恶搞机制：看广告复活
-  // -------------------------------------------------------------
-  startAdRevivalLocal() {
-    const btnAd = document.getElementById('btn-watch-ad');
-    const btnDie = document.getElementById('btn-ad-die');
-    const msg = document.getElementById('ad-modal-message');
-    
-    btnAd.disabled = true;
-    btnDie.style.display = 'none'; // Hide the end game button so it doesn't confuse people
-    
-    msg.innerHTML = "广告播放中<br>(广告位招租中......)";
-    
-    let countdown = 10;
-    btnAd.innerText = `广告播放中 (${countdown})...`;
-    
-    const interval = setInterval(() => {
-      countdown--;
-      if (countdown > 0) {
-        btnAd.innerText = `广告播放中 (${countdown})...`;
-      } else {
-        clearInterval(interval);
-        // 复活成功：坐标回溯，恢复刚才踩中的方块
-        if (this.pendingGameOver) {
-          const { x, y, z } = this.pendingGameOver;
-          const cell = this.grid[x][y][z];
-          
-          // 移除刚才展示的地雷模型
-          if (cell.mineInstance) {
-            cell.group.remove(cell.mineInstance);
-            cell.mineInstance.traverse(obj => {
-              if (obj.geometry) obj.geometry.dispose();
-              if (obj.material) {
-                if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
-                else obj.material.dispose();
-              }
-            });
-            cell.mineInstance = null;
-          }
-          
-          // 恢复方块外观与状态
-          cell.isRevealed = false;
-          cell.mesh.scale.set(1, 1, 1);
-          cell.outline.scale.set(1, 1, 1);
-          cell.mesh.visible = true;
-          cell.outline.visible = true;
-          cell.mesh.material = this.materials.cellUnrevealed;
-          cell.outline.material = this.materials.wireframe;
-          
-          this.pendingGameOver = null;
-        }
-
-        document.getElementById('ad-modal-overlay').classList.add('hidden');
-        // 恢复计时器
-        this.resumeTimer();
-      }
-    }, 1000);
-  }
-
-  // -------------------------------------------------------------
   // 8. 标记旗帜 (Flag)
   // -------------------------------------------------------------
   
@@ -6103,51 +5863,6 @@ class HoloSweeperGame {
     const cell = this.grid[x][y][z];
     if (cell.isPurged || cell.isRevealed) return;
     this.sendGuidedBoardCommand({ op: 'flag', x, y, z });
-  }
-
-  toggleFlagLocal(x, y, z) {
-    const cell = this.grid[x][y][z];
-    
-    // 如果已经翻开，无法插旗
-    if (cell.isRevealed) return;
-
-    sfx.playFlag();
-
-    if (cell.isFlagged) {
-      // 取消标记
-      cell.isFlagged = false;
-      cell.isAutomatedFlag = false;
-      this.automatedFlagKeys.delete(this.pointKey(cell));
-      this.flaggedCount--;
-      
-      // 移除旗帜模型
-      if (cell.flagInstance) {
-        cell.group.remove(cell.flagInstance);
-        cell.flagInstance.traverse(obj => {
-          if (obj.geometry) obj.geometry.dispose();
-          if (obj.material) obj.material.dispose();
-        });
-        cell.flagInstance = null;
-      }
-      
-      // 还原方块玻璃透明度
-      cell.mesh.material = this.materials.cellUnrevealed;
-    } else {
-      // 插上旗帜
-      cell.isFlagged = true;
-      cell.isAutomatedFlag = false;
-      this.flaggedCount++;
-
-      const flag = this.geometries.flag.clone();
-      flag.scale.set(0.9, 0.9, 0.9);
-      cell.group.add(flag);
-      cell.flagInstance = flag;
-
-      // 让插了旗的方块呈实体状，方便识别
-      cell.mesh.material = this.flagMaterialForCell(cell);
-    }
-
-    this.updateStats();
   }
 
   // -------------------------------------------------------------
@@ -6450,20 +6165,6 @@ class HoloSweeperGame {
     }
     const count = document.getElementById('solo-guide-count');
     if (count) count.textContent = `${completed} / ${states.length}`;
-  }
-
-  startTimer() {
-    this.timer = 0;
-    document.getElementById('stat-time').innerText = this.formatTime(this.timer);
-    this.resumeTimer();
-  }
-
-  resumeTimer() {
-    clearInterval(this.timerInterval);
-    this.timerInterval = setInterval(() => {
-      this.timer++;
-      document.getElementById('stat-time').innerText = this.formatTime(this.timer);
-    }, 1000);
   }
 
   formatTime(totalSeconds) {

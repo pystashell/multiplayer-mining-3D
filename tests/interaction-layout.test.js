@@ -149,7 +149,6 @@ test('keeps the solver at bottom center and restores squad communications', () =
 test('plays the squad mine sound once when a player gives up revival', () => {
   assert.match(appSource, /const explosionSoundAlreadyPlayed = previous\?\.phase === 'revive' && Boolean\(previous\.pendingMine\)/);
   assert.match(appSource, /triggerGameOver\(explosion\.x, explosion\.y, explosion\.z, \{[\s\S]*playExplosionSound: !explosionSoundAlreadyPlayed/);
-  assert.match(appSource, /case 'end_game':[\s\S]*triggerGameOver\(this\.pendingGameOver\.x, this\.pendingGameOver\.y, this\.pendingGameOver\.z, \{[\s\S]*playExplosionSound: false/);
   assert.match(appSource, /triggerGameOver\(explosionX, explosionY, explosionZ, \{ playExplosionSound = true \} = \{\}\)[\s\S]*if \(playExplosionSound\) sfx\.playExplosion\(\)/);
 });
 
