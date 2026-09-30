@@ -2,6 +2,12 @@
 
 ## [4.1.2] - Unreleased
 
+### Security
+
+- Wrangler is upgraded from 4.110.0 to 4.145.0, which clears the four
+  high-severity advisories `npm audit` reported in its local-development
+  chain (miniflare, sharp, undici). The deployed Worker code is unchanged.
+
 ### Verification
 
 - Browser regression tests run the real page in headless Chrome or Edge with
