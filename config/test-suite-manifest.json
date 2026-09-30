@@ -169,6 +169,10 @@
       "category": "client-runtime",
       "purposeZh": "验证不同浏览器 Crypto 能力下都能生成可靠且不重复的请求 ID。"
     },
+    "room-client-protocol.test.js": {
+      "category": "client-runtime",
+      "purposeZh": "验证联机客户端的房间码规范化、会话恢复、命令排队与确认、错误映射、断线退避重连、候选连接切换、心跳和离开流程。"
+    },
     "room-client-safari-reconnect.test.js": {
       "category": "client-runtime",
       "purposeZh": "验证 Safari 与 IP 主机上的 WebSocket 卡顿、异常、并行尝试和正常欢迎流程。"

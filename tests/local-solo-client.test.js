@@ -291,3 +291,165 @@ test('runtime IDs and state cloning work without randomUUID or structuredClone',
     else delete globalThis.structuredClone;
   }
 });
+
+function saveRecordFor(harness) {
+  const saveId = new URL(harness.location.href).searchParams.get('solo');
+  const key = [...harness.storage.values.keys()].find((candidate) => candidate.endsWith(saveId));
+  return { saveId, key, record: JSON.parse(harness.storage.getItem(key)) };
+}
+
+test('local sessions reject network-only modes and unusable names', async () => {
+  const harness = installBrowserHarness();
+  try {
+    const client = new LocalRoomClient();
+    await assert.rejects(client.create('Squad Player', 'squad'), { code: 'SOLO_ONLY' });
+    for (const name of ['   ', 42, null]) {
+      await assert.rejects(client.create(name), { code: 'INVALID_NAME' });
+    }
+    assert.equal(harness.storage.values.size, 0);
+    assert.equal(client.session, null);
+  } finally {
+    harness.restore();
+  }
+});
+
+test('corrupted, foreign, or mismatched local saves are discarded instead of resumed', async () => {
+  const mutations = [
+    ['unreadable JSON', () => '{broken'],
+    ['newer save format', (record) => ({ ...record, version: 2 })],
+    ['save id mismatch', (record) => ({ ...record, saveId: 'another-save' })],
+    ['network session', (record) => ({ ...record, session: { ...record.session, local: false } })],
+    ['squad session', (record) => ({ ...record, session: { ...record.session, mode: 'squad' } })],
+    ['missing engine', (record) => ({ ...record, engine: null })],
+    ['unknown player', (record) => ({ ...record, engine: { ...record.engine, members: [] } })],
+    ['squad engine', (record) => ({ ...record, engine: { ...record.engine, mode: 'squad' } })],
+    ['unrestorable engine', (record) => ({ ...record, engine: { expiresAt: record.engine.expiresAt } })],
+  ];
+  for (const [label, mutate] of mutations) {
+    const harness = installBrowserHarness();
+    try {
+      await new LocalRoomClient().create('Save Owner');
+      const { key, record } = saveRecordFor(harness);
+      const mutated = mutate(record);
+      harness.storage.setItem(key, typeof mutated === 'string' ? mutated : JSON.stringify(mutated));
+
+      const statuses = [];
+      const resumed = new LocalRoomClient({ onStatus: (status) => statuses.push(status) });
+      assert.equal(resumed.resumeFromUrl(), false, label);
+      assert.equal(harness.storage.getItem(key), null, `${label}: the unusable save is deleted`);
+      assert.equal(new URL(harness.location.href).searchParams.has('solo'), false, label);
+      assert.equal(resumed.session, null, label);
+      assert.deepEqual(statuses, [], label);
+    } finally {
+      harness.restore();
+    }
+  }
+});
+
+test('a resumed local save announces itself like a network welcome', async () => {
+  const harness = installBrowserHarness();
+  try {
+    const first = new LocalRoomClient();
+    const created = await first.create('Welcome Player');
+
+    const welcomes = [];
+    const statuses = [];
+    const resumed = new LocalRoomClient({
+      onWelcome: (message) => welcomes.push(message),
+      onStatus: (status) => statuses.push(status),
+    });
+    assert.equal(resumed.resumeFromUrl(), true);
+    assert.deepEqual(statuses, ['connected']);
+    assert.equal(welcomes.length, 1);
+    assert.equal(welcomes[0].v, 1);
+    assert.equal(welcomes[0].type, 'welcome');
+    assert.deepEqual(welcomes[0].identity, {
+      playerId: created.session.playerId,
+      playerName: 'Welcome Player',
+    });
+    assert.equal(welcomes[0].snapshot.code, 'LOCAL');
+  } finally {
+    harness.restore();
+  }
+});
+
+test('local engine rejections become coded client errors without blocking later commands', async () => {
+  const harness = installBrowserHarness();
+  try {
+    const client = new LocalRoomClient();
+    await client.create('Careful Player');
+    await assert.rejects(client.send({ op: 'dig', x: 99, y: 0, z: 0 }), { code: 'INVALID_CELL' });
+    await assert.rejects(client.send({ op: 'teleport' }), { code: 'UNKNOWN_COMMAND' });
+    const ack = await client.send({ op: 'chat', content: 'still responsive' });
+    assert.equal(ack.type, 'ack');
+    assert.equal(ack.receipt.sequence, 3);
+    assert.equal(client.retryNow(), false, 'local play has no transport to retry');
+  } finally {
+    harness.restore();
+  }
+});
+
+test('disconnecting keeps a resumable local save while leaving deletes it', async () => {
+  const harness = installBrowserHarness();
+  try {
+    const statuses = [];
+    const client = new LocalRoomClient({ onStatus: (status) => statuses.push(status) });
+    await client.create('Returning Player');
+    await client.send({ op: 'chat', content: 'remember me' });
+    const { saveId, key } = saveRecordFor(harness);
+    assert.equal(new URL(client.inviteUrl()).searchParams.get('solo'), saveId);
+
+    assert.equal(client.disconnect(), undefined);
+    assert.equal(client.session, null);
+    assert.equal(statuses.at(-1), 'disconnected');
+    assert.equal(new URL(harness.location.href).searchParams.has('solo'), false);
+    const saved = JSON.parse(harness.storage.getItem(key));
+    assert.equal(saved.engine.chat.at(-1).message, 'remember me', 'pending changes are flushed on disconnect');
+    await assert.rejects(client.send({ op: 'chat', content: 'gone' }), { code: 'NOT_JOINED' });
+
+    harness.location.href = `https://game.example/?solo=${saveId}`;
+    const resumed = new LocalRoomClient();
+    assert.equal(resumed.resumeFromUrl(), true);
+    await resumed.disconnect({ forgetSession: true });
+    assert.equal(harness.storage.getItem(key), null);
+  } finally {
+    harness.restore();
+  }
+});
+
+test('the hybrid facade stays safe while idle and routes joins to the network client', async () => {
+  const harness = installBrowserHarness({ href: 'https://game.example/?room=abc234' });
+  try {
+    const client = new HybridRoomClient();
+    assert.equal(client.session, null);
+    assert.equal(client.roomFromUrl(), 'ABC234');
+    await assert.rejects(client.send({ op: 'chat', content: 'hello' }), { code: 'NOT_JOINED' });
+    assert.equal(client.retryNow(), false);
+    assert.equal(client.inviteUrl(), 'https://game.example/?room=abc234');
+    await client.leave();
+    assert.equal(client.disconnect(), undefined);
+
+    const joins = [];
+    client.network.join = async (code, name) => {
+      joins.push([code, name]);
+      return { joined: true };
+    };
+    assert.deepEqual(await client.join('ABC234', 'Network Player'), { joined: true });
+    assert.equal(client.active, client.network);
+    assert.deepEqual(joins, [['ABC234', 'Network Player']]);
+
+    harness.location.href = 'https://game.example/';
+    const idle = new HybridRoomClient();
+    assert.equal(idle.resumeFromUrl(), false, 'no room or local save in the URL');
+
+    await idle.create('Hybrid Solo', 'solo');
+    assert.equal(idle.active, idle.local);
+    assert.equal(idle.retryNow(), false);
+    assert.match(idle.inviteUrl(), /[?&]solo=/);
+    assert.equal(idle.disconnect(), undefined);
+    assert.equal(idle.active, null);
+    assert.equal(idle.session, null);
+  } finally {
+    harness.restore();
+  }
+});

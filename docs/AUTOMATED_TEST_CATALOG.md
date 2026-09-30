@@ -5,7 +5,7 @@
 
 ## 如何使用
 
-当前登记 **44 个测试套件、337 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
+当前登记 **45 个测试套件、360 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
 
 - “测试内容”直接取自可执行用例名称，因此目录不会与代码分叉。
 - 每个套件都明确说明失败处理和测试何时可能需要评审。
@@ -370,6 +370,12 @@
 | [L224](../tests/local-solo-client.test.js#L224) | `an old room URL keeps using the existing network transport, including legacy server solo rooms` |
 | [L241](../tests/local-solo-client.test.js#L241) | `local play remains available when persistence is unavailable` |
 | [L255](../tests/local-solo-client.test.js#L255) | `runtime IDs and state cloning work without randomUUID or structuredClone` |
+| [L301](../tests/local-solo-client.test.js#L301) | `local sessions reject network-only modes and unusable names` |
+| [L316](../tests/local-solo-client.test.js#L316) | `corrupted, foreign, or mismatched local saves are discarded instead of resumed` |
+| [L349](../tests/local-solo-client.test.js#L349) | `a resumed local save announces itself like a network welcome` |
+| [L376](../tests/local-solo-client.test.js#L376) | `local engine rejections become coded client errors without blocking later commands` |
+| [L392](../tests/local-solo-client.test.js#L392) | `disconnecting keeps a resumable local save while leaving deletes it` |
+| [L420](../tests/local-solo-client.test.js#L420) | `the hybrid facade stays safe while idle and routes joins to the network client` |
 
 ### minesweeper-solver-room.test.js
 
@@ -561,6 +567,34 @@
 | [L13](../tests/room-client-id.test.js#L13) | `uses getRandomValues on insecure mobile HTTP origins without randomUUID` |
 | [L28](../tests/room-client-id.test.js#L28) | `still creates distinct request IDs when the Crypto API is unavailable` |
 | [L37](../tests/room-client-id.test.js#L37) | `falls through when a partial browser implementation throws` |
+
+### room-client-protocol.test.js
+
+- 分类：客户端运行时与交互逻辑
+- 自动化层级：行为级或源码契约自动化
+- 套件目的：验证联机客户端的房间码规范化、会话恢复、命令排队与确认、错误映射、断线退避重连、候选连接切换、心跳和离开流程。
+- 任一用例失败：先判断是浏览器行为、会话状态还是事件路由发生回归，再修复实现。若仅重构内部结构，应把断言迁移到等价的公开行为，不能直接删除保护。
+- 有效性评审：用户可观察行为不变时测试仍应有效；事件模型、输入协议或持久化边界正式改变时才评审更新。
+
+| 源码 | 测试内容 |
+| --- | --- |
+| [L203](../tests/room-client-protocol.test.js#L203) | `normalizes room codes and rejects malformed codes before any network request` |
+| [L224](../tests/room-client-protocol.test.js#L224) | `resumes a stored room session without creating another membership` |
+| [L252](../tests/room-client-protocol.test.js#L252) | `reports HTTP failures with the server error code or a generic fallback` |
+| [L276](../tests/room-client-protocol.test.js#L276) | `queues commands until welcome, then sends them in sequence and resolves them from acks` |
+| [L314](../tests/room-client-protocol.test.js#L314) | `routes server errors to the matching command and to the error handler` |
+| [L333](../tests/room-client-protocol.test.js#L333) | `forwards snapshots only from the welcomed socket and ignores pongs and foreign frames` |
+| [L356](../tests/room-client-protocol.test.js#L356) | `forgets the stored session when the server rejects it permanently` |
+| [L381](../tests/room-client-protocol.test.js#L381) | `reconnects with backoff after an unexpected drop and resends unacknowledged commands` |
+| [L410](../tests/room-client-protocol.test.js#L410) | `retries the handshake when the server accepts the socket but never welcomes it` |
+| [L427](../tests/room-client-protocol.test.js#L427) | `hands the join to an already open parallel candidate when the joining socket fails` |
+| [L450](../tests/room-client-protocol.test.js#L450) | `waits for a connecting candidate after a failed join and retries when none opens in time` |
+| [L477](../tests/room-client-protocol.test.js#L477) | `reconnects when a resume probe cannot be sent or the handshake is still pending` |
+| [L497](../tests/room-client-protocol.test.js#L497) | `retryNow adds a parallel attempt while connecting and restarts a live session` |
+| [L521](../tests/room-client-protocol.test.js#L521) | `probes a resumed page with a ping and reconnects only when no pong arrives` |
+| [L553](../tests/room-client-protocol.test.js#L553) | `sends keepalive pings only on the current open socket` |
+| [L573](../tests/room-client-protocol.test.js#L573) | `leaves with an acknowledged leave command and clears the session and URL` |
+| [L595](../tests/room-client-protocol.test.js#L595) | `rejects outstanding commands when the player disconnects` |
 
 ### room-client-safari-reconnect.test.js
 
