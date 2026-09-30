@@ -282,3 +282,41 @@ test('never suggests a cell that has already been removed by sector purge', () =
   });
   assert.notDeepEqual(hint.target, { x: 1, y: 1, z: 0 });
 });
+
+test('reports contradictory clues as inconsistent instead of guessing', () => {
+  const line = { width: 3, height: 1, depth: 1, mineCount: 1, phase: 'playing' };
+  const cases = [
+    // A 2 with a single hidden neighbour can never be satisfied.
+    { revealed: [{ x: 0, y: 0, z: 0, count: 2 }] },
+    // A 0 next to a flag contradicts that flag.
+    { revealed: [{ x: 1, y: 0, z: 0, count: 0 }], flags: [{ x: 0, y: 0, z: 0 }] },
+    // More flags than mines on the board.
+    { flags: [{ x: 0, y: 0, z: 0 }, { x: 2, y: 0, z: 0 }] },
+  ];
+  for (const board of cases) {
+    const hint = solveMinesweeperHint({ ...line, ...board });
+    assert.equal(hint.status, 'inconsistent', JSON.stringify(board));
+    assert.equal(hint.target, null);
+  }
+});
+
+test('falls back to a bounded lowest-density guess when exact enumeration exceeds its budget', () => {
+  const board = {
+    width: 5,
+    height: 1,
+    depth: 1,
+    mineCount: 1,
+    phase: 'playing',
+    revealed: [{ x: 1, y: 0, z: 0, count: 1 }],
+  };
+  const exact = solveMinesweeperHint(board);
+  assert.equal(exact.rule, 'enumeration-safe');
+
+  const bounded = solveMinesweeperHint({ ...board, maxNodes: 1 });
+  assert.equal(bounded.rule, 'bounded-guess');
+  assert.equal(bounded.certainty, 'guess', 'a budget-limited hint must never claim certainty');
+  assert.equal(bounded.action, 'dig');
+  assert.ok([3, 4].includes(bounded.target.x), 'cells away from the clue carry the lower global density');
+  assert.equal(bounded.details.localDensity, 0.25);
+  assert.equal(bounded.details.globalDensity, 0.25);
+});

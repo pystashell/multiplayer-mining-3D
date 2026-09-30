@@ -5,7 +5,7 @@
 
 ## 如何使用
 
-当前登记 **46 个测试套件、369 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
+当前登记 **46 个测试套件、390 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
 
 - “测试内容”直接取自可执行用例名称，因此目录不会与代码分叉。
 - 每个套件都明确说明失败处理和测试何时可能需要评审。
@@ -130,6 +130,7 @@
 | [L279](../tests/control-settings.test.js#L279) | `routes plain, Shift, and Ctrl wheel gestures with deterministic modifier precedence` |
 | [L292](../tests/control-settings.test.js#L292) | `normalizes wheel delta modes, dominant axes, directions, and extreme input` |
 | [L303](../tests/control-settings.test.js#L303) | `formats persisted physical key codes for the settings UI` |
+| [L311](../tests/control-settings.test.js#L311) | `unknown modifier wheel actions fall back to their defaults` |
 
 ### deploy-gate.test.js
 
@@ -269,25 +270,27 @@
 
 | 源码 | 测试内容 |
 | --- | --- |
-| [L25](../tests/i18n.test.js#L25) | `selects Chinese only for Chinese browser language tags` |
-| [L32](../tests/i18n.test.js#L32) | `localizes the Zero Domain brand instead of leaving English in Chinese mode` |
-| [L41](../tests/i18n.test.js#L41) | `uses the Sector Purge version title` |
-| [L50](../tests/i18n.test.js#L50) | `explains the campaign, hidden Ultimate chapter, and independent Free Mode features` |
-| [L125](../tests/i18n.test.js#L125) | `uses the new public compression name everywhere while preserving internal protocol identifiers` |
-| [L136](../tests/i18n.test.js#L136) | `builds localized computer-themed nicknames from random parts` |
-| [L161](../tests/i18n.test.js#L161) | `localizes semantic room activities independently for each client` |
-| [L166](../tests/i18n.test.js#L166) | `distinguishes 3D neighbor positions from the beginner number ceiling` |
-| [L174](../tests/i18n.test.js#L174) | `teaches inspection once in beginner, transitions into guided reasoning, and only reminds once in medium` |
-| [L201](../tests/i18n.test.js#L201) | `keeps slice controls localized without any proactive slice tutorial copy` |
-| [L225](../tests/i18n.test.js#L225) | `teaches exact medium hint deductions and labels guesses honestly` |
-| [L271](../tests/i18n.test.js#L271) | `provides mobile touch controls and long-press guidance` |
-| [L314](../tests/i18n.test.js#L314) | `describes middle- and right-button camera drag choices in both languages` |
-| [L328](../tests/i18n.test.js#L328) | `localizes the matrix-center switch, pan gesture, and recenter action` |
-| [L359](../tests/i18n.test.js#L359) | `provides explicit click targets for the guided beginner board` |
-| [L373](../tests/i18n.test.js#L373) | `names the advanced mission Final Protocol in both languages` |
-| [L380](../tests/i18n.test.js#L380) | `localizes the dialogue backdrop dismissal hint` |
-| [L385](../tests/i18n.test.js#L385) | `uses a single rewind action for solo mission failure` |
-| [L397](../tests/i18n.test.js#L397) | `explains that a teammate ad locks the entire squad` |
+| [L26](../tests/i18n.test.js#L26) | `selects Chinese only for Chinese browser language tags` |
+| [L33](../tests/i18n.test.js#L33) | `localizes the Zero Domain brand instead of leaving English in Chinese mode` |
+| [L42](../tests/i18n.test.js#L42) | `uses the Sector Purge version title` |
+| [L51](../tests/i18n.test.js#L51) | `explains the campaign, hidden Ultimate chapter, and independent Free Mode features` |
+| [L126](../tests/i18n.test.js#L126) | `uses the new public compression name everywhere while preserving internal protocol identifiers` |
+| [L137](../tests/i18n.test.js#L137) | `builds localized computer-themed nicknames from random parts` |
+| [L162](../tests/i18n.test.js#L162) | `localizes semantic room activities independently for each client` |
+| [L167](../tests/i18n.test.js#L167) | `distinguishes 3D neighbor positions from the beginner number ceiling` |
+| [L175](../tests/i18n.test.js#L175) | `teaches inspection once in beginner, transitions into guided reasoning, and only reminds once in medium` |
+| [L202](../tests/i18n.test.js#L202) | `keeps slice controls localized without any proactive slice tutorial copy` |
+| [L226](../tests/i18n.test.js#L226) | `teaches exact medium hint deductions and labels guesses honestly` |
+| [L272](../tests/i18n.test.js#L272) | `provides mobile touch controls and long-press guidance` |
+| [L315](../tests/i18n.test.js#L315) | `describes middle- and right-button camera drag choices in both languages` |
+| [L329](../tests/i18n.test.js#L329) | `localizes the matrix-center switch, pan gesture, and recenter action` |
+| [L360](../tests/i18n.test.js#L360) | `provides explicit click targets for the guided beginner board` |
+| [L374](../tests/i18n.test.js#L374) | `names the advanced mission Final Protocol in both languages` |
+| [L381](../tests/i18n.test.js#L381) | `localizes the dialogue backdrop dismissal hint` |
+| [L386](../tests/i18n.test.js#L386) | `uses a single rewind action for solo mission failure` |
+| [L398](../tests/i18n.test.js#L398) | `explains that a teammate ad locks the entire squad` |
+| [L404](../tests/i18n.test.js#L404) | `the first visit uses a saved language, then the browser language, even without storage` |
+| [L426](../tests/i18n.test.js#L426) | `input-specific lookups fall back to the raw key when no translation exists` |
 
 ### identity-agnostic-tests.test.js
 
@@ -328,6 +331,7 @@
 | [L18](../tests/input-mode.test.js#L18) | `lets real pointer input recalibrate hybrid devices without guessing unknown pointers` |
 | [L27](../tests/input-mode.test.js#L27) | `selects same-language input copy, replaces params, and falls back to the base key` |
 | [L40](../tests/input-mode.test.js#L40) | `keeps all gameplay instruction variants complete in Chinese and English` |
+| [L107](../tests/input-mode.test.js#L107) | `input-scoped keys only branch for the two known pointer modes` |
 
 ### interaction-layout.test.js
 
@@ -413,6 +417,8 @@
 | [L255](../tests/minesweeper-solver.test.js#L255) | `uses an easy-to-tap outer corner as the protected first medium-board hint` |
 | [L263](../tests/minesweeper-solver.test.js#L263) | `supports the advanced 7x7x7 mission and starts from an outer corner` |
 | [L272](../tests/minesweeper-solver.test.js#L272) | `never suggests a cell that has already been removed by sector purge` |
+| [L286](../tests/minesweeper-solver.test.js#L286) | `reports contradictory clues as inconsistent instead of guessing` |
+| [L303](../tests/minesweeper-solver.test.js#L303) | `falls back to a bounded lowest-density guess when exact enumeration exceeds its budget` |
 
 ### mobile-ui.test.js
 
@@ -478,6 +484,8 @@
 | [L197](../tests/pointer-targeting.test.js#L197) | `a highlighted revealed number remains locked to the auto-open action` |
 | [L208](../tests/pointer-targeting.test.js#L208) | `real camera drags cancel while small button jitter keeps the locked focus` |
 | [L217](../tests/pointer-targeting.test.js#L217) | `button-state merging remembers the first button when a driver reports only the second` |
+| [L223](../tests/pointer-targeting.test.js#L223) | `without a visual focus the first-button anchor, then the live raycast, owns the gesture` |
+| [L254](../tests/pointer-targeting.test.js#L254) | `a raycast that only crosses unopened proxies or unlabeled objects selects nothing` |
 
 ### reasoning-coordinate-axes.test.js
 
@@ -644,32 +652,35 @@
 
 | 源码 | 测试内容 |
 | --- | --- |
-| [L36](../tests/room-engine.test.js#L36) | `normalizes three-dimensional boards and enforces the 60 percent mine limit` |
-| [L49](../tests/room-engine.test.js#L49) | `normalizes Auto-Purge and Reduction independently while preserving legacy rulesets` |
-| [L89](../tests/room-engine.test.js#L89) | `restores a legacy Reduction room with both advanced features enabled` |
-| [L108](../tests/room-engine.test.js#L108) | `keeps mines private, guarantees the first cell is safe, and reveals mines only after loss` |
-| [L128](../tests/room-engine.test.js#L128) | `publishes recursive dig cells as ordered reveal waves` |
-| [L145](../tests/room-engine.test.js#L145) | `chords every unflagged neighbor when the adjacent flag count matches the clue` |
-| [L165](../tests/room-engine.test.js#L165) | `publishes chord candidates as one fast first wave before recursive expansion` |
-| [L182](../tests/room-engine.test.js#L182) | `does nothing when a chord clue does not have the same number of adjacent flags` |
-| [L198](../tests/room-engine.test.js#L198) | `triggers a mine without revealing safe neighbors when chord flags are wrong` |
-| [L216](../tests/room-engine.test.js#L216) | `acknowledges duplicate commands without applying them twice` |
-| [L227](../tests/room-engine.test.js#L227) | `persists an ad revival deadline and advances it authoritatively` |
-| [L246](../tests/room-engine.test.js#L246) | `task rewind only undoes the mine hit and preserves the current minefield` |
-| [L286](../tests/room-engine.test.js#L286) | `only the host can reconfigure a room` |
-| [L292](../tests/room-engine.test.js#L292) | `intentional leave removes a squad member and frees the seat` |
-| [L304](../tests/room-engine.test.js#L304) | `host leave transfers control to the earliest remaining squad member` |
-| [L322](../tests/room-engine.test.js#L322) | `a new member becomes host when reusing an empty squad room` |
-| [L333](../tests/room-engine.test.js#L333) | `stores semantic activity data so every client can localize it` |
-| [L344](../tests/room-engine.test.js#L344) | `keeps task mode private and exposes the selected mode in snapshots` |
-| [L356](../tests/room-engine.test.js#L356) | `constructs the complete dispersed three-layer beginner candidate space at runtime` |
-| [L379](../tests/room-engine.test.js#L379) | `shadow validation accepts a no-guess route and rejects a visually valid forced guess` |
-| [L384](../tests/room-engine.test.js#L384) | `beginner shadow validation only accepts certain rules with a directly explainable proof` |
-| [L394](../tests/room-engine.test.js#L394) | `gates the beginner first action without initializing or leaking the selected mine layout` |
-| [L440](../tests/room-engine.test.js#L440) | `selects varied solver-verified beginner layouts from seeded random candidate orders` |
-| [L450](../tests/room-engine.test.js#L450) | `pathological random sources remain bounded and can never bypass shadow validation` |
-| [L462](../tests/room-engine.test.js#L462) | `the public solver completes generated beginner layouts with certain moves and all three flags` |
-| [L511](../tests/room-engine.test.js#L511) | `restores legacy rooms as multiplayer squad rooms` |
+| [L37](../tests/room-engine.test.js#L37) | `normalizes three-dimensional boards and enforces the 60 percent mine limit` |
+| [L50](../tests/room-engine.test.js#L50) | `normalizes Auto-Purge and Reduction independently while preserving legacy rulesets` |
+| [L90](../tests/room-engine.test.js#L90) | `restores a legacy Reduction room with both advanced features enabled` |
+| [L109](../tests/room-engine.test.js#L109) | `keeps mines private, guarantees the first cell is safe, and reveals mines only after loss` |
+| [L129](../tests/room-engine.test.js#L129) | `publishes recursive dig cells as ordered reveal waves` |
+| [L146](../tests/room-engine.test.js#L146) | `chords every unflagged neighbor when the adjacent flag count matches the clue` |
+| [L166](../tests/room-engine.test.js#L166) | `publishes chord candidates as one fast first wave before recursive expansion` |
+| [L183](../tests/room-engine.test.js#L183) | `does nothing when a chord clue does not have the same number of adjacent flags` |
+| [L199](../tests/room-engine.test.js#L199) | `triggers a mine without revealing safe neighbors when chord flags are wrong` |
+| [L217](../tests/room-engine.test.js#L217) | `acknowledges duplicate commands without applying them twice` |
+| [L228](../tests/room-engine.test.js#L228) | `persists an ad revival deadline and advances it authoritatively` |
+| [L247](../tests/room-engine.test.js#L247) | `task rewind only undoes the mine hit and preserves the current minefield` |
+| [L287](../tests/room-engine.test.js#L287) | `only the host can reconfigure a room` |
+| [L293](../tests/room-engine.test.js#L293) | `intentional leave removes a squad member and frees the seat` |
+| [L305](../tests/room-engine.test.js#L305) | `host leave transfers control to the earliest remaining squad member` |
+| [L323](../tests/room-engine.test.js#L323) | `a new member becomes host when reusing an empty squad room` |
+| [L334](../tests/room-engine.test.js#L334) | `stores semantic activity data so every client can localize it` |
+| [L345](../tests/room-engine.test.js#L345) | `keeps task mode private and exposes the selected mode in snapshots` |
+| [L357](../tests/room-engine.test.js#L357) | `constructs the complete dispersed three-layer beginner candidate space at runtime` |
+| [L380](../tests/room-engine.test.js#L380) | `shadow validation accepts a no-guess route and rejects a visually valid forced guess` |
+| [L385](../tests/room-engine.test.js#L385) | `beginner shadow validation only accepts certain rules with a directly explainable proof` |
+| [L395](../tests/room-engine.test.js#L395) | `gates the beginner first action without initializing or leaking the selected mine layout` |
+| [L441](../tests/room-engine.test.js#L441) | `selects varied solver-verified beginner layouts from seeded random candidate orders` |
+| [L451](../tests/room-engine.test.js#L451) | `pathological random sources remain bounded and can never bypass shadow validation` |
+| [L463](../tests/room-engine.test.js#L463) | `the public solver completes generated beginner layouts with certain moves and all three flags` |
+| [L512](../tests/room-engine.test.js#L512) | `restores legacy rooms as multiplayer squad rooms` |
+| [L522](../tests/room-engine.test.js#L522) | `runtime identifiers keep a unique UUID shape without Web Crypto or when it fails` |
+| [L547](../tests/room-engine.test.js#L547) | `a player leaving mid-survey cancels it and snapshots no longer name the departed starter` |
+| [L560](../tests/room-engine.test.js#L560) | `an automated survey of a restored, fully surveyed board completes instead of stalling` |
 
 ### sector-purge-ui.test.js
 
@@ -790,6 +801,16 @@
 | [L593](../tests/soundtrack.test.js#L593) | `mine-hit loading fails quietly and retries after fetch or decode errors` |
 | [L615](../tests/soundtrack.test.js#L615) | `mine-hit playback respects mute changes during loading and unavailable audio contexts` |
 | [L635](../tests/soundtrack.test.js#L635) | `the game plays the selected sample through live volume and mute controls without the old synth` |
+| [L677](../tests/soundtrack.test.js#L677) | `legacy sessions without a campaign flag choose a score from the board scale` |
+| [L686](../tests/soundtrack.test.js#L686) | `audio preferences fall back to defaults when the browser blocks storage` |
+| [L717](../tests/soundtrack.test.js#L717) | `hiding the page fades the score and suspends audio, and showing it resumes the desired score` |
+| [L745](../tests/soundtrack.test.js#L745) | `toggling music off stops the score and re-enabling at zero volume restores audible playback` |
+| [L770](../tests/soundtrack.test.js#L770) | `volume changes still apply when gain automation is unavailable` |
+| [L783](../tests/soundtrack.test.js#L783) | `the squad score pans its call-and-response voices across the stereo field` |
+| [L807](../tests/soundtrack.test.js#L807) | `ended voices release their filter and gain nodes` |
+| [L828](../tests/soundtrack.test.js#L828) | `stopping after the audio device is lost releases every voice immediately` |
+| [L852](../tests/soundtrack.test.js#L852) | `sessions clean up synchronously in scopes without timers` |
+| [L868](../tests/soundtrack.test.js#L868) | `mine-hit playback reports failure and releases the source when the audio graph rejects it` |
 
 ### story-art.test.js
 
