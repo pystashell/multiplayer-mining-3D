@@ -12,6 +12,9 @@
 
 - Teammates now see a player who joins or reconnects to a squad as online
   immediately, instead of offline until the next action.
+- A player whose connection hits an error, is replaced by a newer tab, or
+  sends a malformed message is now shown offline consistently, and the
+  abandoned connection can no longer act for them.
 
 ### Removed
 
@@ -21,9 +24,10 @@
 
 ### Verification
 
-- The automated suite grows from 315 to 414 tests, adding behavioral coverage
-  of the Worker routes, the room Durable Object, both room clients, the dialog
-  focus manager, the soundtrack lifecycle, and the release tooling.
+- The automated suite grows from 315 to 420 tests, adding behavioral coverage
+  of the Worker routes, the room Durable Object (with runtime-faithful alarm
+  delivery and closing-socket handling), both room clients, the dialog focus
+  manager, the soundtrack lifecycle, and the release tooling.
 - New `npm run test:coverage` reports deterministic line coverage for the full
   `npm test` pipeline, including files no test loads.
 - A lightweight text check flags browser class methods whose names appear
