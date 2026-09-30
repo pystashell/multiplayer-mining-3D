@@ -13,8 +13,9 @@
 - Teammates now see a player who joins or reconnects to a squad as online
   immediately, instead of offline until the next action.
 - A player whose connection hits an error, is replaced by a newer tab, or
-  sends a malformed message is now shown offline consistently, and the
-  abandoned connection can no longer act for them.
+  sends a malformed message is now shown offline consistently. A connection
+  the server has closed can no longer act for them or rejoin to replace their
+  current connection.
 
 ### Changed
 
@@ -32,7 +33,7 @@
 
 ### Verification
 
-- The automated suite grows from 315 to 425 tests, adding behavioral coverage
+- The automated suite grows from 315 to 428 tests, adding behavioral coverage
   of the Worker routes, the room Durable Object (with runtime-faithful alarm
   delivery and closing-socket handling), both room clients, the dialog focus
   manager, the soundtrack lifecycle, the release tooling, and the deploy gate.

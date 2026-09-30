@@ -5,7 +5,7 @@
 
 ## 如何使用
 
-当前登记 **48 个测试套件、421 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
+当前登记 **48 个测试套件、424 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
 
 - “测试内容”直接取自可执行用例名称，因此目录不会与代码分叉。
 - 每个套件都明确说明失败处理和测试何时可能需要评审。
@@ -220,13 +220,16 @@
 | [L304](../tests/game-room.test.js#L304) | `reports a disconnected player offline and keeps them offline on later broadcasts` |
 | [L316](../tests/game-room.test.js#L316) | `retires a socket after a transport error so presence and commands stay consistent` |
 | [L341](../tests/game-room.test.js#L341) | `a replaced connection stops counting and acting while its close handshake is pending` |
-| [L368](../tests/game-room.test.js#L368) | `closes a joined socket that breaks the protocol and shows the player leaving` |
-| [L378](../tests/game-room.test.js#L378) | `drops sends to a failing socket without breaking the broadcast to everyone else` |
-| [L391](../tests/game-room.test.js#L391) | `expires an idle room when its alarm fires and deletes every stored record` |
-| [L408](../tests/game-room.test.js#L408) | `keeps an unchanged pending alarm when commands reschedule outside the alarm handler` |
-| [L426](../tests/game-room.test.js#L426) | `fires the revive alarm only when due, re-arms room expiry, and tolerates repeated delivery` |
-| [L470](../tests/game-room.test.js#L470) | `derives command timestamps from the server clock instead of the client envelope` |
-| [L494](../tests/game-room.test.js#L494) | `keeps processing queued room operations after a failed request` |
+| [L368](../tests/game-room.test.js#L368) | `a retired socket can never rejoin, replace the live connection, or act again (review N1)` |
+| [L397](../tests/game-room.test.js#L397) | `sockets retired for errors, protocol violations, or failed joins cannot join later` |
+| [L426](../tests/game-room.test.js#L426) | `a join queued before its socket is retired is ignored when it finally runs` |
+| [L444](../tests/game-room.test.js#L444) | `closes a joined socket that breaks the protocol and shows the player leaving` |
+| [L454](../tests/game-room.test.js#L454) | `drops sends to a failing socket without breaking the broadcast to everyone else` |
+| [L467](../tests/game-room.test.js#L467) | `expires an idle room when its alarm fires and deletes every stored record` |
+| [L484](../tests/game-room.test.js#L484) | `keeps an unchanged pending alarm when commands reschedule outside the alarm handler` |
+| [L502](../tests/game-room.test.js#L502) | `fires the revive alarm only when due, re-arms room expiry, and tolerates repeated delivery` |
+| [L546](../tests/game-room.test.js#L546) | `derives command timestamps from the server clock instead of the client envelope` |
+| [L570](../tests/game-room.test.js#L570) | `keeps processing queued room operations after a failed request` |
 
 ### guide-character.test.js
 

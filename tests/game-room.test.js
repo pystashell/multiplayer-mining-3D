@@ -365,6 +365,82 @@ test('a replaced connection stops counting and acting while its close handshake 
   assert.equal(runtime.state.getWebSockets().includes(stale), false);
 });
 
+test('a retired socket can never rejoin, replace the live connection, or act again (review N1)', async () => {
+  const { room, runtime, sessions } = await roomWithMembers(['Host', 'Guest']);
+  const stale = await joinSocket(room, runtime, sessions[0]);
+  const guest = await joinSocket(room, runtime, sessions[1]);
+  const fresh = await joinSocket(room, runtime, sessions[0]);
+  assert.equal(stale.readyState, FakeSocket.CLOSING);
+
+  const expiresAt = room.engine.state.expiresAt;
+  await room.webSocketMessage(stale, joinMessage(sessions[0]));
+  assert.equal(stale.attachment.joined, false);
+  assert.equal(stale.messages('welcome').length, 1, 'no second welcome for a retired socket');
+  assert.equal(fresh.readyState, FakeSocket.OPEN, 'the live connection is not replaced');
+  assert.equal(fresh.closed, null);
+  assert.equal(room.engine.state.expiresAt, expiresAt, 'a retired join does not renew the room');
+
+  const chat = room.engine.state.chat.length;
+  const receipts = room.engine.state.receipts.length;
+  await room.webSocketMessage(stale, commandMessage('late-after-rejoin', 99, { op: 'chat', content: 'late frame' }));
+  assert.equal(room.engine.state.chat.length, chat);
+  assert.equal(room.engine.state.receipts.length, receipts);
+  assert.deepEqual(stale.messages('ack'), []);
+
+  await runtime.clientClose(room, fresh, 1001, 'tab closed');
+  assert.deepEqual(presenceSeenBy(guest), [['Host', false], ['Guest', true]]);
+  const resumed = await joinSocket(room, runtime, sessions[0]);
+  assert.equal(resumed.closed, null, 'a genuinely new socket can still resume the session');
+  assert.deepEqual(presenceSeenBy(guest), [['Host', true], ['Guest', true]]);
+});
+
+test('sockets retired for errors, protocol violations, or failed joins cannot join later', async (t) => {
+  t.mock.method(console, 'error', () => {});
+  const { room, runtime, sessions } = await roomWithMembers(['Host', 'Guest']);
+  const host = await joinSocket(room, runtime, sessions[0]);
+
+  const errored = await joinSocket(room, runtime, sessions[1]);
+  await room.webSocketError(errored, new Error('transport failure'));
+  await room.webSocketMessage(errored, joinMessage(sessions[1]));
+  assert.equal(errored.attachment.joined, false);
+  assert.deepEqual(presenceSeenBy(host), [['Host', true], ['Guest', false]]);
+
+  const dropped = await joinSocket(room, runtime, sessions[1]);
+  await room.webSocketMessage(dropped, '{"v":1,"type":');
+  assert.deepEqual(dropped.closed, { code: 4400, reason: 'Invalid JSON' });
+  await room.webSocketMessage(dropped, joinMessage(sessions[1]));
+  assert.equal(dropped.attachment.joined, false);
+
+  const rejected = await openSocket(room, runtime);
+  await room.webSocketMessage(rejected, joinMessage({ ...sessions[1], token: 'wrong' }));
+  assert.deepEqual(rejected.closed, { code: 4401, reason: 'Invalid session' });
+  await room.webSocketMessage(rejected, joinMessage(sessions[1]));
+  assert.equal(rejected.attachment.joined, false);
+  assert.deepEqual(rejected.messages('welcome'), []);
+  assert.deepEqual(presenceSeenBy(host), [['Host', true], ['Guest', false]]);
+
+  await joinSocket(room, runtime, sessions[1]);
+  assert.deepEqual(presenceSeenBy(host), [['Host', true], ['Guest', true]]);
+});
+
+test('a join queued before its socket is retired is ignored when it finally runs', async () => {
+  const { room, runtime, sessions } = await roomWithMembers(['Host', 'Guest']);
+  const stale = await joinSocket(room, runtime, sessions[0]);
+  const guest = await joinSocket(room, runtime, sessions[1]);
+  const fresh = await openSocket(room, runtime);
+
+  // Both frames are queued before either runs: the fresh join retires the stale
+  // socket, so the stale join behind it must find it retired.
+  await Promise.all([
+    room.webSocketMessage(fresh, joinMessage(sessions[0])),
+    room.webSocketMessage(stale, joinMessage(sessions[0])),
+  ]);
+  assert.equal(fresh.last('welcome')?.identity.playerId, sessions[0].playerId);
+  assert.equal(fresh.closed, null);
+  assert.equal(stale.attachment.joined, false);
+  assert.deepEqual(presenceSeenBy(guest), [['Host', true], ['Guest', true]]);
+});
+
 test('closes a joined socket that breaks the protocol and shows the player leaving', async () => {
   const { room, runtime, sessions } = await roomWithMembers(['Host', 'Guest']);
   const host = await joinSocket(room, runtime, sessions[0]);

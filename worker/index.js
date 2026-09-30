@@ -211,7 +211,10 @@ export class GameRoom {
       return;
     }
     await this.enqueue(async () => {
+      // Checked when the frame runs, not when it was queued: a retired socket
+      // never acts again, even with a valid session while it is still CLOSING.
       const attachment = this.attachment(socket);
+      if (attachment.retired) return;
       if (!attachment.joined) await this.joinSocket(socket, attachment, message);
       else await this.handleCommand(socket, attachment, message);
     });
@@ -219,13 +222,13 @@ export class GameRoom {
 
   async joinSocket(socket, attachment, message) {
     if (!this.engine || message?.v !== PROTOCOL_VERSION || message?.type !== "join" || !message.session) {
-      this.close(socket, 4401, "Join required");
+      this.retire(socket, 4401, "Join required");
       return;
     }
     const member = this.engine.member(message.session.playerId);
     const suppliedHash = typeof message.session.token === "string" ? await hash(message.session.token) : "";
     if (!member || message.session.code !== this.engine.state.code || !constantTimeEqual(member.tokenHash, suppliedHash)) {
-      this.close(socket, 4401, "Invalid session");
+      this.retire(socket, 4401, "Invalid session");
       return;
     }
     for (const existing of this.ctx.getWebSockets()) {
@@ -276,10 +279,7 @@ export class GameRoom {
   }
 
   async webSocketClose(socket, code, reason) {
-    await this.enqueue(async () => {
-      this.retire(socket, code, reason);
-      this.broadcast();
-    });
+    await this.enqueue(async () => this.drop(socket, code, reason));
   }
 
   // A non-disconnection error leaves the socket in an unknown state. Retire it
@@ -288,8 +288,7 @@ export class GameRoom {
   async webSocketError(socket, error) {
     await this.enqueue(async () => {
       console.error("Room WebSocket error", error);
-      this.retire(socket, 1011, "Socket error");
-      this.broadcast();
+      this.drop(socket, 1011, "Socket error");
     });
   }
 
@@ -331,17 +330,18 @@ export class GameRoom {
     }
   }
 
-  // Stop counting a socket as present and stop it acting for its player before
-  // closing it: a server-initiated close stays CLOSING until the peer answers,
-  // and getWebSockets() may keep returning it until then.
+  // Every socket the room closes is retired first. A server-initiated close stays
+  // CLOSING until the peer answers and getWebSockets() may keep returning it, so
+  // the terminal `retired` mark (kept in the attachment, which survives
+  // hibernation) stops it counting as present, rejoining, or acting again.
   retire(socket, code, reason) {
     try {
-      socket.serializeAttachment({ ...this.attachment(socket), joined: false, playerId: null });
+      socket.serializeAttachment({ ...this.attachment(socket), joined: false, playerId: null, retired: true });
     } catch {}
     this.close(socket, code, reason);
   }
 
-  // Closes a socket that broke the protocol; if it was playing, others see it leave.
+  // Retires a socket; if it was playing, the others see it leave.
   drop(socket, code, reason) {
     const wasJoined = this.attachment(socket).joined;
     this.retire(socket, code, reason);
