@@ -26,7 +26,9 @@
   focus manager, the soundtrack lifecycle, and the release tooling.
 - New `npm run test:coverage` reports deterministic line coverage for the full
   `npm test` pipeline, including files no test loads.
-- A new check fails when a browser class method has no call site.
+- A lightweight text check flags browser class methods whose names appear
+  nowhere else. It is a heuristic with documented blind spots, not a
+  reachability analysis.
 - Dependencies are unchanged; Three.js, Wrangler, and the fonts keep their
   locked versions.
 

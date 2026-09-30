@@ -227,7 +227,7 @@
     },
     "unreferenced-methods.test.js": {
       "category": "client-runtime",
-      "purposeZh": "扫描浏览器端全部类方法，确保每个方法都有调用点，阻止不可达的死代码重新积累。"
+      "purposeZh": "用文本启发式检查浏览器端类方法：方法名在自身定义之外从未出现（整行注释不算）时报错。它不是调用关系或可达性分析，同名方法、只互相调用的方法、行尾注释和多行参数列表都会漏报，这些边界由测试固定。"
     },
     "vendor-assets.test.js": {
       "category": "media-assets",

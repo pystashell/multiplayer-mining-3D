@@ -5,7 +5,7 @@
 
 ## 如何使用
 
-当前登记 **48 个测试套件、415 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
+当前登记 **48 个测试套件、416 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
 
 - “测试内容”直接取自可执行用例名称，因此目录不会与代码分叉。
 - 每个套件都明确说明失败处理和测试何时可能需要评审。
@@ -924,14 +924,15 @@
 
 - 分类：客户端运行时与交互逻辑
 - 自动化层级：行为级或源码契约自动化
-- 套件目的：扫描浏览器端全部类方法，确保每个方法都有调用点，阻止不可达的死代码重新积累。
+- 套件目的：用文本启发式检查浏览器端类方法：方法名在自身定义之外从未出现（整行注释不算）时报错。它不是调用关系或可达性分析，同名方法、只互相调用的方法、行尾注释和多行参数列表都会漏报，这些边界由测试固定。
 - 任一用例失败：先判断是浏览器行为、会话状态还是事件路由发生回归，再修复实现。若仅重构内部结构，应把断言迁移到等价的公开行为，不能直接删除保护。
 - 有效性评审：用户可观察行为不变时测试仍应有效；事件模型、输入协议或持久化边界正式改变时才评审更新。
 
 | 源码 | 测试内容 |
 | --- | --- |
-| [L31](../tests/unreferenced-methods.test.js#L31) | `the dead-method scan recognizes class methods and their call sites` |
-| [L51](../tests/unreferenced-methods.test.js#L51) | `every browser class method is referenced somewhere besides its own definition` |
+| [L58](../tests/unreferenced-methods.test.js#L58) | `the name-reference heuristic flags methods whose names appear nowhere else` |
+| [L84](../tests/unreferenced-methods.test.js#L84) | `the heuristic documents what it cannot prove about reachability` |
+| [L129](../tests/unreferenced-methods.test.js#L129) | `every browser class method name appears somewhere besides its definition` |
 
 ### vendor-assets.test.js
 
