@@ -219,3 +219,44 @@ test('button-state merging remembers the first button when a driver reports only
   assert.equal(mergeTwoButtonState(2, 1, 1), 3);
   assert.equal(mergeTwoButtonState(0, 0, 1), 1);
 });
+
+test('without a visual focus the first-button anchor, then the live raycast, owns the gesture', () => {
+  const board = fixture();
+  const anchorCell = board.add({ x: 0, y: 0, z: 0, revealed: false });
+  const liveCell = board.add({ x: 1, y: 0, z: 0, revealed: false });
+  board.add({ x: 2, y: 0, z: 0, revealed: true, count: 0 });
+  const anchorTarget = { x: 0, y: 0, z: 0, type: 'cell' };
+  const currentTarget = { x: 1, y: 0, z: 0, type: 'cell' };
+
+  assert.deepEqual(resolveTwoButtonGestureTargets({ anchorTarget, currentTarget }, board.getCell), [anchorTarget]);
+  anchorCell.isRevealed = true;
+  assert.deepEqual(
+    resolveTwoButtonGestureTargets({ anchorTarget, currentTarget }, board.getCell),
+    [],
+    'a stale anchor cancels instead of silently retargeting',
+  );
+  assert.deepEqual(resolveTwoButtonGestureTargets({ currentTarget }, board.getCell), [currentTarget]);
+  liveCell.mesh.visible = false;
+  assert.deepEqual(resolveTwoButtonGestureTargets({ currentTarget }, board.getCell), []);
+  assert.deepEqual(
+    resolveTwoButtonGestureTargets({ currentTarget: { x: 2, y: 0, z: 0, type: 'number' } }, board.getCell),
+    [],
+    'an opened zero has no clue to chord',
+  );
+  assert.deepEqual(
+    resolveTwoButtonGestureTargets({ currentTarget: { x: 1, y: 0, z: 0, type: 'flag' } }, board.getCell),
+    [],
+    'unknown target kinds are never actionable',
+  );
+  assert.deepEqual(resolveTwoButtonGestureTargets({}, board.getCell), []);
+});
+
+test('a raycast that only crosses unopened proxies or unlabeled objects selects nothing', () => {
+  const board = fixture();
+  const hidden = board.add({ x: 0, y: 0, z: 0, revealed: false });
+  assert.equal(resolveTwoButtonRayHits([], [], board.getCell), null);
+  assert.equal(
+    resolveTwoButtonRayHits([], [{ object: hidden.mesh }, { object: { userData: {} } }], board.getCell),
+    null,
+  );
+});

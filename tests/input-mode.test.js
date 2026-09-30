@@ -103,3 +103,10 @@ test('keeps all gameplay instruction variants complete in Chinese and English', 
     }
   }
 });
+
+test('input-scoped keys only branch for the two known pointer modes', () => {
+  assert.equal(inputScopedTranslationKey('tutorial.dig', 'touch'), 'tutorial.dig.touch');
+  assert.equal(inputScopedTranslationKey('tutorial.dig', 'mouse'), 'tutorial.dig.mouse');
+  assert.equal(inputScopedTranslationKey('tutorial.dig', 'pen'), 'tutorial.dig');
+  assert.equal(inputScopedTranslationKey('tutorial.dig', undefined), 'tutorial.dig');
+});

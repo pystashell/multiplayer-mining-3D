@@ -5,7 +5,7 @@
 
 ## 如何使用
 
-当前登记 **42 个测试套件、311 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
+当前登记 **48 个测试套件、424 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
 
 - “测试内容”直接取自可执行用例名称，因此目录不会与代码分叉。
 - 每个套件都明确说明失败处理和测试何时可能需要评审。
@@ -130,6 +130,29 @@
 | [L279](../tests/control-settings.test.js#L279) | `routes plain, Shift, and Ctrl wheel gestures with deterministic modifier precedence` |
 | [L292](../tests/control-settings.test.js#L292) | `normalizes wheel delta modes, dominant axes, directions, and extreme input` |
 | [L303](../tests/control-settings.test.js#L303) | `formats persisted physical key codes for the settings UI` |
+| [L311](../tests/control-settings.test.js#L311) | `unknown modifier wheel actions fall back to their defaults` |
+
+### coverage-report.test.js
+
+- 分类：版本、供应链、安全与发布门禁
+- 自动化层级：交付链自动化
+- 套件目的：验证确定性覆盖率报告：合并同一模块在不同缓存参数 URL 下的多次执行，把 vendor 副本归并到源码，把从未加载的文件计为零覆盖，并与真实 V8 输出一致。
+- 任一用例失败：停止发布，定位版本漂移、依赖漂移、安全头、工作流顺序或部署门禁缺失。不得跳过失败步骤；修复后从完整测试重新开始。
+- 有效性评审：仅在正式更换发布平台、版本规则、安全基线或依赖管理方式时评审更新，并保留同等或更强的门禁。
+
+| 源码 | 测试内容 |
+| --- | --- |
+| [L43](../tests/coverage-report.test.js#L43) | `counts only executable lines and ignores blank and comment-only lines` |
+| [L58](../tests/coverage-report.test.js#L58) | `applies nested V8 block ranges so inner counts override their parent` |
+| [L88](../tests/coverage-report.test.js#L88) | `merges executions line by line so any run that executed a line covers it` |
+| [L93](../tests/coverage-report.test.js#L93) | `maps coverage URLs to project files without cache-busting queries` |
+| [L102](../tests/coverage-report.test.js#L102) | `assigns files to report groups and skips generated vendor copies` |
+| [L123](../tests/coverage-report.test.js#L123) | `reports never-loaded files as uncovered and merges aliased copies by line` |
+| [L160](../tests/coverage-report.test.js#L160) | `formats uncovered line ranges and renders runtime and tooling totals separately` |
+| [L188](../tests/coverage-report.test.js#L188) | `merges real V8 coverage from a module imported under two cache-busting URLs` |
+| [L262](../tests/coverage-report.test.js#L262) | `the coverage run reports after passing tests and appends the report to the CI job summary` |
+| [L275](../tests/coverage-report.test.js#L275) | `the coverage run fails exactly when the tests fail and skips the report` |
+| [L286](../tests/coverage-report.test.js#L286) | `a coverage reporting problem after passing tests is logged without failing the run` |
 
 ### deploy-gate.test.js
 
@@ -141,9 +164,11 @@
 
 | 源码 | 测试内容 |
 | --- | --- |
-| [L18](../tests/deploy-gate.test.js#L18) | `production deployment requires automated, bundle, and current UI approval gates` |
-| [L35](../tests/deploy-gate.test.js#L35) | `the complete regression command checks documentation, assets, version, and all test files` |
-| [L45](../tests/deploy-gate.test.js#L45) | `development, UI evidence, validation, and live-smoke scripts remain available` |
+| [L30](../tests/deploy-gate.test.js#L30) | `production deployment requires automated, bundle, and current UI approval gates` |
+| [L52](../tests/deploy-gate.test.js#L52) | `npm is started through its CLI file, falling back to a shell only when none is found` |
+| [L91](../tests/deploy-gate.test.js#L91) | `npm run deploy runs each gate exactly once, cannot skip it, and a failing gate blocks deployment` |
+| [L136](../tests/deploy-gate.test.js#L136) | `the complete regression command checks documentation, assets, version, and all test files` |
+| [L146](../tests/deploy-gate.test.js#L146) | `development, UI evidence, validation, and live-smoke scripts remain available` |
 
 ### dialogue-overlay.test.js
 
@@ -170,6 +195,41 @@
 | --- | --- |
 | [L12](../tests/game-core-vendor.test.js#L12) | `the browser game core is the exact worker engine source` |
 | [L16](../tests/game-core-vendor.test.js#L16) | `the browser beginner layout differs only by its solver import path` |
+
+### game-room.test.js
+
+- 分类：游戏规则与权威状态
+- 自动化层级：行为级自动化
+- 套件目的：验证联机房间 Durable Object 的状态恢复、会话校验、命令去重与顺序、在线状态广播、闹钟回收和复活计时。
+- 任一用例失败：先用失败用例的固定输入复现，再检查规则实现、状态迁移和测试夹具。若规则确实被产品决策修改，应在同一变更中同步需求、实现和断言，不能只放宽断言。
+- 有效性评审：内部重构不应使这类行为契约失效；只有公开规则、协议或兼容边界正式改变时才评审更新。
+
+| 源码 | 测试内容 |
+| --- | --- |
+| [L80](../tests/game-room.test.js#L80) | `restores persisted room state before serving and answers ping frames without waking the room` |
+| [L92](../tests/game-room.test.js#L92) | `initializes a room once, persists it, and schedules the expiry alarm` |
+| [L115](../tests/game-room.test.js#L115) | `reserves members through the internal join route and broadcasts the new roster` |
+| [L138](../tests/game-room.test.js#L138) | `accepts hibernatable WebSockets only for live rooms, real upgrades, and below the socket cap` |
+| [L159](../tests/game-room.test.js#L159) | `closes sockets that send binary, oversized, or malformed frames` |
+| [L175](../tests/game-room.test.js#L175) | `requires a valid session join before any command and rejects forged sessions` |
+| [L196](../tests/game-room.test.js#L196) | `welcomes a joined player and replaces an older socket for the same session` |
+| [L220](../tests/game-room.test.js#L220) | `acknowledges each command once, replays duplicate acknowledgements, and rejects stale sequences` |
+| [L245](../tests/game-room.test.js#L245) | `serializes concurrent commands from one socket in arrival order` |
+| [L257](../tests/game-room.test.js#L257) | `validates command envelopes and reports engine rejections with stable error codes` |
+| [L284](../tests/game-room.test.js#L284) | `lets a player leave by command and detaches the socket from the room` |
+| [L304](../tests/game-room.test.js#L304) | `reports a disconnected player offline and keeps them offline on later broadcasts` |
+| [L316](../tests/game-room.test.js#L316) | `retires a socket after a transport error so presence and commands stay consistent` |
+| [L341](../tests/game-room.test.js#L341) | `a replaced connection stops counting and acting while its close handshake is pending` |
+| [L368](../tests/game-room.test.js#L368) | `a retired socket can never rejoin, replace the live connection, or act again (review N1)` |
+| [L397](../tests/game-room.test.js#L397) | `sockets retired for errors, protocol violations, or failed joins cannot join later` |
+| [L426](../tests/game-room.test.js#L426) | `a join queued before its socket is retired is ignored when it finally runs` |
+| [L444](../tests/game-room.test.js#L444) | `closes a joined socket that breaks the protocol and shows the player leaving` |
+| [L454](../tests/game-room.test.js#L454) | `drops sends to a failing socket without breaking the broadcast to everyone else` |
+| [L467](../tests/game-room.test.js#L467) | `expires an idle room when its alarm fires and deletes every stored record` |
+| [L484](../tests/game-room.test.js#L484) | `keeps an unchanged pending alarm when commands reschedule outside the alarm handler` |
+| [L502](../tests/game-room.test.js#L502) | `fires the revive alarm only when due, re-arms room expiry, and tolerates repeated delivery` |
+| [L546](../tests/game-room.test.js#L546) | `derives command timestamps from the server clock instead of the client envelope` |
+| [L570](../tests/game-room.test.js#L570) | `keeps processing queued room operations after a failed request` |
 
 ### guide-character.test.js
 
@@ -242,25 +302,27 @@
 
 | 源码 | 测试内容 |
 | --- | --- |
-| [L25](../tests/i18n.test.js#L25) | `selects Chinese only for Chinese browser language tags` |
-| [L32](../tests/i18n.test.js#L32) | `localizes the Zero Domain brand instead of leaving English in Chinese mode` |
-| [L41](../tests/i18n.test.js#L41) | `uses the Sector Purge version title` |
-| [L50](../tests/i18n.test.js#L50) | `explains the campaign, hidden Ultimate chapter, and independent Free Mode features` |
-| [L125](../tests/i18n.test.js#L125) | `uses the new public compression name everywhere while preserving internal protocol identifiers` |
-| [L136](../tests/i18n.test.js#L136) | `builds localized computer-themed nicknames from random parts` |
-| [L161](../tests/i18n.test.js#L161) | `localizes semantic room activities independently for each client` |
-| [L166](../tests/i18n.test.js#L166) | `distinguishes 3D neighbor positions from the beginner number ceiling` |
-| [L174](../tests/i18n.test.js#L174) | `teaches inspection once in beginner, transitions into guided reasoning, and only reminds once in medium` |
-| [L201](../tests/i18n.test.js#L201) | `keeps slice controls localized without any proactive slice tutorial copy` |
-| [L225](../tests/i18n.test.js#L225) | `teaches exact medium hint deductions and labels guesses honestly` |
-| [L271](../tests/i18n.test.js#L271) | `provides mobile touch controls and long-press guidance` |
-| [L314](../tests/i18n.test.js#L314) | `describes middle- and right-button camera drag choices in both languages` |
-| [L328](../tests/i18n.test.js#L328) | `localizes the matrix-center switch, pan gesture, and recenter action` |
-| [L359](../tests/i18n.test.js#L359) | `provides explicit click targets for the guided beginner board` |
-| [L373](../tests/i18n.test.js#L373) | `names the advanced mission Final Protocol in both languages` |
-| [L380](../tests/i18n.test.js#L380) | `localizes the dialogue backdrop dismissal hint` |
-| [L385](../tests/i18n.test.js#L385) | `uses a single rewind action for solo mission failure` |
-| [L397](../tests/i18n.test.js#L397) | `explains that a teammate ad locks the entire squad` |
+| [L26](../tests/i18n.test.js#L26) | `selects Chinese only for Chinese browser language tags` |
+| [L33](../tests/i18n.test.js#L33) | `localizes the Zero Domain brand instead of leaving English in Chinese mode` |
+| [L42](../tests/i18n.test.js#L42) | `uses the Sector Purge version title` |
+| [L51](../tests/i18n.test.js#L51) | `explains the campaign, hidden Ultimate chapter, and independent Free Mode features` |
+| [L126](../tests/i18n.test.js#L126) | `uses the new public compression name everywhere while preserving internal protocol identifiers` |
+| [L137](../tests/i18n.test.js#L137) | `builds localized computer-themed nicknames from random parts` |
+| [L162](../tests/i18n.test.js#L162) | `localizes semantic room activities independently for each client` |
+| [L167](../tests/i18n.test.js#L167) | `distinguishes 3D neighbor positions from the beginner number ceiling` |
+| [L175](../tests/i18n.test.js#L175) | `teaches inspection once in beginner, transitions into guided reasoning, and only reminds once in medium` |
+| [L202](../tests/i18n.test.js#L202) | `keeps slice controls localized without any proactive slice tutorial copy` |
+| [L226](../tests/i18n.test.js#L226) | `teaches exact medium hint deductions and labels guesses honestly` |
+| [L272](../tests/i18n.test.js#L272) | `provides mobile touch controls and long-press guidance` |
+| [L315](../tests/i18n.test.js#L315) | `describes middle- and right-button camera drag choices in both languages` |
+| [L329](../tests/i18n.test.js#L329) | `localizes the matrix-center switch, pan gesture, and recenter action` |
+| [L360](../tests/i18n.test.js#L360) | `provides explicit click targets for the guided beginner board` |
+| [L374](../tests/i18n.test.js#L374) | `names the advanced mission Final Protocol in both languages` |
+| [L381](../tests/i18n.test.js#L381) | `localizes the dialogue backdrop dismissal hint` |
+| [L386](../tests/i18n.test.js#L386) | `uses a single rewind action for solo mission failure` |
+| [L398](../tests/i18n.test.js#L398) | `explains that a teammate ad locks the entire squad` |
+| [L404](../tests/i18n.test.js#L404) | `the first visit uses a saved language, then the browser language, even without storage` |
+| [L426](../tests/i18n.test.js#L426) | `input-specific lookups fall back to the raw key when no translation exists` |
 
 ### identity-agnostic-tests.test.js
 
@@ -301,6 +363,7 @@
 | [L18](../tests/input-mode.test.js#L18) | `lets real pointer input recalibrate hybrid devices without guessing unknown pointers` |
 | [L27](../tests/input-mode.test.js#L27) | `selects same-language input copy, replaces params, and falls back to the base key` |
 | [L40](../tests/input-mode.test.js#L40) | `keeps all gameplay instruction variants complete in Chinese and English` |
+| [L107](../tests/input-mode.test.js#L107) | `input-scoped keys only branch for the two known pointer modes` |
 
 ### interaction-layout.test.js
 
@@ -324,7 +387,7 @@
 | [L124](../tests/interaction-layout.test.js#L124) | `renders practical verification inside the current task panel` |
 | [L138](../tests/interaction-layout.test.js#L138) | `keeps the solver at bottom center and restores squad communications` |
 | [L149](../tests/interaction-layout.test.js#L149) | `plays the squad mine sound once when a player gives up revival` |
-| [L156](../tests/interaction-layout.test.js#L156) | `keeps the illustrated background inside the dialogue frame without covering text` |
+| [L155](../tests/interaction-layout.test.js#L155) | `keeps the illustrated background inside the dialogue frame without covering text` |
 
 ### local-solo-client.test.js
 
@@ -343,6 +406,12 @@
 | [L224](../tests/local-solo-client.test.js#L224) | `an old room URL keeps using the existing network transport, including legacy server solo rooms` |
 | [L241](../tests/local-solo-client.test.js#L241) | `local play remains available when persistence is unavailable` |
 | [L255](../tests/local-solo-client.test.js#L255) | `runtime IDs and state cloning work without randomUUID or structuredClone` |
+| [L301](../tests/local-solo-client.test.js#L301) | `local sessions reject network-only modes and unusable names` |
+| [L316](../tests/local-solo-client.test.js#L316) | `corrupted, foreign, or mismatched local saves are discarded instead of resumed` |
+| [L349](../tests/local-solo-client.test.js#L349) | `a resumed local save announces itself like a network welcome` |
+| [L376](../tests/local-solo-client.test.js#L376) | `local engine rejections become coded client errors without blocking later commands` |
+| [L392](../tests/local-solo-client.test.js#L392) | `disconnecting keeps a resumable local save while leaving deletes it` |
+| [L420](../tests/local-solo-client.test.js#L420) | `the hybrid facade stays safe while idle and routes joins to the network client` |
 
 ### minesweeper-solver-room.test.js
 
@@ -380,6 +449,8 @@
 | [L255](../tests/minesweeper-solver.test.js#L255) | `uses an easy-to-tap outer corner as the protected first medium-board hint` |
 | [L263](../tests/minesweeper-solver.test.js#L263) | `supports the advanced 7x7x7 mission and starts from an outer corner` |
 | [L272](../tests/minesweeper-solver.test.js#L272) | `never suggests a cell that has already been removed by sector purge` |
+| [L286](../tests/minesweeper-solver.test.js#L286) | `reports contradictory clues as inconsistent instead of guessing` |
+| [L303](../tests/minesweeper-solver.test.js#L303) | `falls back to a bounded lowest-density guess when exact enumeration exceeds its budget` |
 
 ### mobile-ui.test.js
 
@@ -401,6 +472,26 @@
 | [L105](../tests/mobile-ui.test.js#L105) | `stacks the tutorial action above the solver hint and mobile dock` |
 | [L123](../tests/mobile-ui.test.js#L123) | `keeps mobile drawer actions clear of the guide hint panel` |
 | [L141](../tests/mobile-ui.test.js#L141) | `lets players exit reasoning mode and uses a transparent clue reticle` |
+
+### modal-focus.test.js
+
+- 分类：客户端运行时与交互逻辑
+- 自动化层级：行为级或源码契约自动化
+- 套件目的：验证弹窗焦点管理：打开时焦点进入弹窗并使页面惰性化，Tab 在弹窗内循环，关闭时焦点回到触发控件或安全回退，多层弹窗按优先级处理。
+- 任一用例失败：先判断是浏览器行为、会话状态还是事件路由发生回归，再修复实现。若仅重构内部结构，应把断言迁移到等价的公开行为，不能直接删除保护。
+- 有效性评审：用户可观察行为不变时测试仍应有效；事件模型、输入协议或持久化边界正式改变时才评审更新。
+
+| 源码 | 测试内容 |
+| --- | --- |
+| [L200](../tests/modal-focus.test.js#L200) | `watches every dialog overlay and the page body for visibility changes` |
+| [L223](../tests/modal-focus.test.js#L223) | `moves focus into an opened dialog and makes the rest of the page inert` |
+| [L239](../tests/modal-focus.test.js#L239) | `returns focus to the control that opened the dialog when it closes` |
+| [L255](../tests/modal-focus.test.js#L255) | `falls back to the guided pointer, then the first page control, when the opener is gone` |
+| [L274](../tests/modal-focus.test.js#L274) | `traps Tab and Shift+Tab inside the dialog and skips controls that cannot take focus` |
+| [L297](../tests/modal-focus.test.js#L297) | `focuses the dialog itself when it has no focusable controls` |
+| [L310](../tests/modal-focus.test.js#L310) | `pulls focus that escapes to the page back into the dialog` |
+| [L326](../tests/modal-focus.test.js#L326) | `gives priority to the topmost dialog and restores the dialog underneath` |
+| [L344](../tests/modal-focus.test.js#L344) | `ignores overlays hidden by computed style and re-homes focus when a control disappears` |
 
 ### pointer-targeting.test.js
 
@@ -425,6 +516,8 @@
 | [L197](../tests/pointer-targeting.test.js#L197) | `a highlighted revealed number remains locked to the auto-open action` |
 | [L208](../tests/pointer-targeting.test.js#L208) | `real camera drags cancel while small button jitter keeps the locked focus` |
 | [L217](../tests/pointer-targeting.test.js#L217) | `button-state merging remembers the first button when a driver reports only the second` |
+| [L223](../tests/pointer-targeting.test.js#L223) | `without a visual focus the first-button anchor, then the live raycast, owns the gesture` |
+| [L254](../tests/pointer-targeting.test.js#L254) | `a raycast that only crosses unopened proxies or unlabeled objects selects nothing` |
 
 ### reasoning-coordinate-axes.test.js
 
@@ -451,11 +544,11 @@
 | 源码 | 测试内容 |
 | --- | --- |
 | [L34](../tests/release-pipeline.test.js#L34) | `CI runs complete tests before the Cloudflare deployment dry run` |
-| [L45](../tests/release-pipeline.test.js#L45) | `release workflow deploys only unsuffixed semantic tags from an approved branch` |
-| [L63](../tests/release-pipeline.test.js#L63) | `release remains draft until deploy and live verification both succeed` |
-| [L80](../tests/release-pipeline.test.js#L80) | `manual release recovery only publishes an existing tag after live verification` |
-| [L108](../tests/release-pipeline.test.js#L108) | `package scripts keep local deployment and release verification gates available` |
-| [L119](../tests/release-pipeline.test.js#L119) | `live-version verification exits naturally after success on Windows` |
+| [L49](../tests/release-pipeline.test.js#L49) | `release workflow deploys only unsuffixed semantic tags from an approved branch` |
+| [L67](../tests/release-pipeline.test.js#L67) | `release remains draft until deploy and live verification both succeed` |
+| [L84](../tests/release-pipeline.test.js#L84) | `manual release recovery only publishes an existing tag after live verification` |
+| [L112](../tests/release-pipeline.test.js#L112) | `package scripts keep local deployment and release verification gates available` |
+| [L124](../tests/release-pipeline.test.js#L124) | `live-version verification exits naturally after success on Windows` |
 
 ### release-version.test.js
 
@@ -467,10 +560,14 @@
 
 | 源码 | 测试内容 |
 | --- | --- |
-| [L22](../tests/release-version.test.js#L22) | `release identity is synchronized across package, lockfile, and public metadata` |
-| [L35](../tests/release-version.test.js#L35) | `release tags use semantic versions and reject mismatches` |
-| [L51](../tests/release-version.test.js#L51) | `all browser cache parameters use the product release version` |
-| [L65](../tests/release-version.test.js#L65) | `release check accepts the matching tag and rejects a different tag` |
+| [L23](../tests/release-version.test.js#L23) | `release identity is synchronized across package, lockfile, and public metadata` |
+| [L36](../tests/release-version.test.js#L36) | `release tags use semantic versions and reject mismatches` |
+| [L52](../tests/release-version.test.js#L52) | `all browser cache parameters use the product release version` |
+| [L66](../tests/release-version.test.js#L66) | `release check accepts the matching tag and rejects a different tag` |
+| [L109](../tests/release-version.test.js#L109) | `reports every mismatched release field at once` |
+| [L132](../tests/release-version.test.js#L132) | `cache-version checks fail when parameters are missing or disagree` |
+| [L151](../tests/release-version.test.js#L151) | `release checks read the tag from RELEASE_TAG or a GitHub tag ref, not branch refs` |
+| [L168](../tests/release-version.test.js#L168) | `live verification accepts a deployment that serves the release version and needs a URL` |
 
 ### replay-engine.test.js
 
@@ -535,6 +632,34 @@
 | [L28](../tests/room-client-id.test.js#L28) | `still creates distinct request IDs when the Crypto API is unavailable` |
 | [L37](../tests/room-client-id.test.js#L37) | `falls through when a partial browser implementation throws` |
 
+### room-client-protocol.test.js
+
+- 分类：客户端运行时与交互逻辑
+- 自动化层级：行为级或源码契约自动化
+- 套件目的：验证联机客户端的房间码规范化、会话恢复、命令排队与确认、错误映射、断线退避重连、候选连接切换、心跳和离开流程。
+- 任一用例失败：先判断是浏览器行为、会话状态还是事件路由发生回归，再修复实现。若仅重构内部结构，应把断言迁移到等价的公开行为，不能直接删除保护。
+- 有效性评审：用户可观察行为不变时测试仍应有效；事件模型、输入协议或持久化边界正式改变时才评审更新。
+
+| 源码 | 测试内容 |
+| --- | --- |
+| [L203](../tests/room-client-protocol.test.js#L203) | `normalizes room codes and rejects malformed codes before any network request` |
+| [L224](../tests/room-client-protocol.test.js#L224) | `resumes a stored room session without creating another membership` |
+| [L252](../tests/room-client-protocol.test.js#L252) | `reports HTTP failures with the server error code or a generic fallback` |
+| [L276](../tests/room-client-protocol.test.js#L276) | `queues commands until welcome, then sends them in sequence and resolves them from acks` |
+| [L314](../tests/room-client-protocol.test.js#L314) | `routes server errors to the matching command and to the error handler` |
+| [L333](../tests/room-client-protocol.test.js#L333) | `forwards snapshots only from the welcomed socket and ignores pongs and foreign frames` |
+| [L356](../tests/room-client-protocol.test.js#L356) | `forgets the stored session when the server rejects it permanently` |
+| [L381](../tests/room-client-protocol.test.js#L381) | `reconnects with backoff after an unexpected drop and resends unacknowledged commands` |
+| [L410](../tests/room-client-protocol.test.js#L410) | `retries the handshake when the server accepts the socket but never welcomes it` |
+| [L427](../tests/room-client-protocol.test.js#L427) | `hands the join to an already open parallel candidate when the joining socket fails` |
+| [L450](../tests/room-client-protocol.test.js#L450) | `waits for a connecting candidate after a failed join and retries when none opens in time` |
+| [L477](../tests/room-client-protocol.test.js#L477) | `reconnects when a resume probe cannot be sent or the handshake is still pending` |
+| [L497](../tests/room-client-protocol.test.js#L497) | `retryNow adds a parallel attempt while connecting and restarts a live session` |
+| [L521](../tests/room-client-protocol.test.js#L521) | `probes a resumed page with a ping and reconnects only when no pong arrives` |
+| [L553](../tests/room-client-protocol.test.js#L553) | `sends keepalive pings only on the current open socket` |
+| [L573](../tests/room-client-protocol.test.js#L573) | `leaves with an acknowledged leave command and clears the session and URL` |
+| [L595](../tests/room-client-protocol.test.js#L595) | `rejects outstanding commands when the player disconnects` |
+
 ### room-client-safari-reconnect.test.js
 
 - 分类：客户端运行时与交互逻辑
@@ -563,32 +688,35 @@
 
 | 源码 | 测试内容 |
 | --- | --- |
-| [L36](../tests/room-engine.test.js#L36) | `normalizes three-dimensional boards and enforces the 60 percent mine limit` |
-| [L49](../tests/room-engine.test.js#L49) | `normalizes Auto-Purge and Reduction independently while preserving legacy rulesets` |
-| [L89](../tests/room-engine.test.js#L89) | `restores a legacy Reduction room with both advanced features enabled` |
-| [L108](../tests/room-engine.test.js#L108) | `keeps mines private, guarantees the first cell is safe, and reveals mines only after loss` |
-| [L128](../tests/room-engine.test.js#L128) | `publishes recursive dig cells as ordered reveal waves` |
-| [L145](../tests/room-engine.test.js#L145) | `chords every unflagged neighbor when the adjacent flag count matches the clue` |
-| [L165](../tests/room-engine.test.js#L165) | `publishes chord candidates as one fast first wave before recursive expansion` |
-| [L182](../tests/room-engine.test.js#L182) | `does nothing when a chord clue does not have the same number of adjacent flags` |
-| [L198](../tests/room-engine.test.js#L198) | `triggers a mine without revealing safe neighbors when chord flags are wrong` |
-| [L216](../tests/room-engine.test.js#L216) | `acknowledges duplicate commands without applying them twice` |
-| [L227](../tests/room-engine.test.js#L227) | `persists an ad revival deadline and advances it authoritatively` |
-| [L246](../tests/room-engine.test.js#L246) | `task rewind only undoes the mine hit and preserves the current minefield` |
-| [L286](../tests/room-engine.test.js#L286) | `only the host can reconfigure a room` |
-| [L292](../tests/room-engine.test.js#L292) | `intentional leave removes a squad member and frees the seat` |
-| [L304](../tests/room-engine.test.js#L304) | `host leave transfers control to the earliest remaining squad member` |
-| [L322](../tests/room-engine.test.js#L322) | `a new member becomes host when reusing an empty squad room` |
-| [L333](../tests/room-engine.test.js#L333) | `stores semantic activity data so every client can localize it` |
-| [L344](../tests/room-engine.test.js#L344) | `keeps task mode private and exposes the selected mode in snapshots` |
-| [L356](../tests/room-engine.test.js#L356) | `constructs the complete dispersed three-layer beginner candidate space at runtime` |
-| [L379](../tests/room-engine.test.js#L379) | `shadow validation accepts a no-guess route and rejects a visually valid forced guess` |
-| [L384](../tests/room-engine.test.js#L384) | `beginner shadow validation only accepts certain rules with a directly explainable proof` |
-| [L394](../tests/room-engine.test.js#L394) | `gates the beginner first action without initializing or leaking the selected mine layout` |
-| [L440](../tests/room-engine.test.js#L440) | `selects varied solver-verified beginner layouts from seeded random candidate orders` |
-| [L450](../tests/room-engine.test.js#L450) | `pathological random sources remain bounded and can never bypass shadow validation` |
-| [L462](../tests/room-engine.test.js#L462) | `the public solver completes generated beginner layouts with certain moves and all three flags` |
-| [L511](../tests/room-engine.test.js#L511) | `restores legacy rooms as multiplayer squad rooms` |
+| [L37](../tests/room-engine.test.js#L37) | `normalizes three-dimensional boards and enforces the 60 percent mine limit` |
+| [L50](../tests/room-engine.test.js#L50) | `normalizes Auto-Purge and Reduction independently while preserving legacy rulesets` |
+| [L90](../tests/room-engine.test.js#L90) | `restores a legacy Reduction room with both advanced features enabled` |
+| [L109](../tests/room-engine.test.js#L109) | `keeps mines private, guarantees the first cell is safe, and reveals mines only after loss` |
+| [L129](../tests/room-engine.test.js#L129) | `publishes recursive dig cells as ordered reveal waves` |
+| [L146](../tests/room-engine.test.js#L146) | `chords every unflagged neighbor when the adjacent flag count matches the clue` |
+| [L166](../tests/room-engine.test.js#L166) | `publishes chord candidates as one fast first wave before recursive expansion` |
+| [L183](../tests/room-engine.test.js#L183) | `does nothing when a chord clue does not have the same number of adjacent flags` |
+| [L199](../tests/room-engine.test.js#L199) | `triggers a mine without revealing safe neighbors when chord flags are wrong` |
+| [L217](../tests/room-engine.test.js#L217) | `acknowledges duplicate commands without applying them twice` |
+| [L228](../tests/room-engine.test.js#L228) | `persists an ad revival deadline and advances it authoritatively` |
+| [L247](../tests/room-engine.test.js#L247) | `task rewind only undoes the mine hit and preserves the current minefield` |
+| [L287](../tests/room-engine.test.js#L287) | `only the host can reconfigure a room` |
+| [L293](../tests/room-engine.test.js#L293) | `intentional leave removes a squad member and frees the seat` |
+| [L305](../tests/room-engine.test.js#L305) | `host leave transfers control to the earliest remaining squad member` |
+| [L323](../tests/room-engine.test.js#L323) | `a new member becomes host when reusing an empty squad room` |
+| [L334](../tests/room-engine.test.js#L334) | `stores semantic activity data so every client can localize it` |
+| [L345](../tests/room-engine.test.js#L345) | `keeps task mode private and exposes the selected mode in snapshots` |
+| [L357](../tests/room-engine.test.js#L357) | `constructs the complete dispersed three-layer beginner candidate space at runtime` |
+| [L380](../tests/room-engine.test.js#L380) | `shadow validation accepts a no-guess route and rejects a visually valid forced guess` |
+| [L385](../tests/room-engine.test.js#L385) | `beginner shadow validation only accepts certain rules with a directly explainable proof` |
+| [L395](../tests/room-engine.test.js#L395) | `gates the beginner first action without initializing or leaking the selected mine layout` |
+| [L441](../tests/room-engine.test.js#L441) | `selects varied solver-verified beginner layouts from seeded random candidate orders` |
+| [L451](../tests/room-engine.test.js#L451) | `pathological random sources remain bounded and can never bypass shadow validation` |
+| [L463](../tests/room-engine.test.js#L463) | `the public solver completes generated beginner layouts with certain moves and all three flags` |
+| [L512](../tests/room-engine.test.js#L512) | `restores legacy rooms as multiplayer squad rooms` |
+| [L522](../tests/room-engine.test.js#L522) | `runtime identifiers keep a unique UUID shape without Web Crypto or when it fails` |
+| [L547](../tests/room-engine.test.js#L547) | `a player leaving mid-survey cancels it and snapshots no longer name the departed starter` |
+| [L560](../tests/room-engine.test.js#L560) | `an automated survey of a restored, fully surveyed board completes instead of stalling` |
 
 ### sector-purge-ui.test.js
 
@@ -709,6 +837,16 @@
 | [L593](../tests/soundtrack.test.js#L593) | `mine-hit loading fails quietly and retries after fetch or decode errors` |
 | [L615](../tests/soundtrack.test.js#L615) | `mine-hit playback respects mute changes during loading and unavailable audio contexts` |
 | [L635](../tests/soundtrack.test.js#L635) | `the game plays the selected sample through live volume and mute controls without the old synth` |
+| [L677](../tests/soundtrack.test.js#L677) | `legacy sessions without a campaign flag choose a score from the board scale` |
+| [L686](../tests/soundtrack.test.js#L686) | `audio preferences fall back to defaults when the browser blocks storage` |
+| [L717](../tests/soundtrack.test.js#L717) | `hiding the page fades the score and suspends audio, and showing it resumes the desired score` |
+| [L745](../tests/soundtrack.test.js#L745) | `toggling music off stops the score and re-enabling at zero volume restores audible playback` |
+| [L770](../tests/soundtrack.test.js#L770) | `volume changes still apply when gain automation is unavailable` |
+| [L783](../tests/soundtrack.test.js#L783) | `the squad score pans its call-and-response voices across the stereo field` |
+| [L807](../tests/soundtrack.test.js#L807) | `ended voices release their filter and gain nodes` |
+| [L828](../tests/soundtrack.test.js#L828) | `stopping after the audio device is lost releases every voice immediately` |
+| [L852](../tests/soundtrack.test.js#L852) | `sessions clean up synchronously in scopes without timers` |
+| [L868](../tests/soundtrack.test.js#L868) | `mine-hit playback reports failure and releases the source when the audio graph rejects it` |
 
 ### story-art.test.js
 
@@ -781,8 +919,28 @@
 
 | 源码 | 测试内容 |
 | --- | --- |
-| [L31](../tests/ui-approval.test.js#L31) | `accepts a complete approval only when every configured visual scenario passed` |
-| [L42](../tests/ui-approval.test.js#L42) | `rejects stale UI hashes, missing scenarios, and incomplete human evidence` |
+| [L37](../tests/ui-approval.test.js#L37) | `accepts a complete approval only when every configured visual scenario passed` |
+| [L48](../tests/ui-approval.test.js#L48) | `rejects stale UI hashes, missing scenarios, and incomplete human evidence` |
+| [L80](../tests/ui-approval.test.js#L80) | `normalizes release tags and maps each one to its approval record` |
+| [L86](../tests/ui-approval.test.js#L86) | `the UI digest is stable and changes when the covered file set changes` |
+| [L93](../tests/ui-approval.test.js#L93) | `rejects approvals for other releases, stale checklists, and malformed review metadata` |
+| [L119](../tests/ui-approval.test.js#L119) | `renders the committed UI manual from the checklist and rejects unknown viewport profiles` |
+| [L132](../tests/ui-approval.test.js#L132) | `refuses to record a UI approval without confirmation, a formal tag, a reviewer, a browser, and evidence` |
+| [L153](../tests/ui-approval.test.js#L153) | `fails closed when a release has no UI approval or only a stale one` |
+
+### unreferenced-methods.test.js
+
+- 分类：客户端运行时与交互逻辑
+- 自动化层级：行为级或源码契约自动化
+- 套件目的：用文本启发式检查浏览器端类方法：方法名在自身定义之外从未出现（整行注释不算）时报错。它不是调用关系或可达性分析，同名方法、只互相调用的方法、行尾注释和多行参数列表都会漏报，这些边界由测试固定。
+- 任一用例失败：先判断是浏览器行为、会话状态还是事件路由发生回归，再修复实现。若仅重构内部结构，应把断言迁移到等价的公开行为，不能直接删除保护。
+- 有效性评审：用户可观察行为不变时测试仍应有效；事件模型、输入协议或持久化边界正式改变时才评审更新。
+
+| 源码 | 测试内容 |
+| --- | --- |
+| [L58](../tests/unreferenced-methods.test.js#L58) | `the name-reference heuristic flags methods whose names appear nowhere else` |
+| [L84](../tests/unreferenced-methods.test.js#L84) | `the heuristic documents what it cannot prove about reachability` |
+| [L129](../tests/unreferenced-methods.test.js#L129) | `every browser class method name appears somewhere besides its definition` |
 
 ### vendor-assets.test.js
 
@@ -798,3 +956,24 @@
 | [L39](../tests/vendor-assets.test.js#L39) | `vendored OrbitControls resolves the local pinned Three.js module` |
 | [L44](../tests/vendor-assets.test.js#L44) | `only the selected local WOFF2 weights are declared` |
 | [L58](../tests/vendor-assets.test.js#L58) | `vendored runtime files and upstream licenses are present` |
+
+### worker-routes.test.js
+
+- 分类：版本、供应链、安全与发布门禁
+- 自动化层级：交付链自动化
+- 套件目的：验证 Worker 建房、加入和 WebSocket 路由的昵称规范化、令牌哈希、来源校验、请求体上限、限流与错误码映射。
+- 任一用例失败：停止发布，定位版本漂移、依赖漂移、安全头、工作流顺序或部署门禁缺失。不得跳过失败步骤；修复后从完整测试重新开始。
+- 有效性评审：仅在正式更换发布平台、版本规则、安全基线或依赖管理方式时评审更新，并保留同等或更强的门禁。
+
+| 源码 | 测试内容 |
+| --- | --- |
+| [L39](../tests/worker-routes.test.js#L39) | `creates a room with a normalized nickname, a random room code, and a hashed session token` |
+| [L63](../tests/worker-routes.test.js#L63) | `rejects a room request without a usable nickname before touching Durable Objects` |
+| [L73](../tests/worker-routes.test.js#L73) | `retries room-code collisions and gives up with 503 after twelve attempts` |
+| [L102](../tests/worker-routes.test.js#L102) | `reports a Durable Object initialization failure with its status and no session` |
+| [L112](../tests/worker-routes.test.js#L112) | `joins an existing room and maps room errors to stable codes and HTTP statuses` |
+| [L147](../tests/worker-routes.test.js#L147) | `rejects cross-origin and malformed-origin requests on every room entry point` |
+| [L162](../tests/worker-routes.test.js#L162) | `enforces byte-based request body limits and JSON validity before creating rooms` |
+| [L185](../tests/worker-routes.test.js#L185) | `rate limits room creation, joins, and sockets per hashed client address and scope` |
+| [L221](../tests/worker-routes.test.js#L221) | `routes only well-formed room codes and returns JSON 404 for unknown API paths` |
+| [L243](../tests/worker-routes.test.js#L243) | `converts unexpected Worker failures into a generic 500 response` |

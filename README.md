@@ -49,6 +49,17 @@ npm run deploy:dry
 完成真实桌面、手机和双客户端验收；完整门禁见
 [发布前质量流程](docs/PREDEPLOY_PROCESS.md)。
 
+查看按可执行行统计的覆盖率报告：
+
+```bash
+npm run test:coverage
+```
+
+报告会合并同一模块通过不同 `?v=` 缓存参数加载的多次执行，并把从未被任何测试
+加载的文件（目前是 `public/app.js`）计为 0%，因此“全部运行时代码”一行才是
+真实覆盖率；“仅已加载文件”一行只反映被测试模块内部的完整度。CI 也用这个命令
+运行完整测试，每次运行的 Summary 页面都会附上这份报告。
+
 开发服务器运行时，可以执行真实双 WebSocket 测试：
 
 ```bash
@@ -59,12 +70,12 @@ npm run test:live
 
 ```bash
 npx wrangler login
-npm run predeploy
 npm run deploy
 ```
 
-`npm run predeploy` 会运行全部自动化、Wrangler dry-run，并验证与当前源码绑定的
-UI 人工验收记录；`npm run deploy` 会再次执行这套门禁后才部署。
+`npm run deploy` 会先执行一次发布前门禁 `npm run deploy:gate`：运行全部自动化、
+Wrangler dry-run，并验证与当前源码绑定的 UI 人工验收记录，全部通过后才调用 Wrangler
+部署。只想检查、不部署时，单独运行 `npm run deploy:gate`。
 
 部署后，网页、房间 API 和 WebSocket 共用同一个 `workers.dev` 域名。创建房间后 URL 会自动附加 `?room=六位房间码`，可以直接复制给朋友。
 

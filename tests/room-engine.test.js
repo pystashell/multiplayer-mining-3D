@@ -4,6 +4,7 @@ import { solveMinesweeperHint } from '../public/minesweeper-solver.js';
 import {
   BEGINNER_TUTORIAL_START,
   RoomEngine,
+  createRuntimeId,
   normalizeConfig,
 } from '../worker/room-engine.js';
 import {
@@ -516,4 +517,67 @@ test('restores legacy rooms as multiplayer squad rooms', () => {
   const restored = RoomEngine.restore(legacy).snapshot();
   assert.equal(restored.mode, 'squad');
   assert.equal(restored.reviveStartedBy, null);
+});
+
+test('runtime identifiers keep a unique UUID shape without Web Crypto or when it fails', () => {
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+  const failing = {
+    randomUUID() { throw new Error('insecure context'); },
+    getRandomValues() { throw new Error('quota exceeded'); },
+  };
+  const ids = [
+    ...Array.from({ length: 40 }, () => createRuntimeId(null)),
+    ...Array.from({ length: 40 }, () => createRuntimeId(failing)),
+  ];
+  assert.ok(ids.every((id) => uuid.test(id)));
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+function soloEngine() {
+  return RoomEngine.create({
+    code: 'LOCAL',
+    hostId: 'host',
+    hostName: 'Surveyor',
+    tokenHash: 'local-only',
+    mode: 'solo',
+    now: 1_000,
+  });
+}
+
+test('a player leaving mid-survey cancels it and snapshots no longer name the departed starter', () => {
+  const engine = soloEngine();
+  engine.apply('host', { op: 'auto_survey_start' }, { id: 'start', sequence: 1, now: 1_001 });
+  assert.equal(engine.snapshot(1_001).autoSurvey.startedBy.name, 'Surveyor');
+
+  engine.apply('host', { op: 'leave' }, { id: 'leave', sequence: 2, now: 1_002 });
+  assert.equal(engine.state.autoSurvey.status, 'cancelled');
+  const snapshot = engine.snapshot(1_003);
+  assert.equal(snapshot.autoSurvey.status, 'cancelled');
+  assert.equal(snapshot.autoSurvey.startedBy, null);
+  assert.deepEqual(snapshot.players, []);
+});
+
+test('an automated survey of a restored, fully surveyed board completes instead of stalling', () => {
+  const finished = soloEngine();
+  finished.apply('host', { op: 'restart', config: { width: 3, height: 2, depth: 2, mineCount: 1 } }, { id: 'r', sequence: 1, now: 1_001 });
+  finished.apply('host', { op: 'dig', x: 0, y: 0, z: 0 }, { id: 'd', sequence: 2, now: 1_002 });
+  const { width, height, depth } = finished.state.config;
+  const mines = new Set(finished.state.mines);
+  const safe = Array.from({ length: width * height * depth }, (_, index) => index)
+    .filter((index) => !mines.has(index));
+
+  // A save written before the win was recorded: every safe cell revealed and
+  // the mine flagged, but the phase still says the run is in progress.
+  const legacy = finished.serialize();
+  legacy.phase = 'playing';
+  legacy.revealed = Object.fromEntries(safe.map((index) => [index, 0]));
+  legacy.flags = [...mines];
+  const engine = RoomEngine.restore(legacy);
+
+  engine.apply('host', { op: 'auto_survey_start' }, { id: 's', sequence: 3, now: 1_003 });
+  const { runId } = engine.state.autoSurvey;
+  const result = engine.apply('host', { op: 'auto_survey_step', runId, expectedStep: 0 }, { id: 't', sequence: 4, now: 1_004 });
+  assert.equal(result.kind, 'applied');
+  assert.equal(engine.state.autoSurvey.status, 'completed');
+  assert.equal(engine.state.phase, 'won');
 });

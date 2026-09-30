@@ -307,3 +307,9 @@ test('formats persisted physical key codes for the settings UI', () => {
   assert.equal(formatControlKey('Enter'), 'ENTER');
   assert.equal(formatControlKey('Minus'), '-');
 });
+
+test('unknown modifier wheel actions fall back to their defaults', () => {
+  const settings = normalizeControlSettings({ shiftWheelAction: 'teleport', ctrlWheelAction: 42 });
+  assert.equal(settings.shiftWheelAction, DEFAULT_CONTROL_SETTINGS.shiftWheelAction);
+  assert.equal(settings.ctrlWheelAction, DEFAULT_CONTROL_SETTINGS.ctrlWheelAction);
+});

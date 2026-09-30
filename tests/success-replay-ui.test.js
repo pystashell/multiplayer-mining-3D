@@ -194,7 +194,7 @@ test('runs replay locally without sending gameplay commands and buffers authorit
   const replayLifecycleSource = sourceBetween(
     appSource,
     '  startSuccessReplay() {',
-    '  handleNetworkAction(action) {',
+    '  initThree() {',
   );
   const snapshotSource = sourceBetween(
     appSource,
@@ -246,7 +246,7 @@ test('pauses between replay steps, resumes explicitly, and exposes a direct exit
 
 test('finishes with replay celebration and restores the newest authoritative snapshot on completion or exit', () => {
   const finishSource = sourceBetween(appSource, '  finishSuccessReplay() {', '  stopSuccessReplay() {');
-  const stopSource = sourceBetween(appSource, '  stopSuccessReplay() {', '  handleNetworkAction(action) {');
+  const stopSource = sourceBetween(appSource, '  stopSuccessReplay() {', '  initThree() {');
 
   assert.match(finishSource, /if \(!state \|\| state\.finished\) return/);
   assert.match(finishSource, /state\.finished = true/);
@@ -264,7 +264,7 @@ test('finishes with replay celebration and restores the newest authoritative sna
 
 test('keeps replay independent from the hard-to-Ultimate-to-Free-Mode campaign progression', () => {
   const completionSource = sourceBetween(appSource, '  showTaskCompletion() {', '  enterFreeModeAfterCampaign() {');
-  const replayLifecycleSource = sourceBetween(appSource, '  startSuccessReplay() {', '  handleNetworkAction(action) {');
+  const replayLifecycleSource = sourceBetween(appSource, '  startSuccessReplay() {', '  initThree() {');
   const dialogueFinishSource = sourceBetween(appSource, '  finishGuideDialogue() {', '  skipTutorial() {');
 
   assert.match(completionSource, /taskFlow === 'freeplay'[\s\S]*titleKey:\s*'freeplay\.completeTitle'[\s\S]*messageKey:\s*'freeplay\.completeMessage'[\s\S]*factText:\s*this\.t\('tutorial\.completionFact',\s*\{\s*time:\s*this\.formatTime\(this\.timer\)\s*\}\)[\s\S]*allowReplay: true/);

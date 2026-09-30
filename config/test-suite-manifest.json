@@ -69,6 +69,10 @@
       "category": "client-runtime",
       "purposeZh": "验证控制预设、持久化、非法值回退、滚轮手势和按键显示。"
     },
+    "coverage-report.test.js": {
+      "category": "release-security",
+      "purposeZh": "验证确定性覆盖率报告：合并同一模块在不同缓存参数 URL 下的多次执行，把 vendor 副本归并到源码，把从未加载的文件计为零覆盖，并与真实 V8 输出一致。"
+    },
     "deploy-gate.test.js": {
       "category": "release-security",
       "purposeZh": "验证本地生产部署命令必经完整自动化、Cloudflare dry-run 和有效 UI 人工验收。"
@@ -80,6 +84,10 @@
     "game-core-vendor.test.js": {
       "category": "release-security",
       "purposeZh": "验证浏览器端游戏核心与服务端权威引擎来源一致，避免规则分叉。"
+    },
+    "game-room.test.js": {
+      "category": "game-engine",
+      "purposeZh": "验证联机房间 Durable Object 的状态恢复、会话校验、命令去重与顺序、在线状态广播、闹钟回收和复活计时。"
     },
     "guide-character.test.js": {
       "category": "content-localization",
@@ -133,6 +141,10 @@
       "category": "ui-source-contract",
       "purposeZh": "验证移动端选择抑制、大厅宽度、手势、五键操作区、层级和提示面板结构。"
     },
+    "modal-focus.test.js": {
+      "category": "client-runtime",
+      "purposeZh": "验证弹窗焦点管理：打开时焦点进入弹窗并使页面惰性化，Tab 在弹窗内循环，关闭时焦点回到触发控件或安全回退，多层弹窗按优先级处理。"
+    },
     "pointer-targeting.test.js": {
       "category": "client-runtime",
       "purposeZh": "验证三维射线命中、数字纹理、代理壳、双键手势和拖拽取消不会误选格子。"
@@ -164,6 +176,10 @@
     "room-client-id.test.js": {
       "category": "client-runtime",
       "purposeZh": "验证不同浏览器 Crypto 能力下都能生成可靠且不重复的请求 ID。"
+    },
+    "room-client-protocol.test.js": {
+      "category": "client-runtime",
+      "purposeZh": "验证联机客户端的房间码规范化、会话恢复、命令排队与确认、错误映射、断线退避重连、候选连接切换、心跳和离开流程。"
     },
     "room-client-safari-reconnect.test.js": {
       "category": "client-runtime",
@@ -209,9 +225,17 @@
       "category": "release-security",
       "purposeZh": "验证 UI 人工验收记录必须绑定当前源码摘要、版本、完整场景和可追溯证据。"
     },
+    "unreferenced-methods.test.js": {
+      "category": "client-runtime",
+      "purposeZh": "用文本启发式检查浏览器端类方法：方法名在自身定义之外从未出现（整行注释不算）时报错。它不是调用关系或可达性分析，同名方法、只互相调用的方法、行尾注释和多行参数列表都会漏报，这些边界由测试固定。"
+    },
     "vendor-assets.test.js": {
       "category": "media-assets",
       "purposeZh": "验证运行时不依赖外部字体/CDN，固定版本资源、字体权重和许可证完整。"
+    },
+    "worker-routes.test.js": {
+      "category": "release-security",
+      "purposeZh": "验证 Worker 建房、加入和 WebSocket 路由的昵称规范化、令牌哈希、来源校验、请求体上限、限流与错误码映射。"
     }
   },
   "gates": [

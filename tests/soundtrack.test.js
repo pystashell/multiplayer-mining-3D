@@ -669,3 +669,216 @@ test('the game plays the selected sample through live volume and mute controls w
     harness.close();
   }
 });
+
+function silentStorage() {
+  return { getItem: () => null, setItem() {} };
+}
+
+test('legacy sessions without a campaign flag choose a score from the board scale', () => {
+  const legacy = (taskMission, config) => musicTrackForGame({ inRoom: true, gameMode: 'solo', taskMission, config });
+  assert.equal(legacy('bonus', { width: 3, height: 3, depth: 3, mineCount: 3 }), 'easy');
+  assert.equal(legacy('bonus', { width: 2, height: 5, depth: 2, mineCount: 3 }), 'medium');
+  assert.equal(legacy('squad', { width: 3, height: 3, depth: 3, mineCount: 30 }), 'hard');
+  assert.equal(legacy(null, { width: 9, height: 3, depth: 3, mineCount: 1 }), 'ultimate');
+  assert.equal(legacy('bonus', null), 'easy');
+});
+
+test('audio preferences fall back to defaults when the browser blocks storage', () => {
+  const blocked = {
+    getItem() { throw new Error('SecurityError'); },
+    setItem() { throw new Error('SecurityError'); },
+  };
+  assert.equal(loadAudioVolume(blocked, MUSIC_VOLUME_STORAGE_KEY, 0.4), 0.4);
+  assert.equal(loadMusicEnabled(blocked), true);
+  assert.equal(loadSfxEnabled(blocked), true);
+  assert.equal(persistMusicVolume(0.3, blocked), 0.3);
+  assert.doesNotThrow(() => persistSfxEnabled(false, blocked));
+
+  const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  Object.defineProperty(globalThis, 'localStorage', {
+    configurable: true,
+    get() { throw new Error('SecurityError'); },
+  });
+  try {
+    assert.equal(loadMusicVolume(), 1);
+    assert.equal(loadSfxVolume(), 1);
+    const director = new SciFiMusicDirector({
+      scope: { get localStorage() { throw new Error('SecurityError'); } },
+    });
+    assert.equal(director.storage, null);
+    assert.equal(director.volume, 1);
+    assert.equal(director.enabled, true);
+  } finally {
+    if (descriptor) Object.defineProperty(globalThis, 'localStorage', descriptor);
+    else delete globalThis.localStorage;
+  }
+});
+
+test('hiding the page fades the score and suspends audio, and showing it resumes the desired score', async () => {
+  const harness = createAudioHarness();
+  try {
+    const director = new SciFiMusicDirector({ scope: harness.scope, storage: silentStorage() });
+    await director.unlock();
+    director.setScene(campaignScene('medium'));
+    const session = director.activeSession;
+
+    harness.scope.document.hidden = true;
+    director.handleVisibilityChange();
+    assert.equal(director.hidden, true);
+    assert.equal(session.stopped, true);
+    assert.equal(director.activeSession, null);
+    assert.equal(director.setScene(campaignScene('hard')), 'hard', 'the desired score keeps following the game');
+    assert.equal(director.activeSession, null, 'nothing plays while the page is hidden');
+    harness.flushTimeouts();
+    assert.equal(harness.contexts[0].suspendCalls, 1);
+
+    harness.scope.document.hidden = false;
+    director.handleVisibilityChange();
+    await new Promise(setImmediate);
+    assert.equal(harness.contexts[0].resumeCalls, 1);
+    assert.equal(director.activeSession?.id, 'hard');
+  } finally {
+    harness.close();
+  }
+});
+
+test('toggling music off stops the score and re-enabling at zero volume restores audible playback', async () => {
+  const values = new Map();
+  const storage = { getItem: (key) => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) };
+  const harness = createAudioHarness();
+  try {
+    const director = new SciFiMusicDirector({ scope: harness.scope, storage });
+    await director.unlock();
+    director.setScene(campaignScene('easy'));
+
+    assert.equal(await director.toggleEnabled(), false);
+    assert.equal(director.activeSession, null);
+    assert.equal(values.get(MUSIC_STORAGE_KEY), 'false');
+    assert.equal(director.setScene(campaignScene('medium')), 'medium');
+    assert.equal(director.activeSession, null, 'disabled music tracks the scene without playing it');
+
+    assert.equal(await director.setVolume(0), false);
+    assert.equal(await director.setEnabled(true), true);
+    assert.equal(director.volume, 1);
+    assert.equal(values.get(MUSIC_VOLUME_STORAGE_KEY), '1');
+    assert.equal(director.activeSession?.id, 'medium');
+  } finally {
+    harness.close();
+  }
+});
+
+test('volume changes still apply when gain automation is unavailable', async () => {
+  const harness = createAudioHarness();
+  try {
+    const director = new SciFiMusicDirector({ scope: harness.scope, storage: silentStorage() });
+    await director.unlock();
+    director.master.gain.cancelScheduledValues = () => { throw new Error('automation unsupported'); };
+    await director.setVolume(0.5);
+    assert.equal(director.master.gain.value, DEFAULT_MUSIC_MASTER_VOLUME * 0.5);
+  } finally {
+    harness.close();
+  }
+});
+
+test('the squad score pans its call-and-response voices across the stereo field', async () => {
+  const harness = createAudioHarness();
+  try {
+    const director = new SciFiMusicDirector({ scope: harness.scope, storage: silentStorage() });
+    await director.unlock();
+    const context = harness.contexts[0];
+    const panners = [];
+    const createStereoPanner = context.createStereoPanner.bind(context);
+    context.createStereoPanner = () => {
+      const node = createStereoPanner();
+      panners.push(node);
+      return node;
+    };
+
+    assert.equal(director.setScene({ inRoom: true, gameMode: 'squad' }), 'squad');
+    context.currentTime += 2;
+    for (const { callback } of harness.intervals.values()) callback();
+    assert.deepEqual([...new Set(panners.map((node) => node.pan.value))].sort(), [-0.36, 0.36]);
+    assert.ok(panners.every((node) => node.connections.includes(director.activeSession.bus)));
+  } finally {
+    harness.close();
+  }
+});
+
+test('ended voices release their filter and gain nodes', async () => {
+  const harness = createAudioHarness();
+  try {
+    const director = new SciFiMusicDirector({ scope: harness.scope, storage: silentStorage() });
+    await director.unlock();
+    director.setScene(campaignScene('easy'));
+    const session = director.activeSession;
+    const tone = [...session.sources].find((source) => source.connections[0]?.Q);
+    const filter = tone.connections[0];
+    const gain = filter.connections[0];
+
+    tone.listeners.get('ended')();
+    assert.equal(session.sources.has(tone), false);
+    assert.equal(tone.disconnected, true);
+    assert.equal(filter.disconnected, true);
+    assert.equal(gain.disconnected, true);
+  } finally {
+    harness.close();
+  }
+});
+
+test('stopping after the audio device is lost releases every voice immediately', async () => {
+  const harness = createAudioHarness();
+  try {
+    const director = new SciFiMusicDirector({ scope: harness.scope, storage: silentStorage() });
+    await director.unlock();
+    director.setScene(campaignScene('easy'));
+    const session = director.activeSession;
+    const sources = [...session.sources];
+
+    harness.close();
+    harness.scope.AudioContext = class {
+      constructor() { throw new Error('no audio output device'); }
+    };
+    assert.equal(await director.unlock(), false);
+    assert.equal(director.context, null);
+    director.stop();
+    assert.equal(session.sources.size, 0);
+    assert.equal(session.bus.disconnected, true);
+    assert.ok(sources.every((source) => source.stoppedAt.length > 0));
+  } finally {
+    harness.close();
+  }
+});
+
+test('sessions clean up synchronously in scopes without timers', async () => {
+  const harness = createAudioHarness();
+  try {
+    delete harness.scope.setTimeout;
+    const director = new SciFiMusicDirector({ scope: harness.scope, storage: silentStorage() });
+    await director.unlock();
+    director.setScene(campaignScene('easy'));
+    const session = director.activeSession;
+    director.stop();
+    assert.equal(session.sources.size, 0);
+    assert.equal(session.bus.disconnected, true);
+  } finally {
+    harness.close();
+  }
+});
+
+test('mine-hit playback reports failure and releases the source when the audio graph rejects it', async () => {
+  const sound = new MineHitSound({
+    scope: { fetch: async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) }) },
+  });
+  const context = new CompleteFakeAudioContext();
+  const created = [];
+  context.createBufferSource = () => {
+    const source = new FakeScheduledSource(context);
+    source.start = () => { throw new Error('InvalidStateError'); };
+    created.push(source);
+    return source;
+  };
+
+  assert.equal(await sound.play(context, context.createGain()), false);
+  assert.equal(created.length, 1);
+  assert.equal(created[0].disconnected, true, 'a source that failed to start is not left connected');
+});

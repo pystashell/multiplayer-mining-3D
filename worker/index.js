@@ -200,18 +200,21 @@ export class GameRoom {
 
   async webSocketMessage(socket, raw) {
     if (typeof raw !== "string" || new TextEncoder().encode(raw).byteLength > MAX_MESSAGE_BYTES) {
-      this.close(socket, 4409, "Message too large");
+      await this.enqueue(async () => this.drop(socket, 4409, "Message too large"));
       return;
     }
     let message;
     try {
       message = JSON.parse(raw);
     } catch {
-      this.close(socket, 4400, "Invalid JSON");
+      await this.enqueue(async () => this.drop(socket, 4400, "Invalid JSON"));
       return;
     }
     await this.enqueue(async () => {
+      // Checked when the frame runs, not when it was queued: a retired socket
+      // never acts again, even with a valid session while it is still CLOSING.
       const attachment = this.attachment(socket);
+      if (attachment.retired) return;
       if (!attachment.joined) await this.joinSocket(socket, attachment, message);
       else await this.handleCommand(socket, attachment, message);
     });
@@ -219,24 +222,25 @@ export class GameRoom {
 
   async joinSocket(socket, attachment, message) {
     if (!this.engine || message?.v !== PROTOCOL_VERSION || message?.type !== "join" || !message.session) {
-      this.close(socket, 4401, "Join required");
+      this.retire(socket, 4401, "Join required");
       return;
     }
     const member = this.engine.member(message.session.playerId);
     const suppliedHash = typeof message.session.token === "string" ? await hash(message.session.token) : "";
     if (!member || message.session.code !== this.engine.state.code || !constantTimeEqual(member.tokenHash, suppliedHash)) {
-      this.close(socket, 4401, "Invalid session");
+      this.retire(socket, 4401, "Invalid session");
       return;
     }
     for (const existing of this.ctx.getWebSockets()) {
       if (existing === socket) continue;
       const previous = this.attachment(existing);
-      if (previous.joined && previous.playerId === member.id) this.close(existing, 4408, "Session replaced");
+      if (previous.joined && previous.playerId === member.id) this.retire(existing, 4408, "Session replaced");
     }
     socket.serializeAttachment({ ...attachment, joined: true, playerId: member.id });
     this.engine.touch(Date.now(), false);
     await this.persistAndSchedule();
     this.send(socket, { v: PROTOCOL_VERSION, type: "welcome", identity: { playerId: member.id, playerName: member.name }, snapshot: this.snapshot() });
+    // The joining socket already has its snapshot in the welcome.
     this.broadcast(socket);
   }
 
@@ -256,7 +260,13 @@ export class GameRoom {
       return;
     }
     try {
-      const result = this.engine.apply(attachment.playerId, message.command, message);
+      // Only the id and sequence come from the client; time is always the
+      // server's, or a crafted envelope could move expiry and revive deadlines.
+      const result = this.engine.apply(attachment.playerId, message.command, {
+        id: message.id,
+        sequence: message.sequence,
+        now: Date.now(),
+      });
       if (message.command.op === "leave") {
         socket.serializeAttachment({ ...attachment, joined: false, playerId: null });
       }
@@ -269,14 +279,17 @@ export class GameRoom {
   }
 
   async webSocketClose(socket, code, reason) {
-    await this.enqueue(async () => {
-      this.broadcast(socket);
-      try { socket.close(code, reason); } catch {}
-    });
+    await this.enqueue(async () => this.drop(socket, code, reason));
   }
 
-  async webSocketError(socket) {
-    await this.enqueue(() => this.broadcast(socket));
+  // A non-disconnection error leaves the socket in an unknown state. Retire it
+  // so presence stays consistent; the client reconnects with its session and
+  // resends any unacknowledged commands.
+  async webSocketError(socket, error) {
+    await this.enqueue(async () => {
+      console.error("Room WebSocket error", error);
+      this.drop(socket, 1011, "Socket error");
+    });
   }
 
   async alarm() {
@@ -284,7 +297,7 @@ export class GameRoom {
       if (!this.engine) return;
       const now = Date.now();
       if (now >= this.engine.state.expiresAt) {
-        for (const socket of this.ctx.getWebSockets()) this.close(socket, 4404, "Room expired");
+        for (const socket of this.ctx.getWebSockets()) this.retire(socket, 4404, "Room expired");
         this.engine = null;
         await this.ctx.storage.deleteAll();
         return;
@@ -298,22 +311,41 @@ export class GameRoom {
     });
   }
 
-  snapshot(excluded) {
+  // Presence comes only from joined attachments. Retired sockets are detached
+  // first, so a socket the runtime still lists while CLOSING never counts.
+  snapshot() {
     const connected = new Set();
     for (const socket of this.ctx.getWebSockets()) {
-      if (socket === excluded) continue;
       const attachment = this.attachment(socket);
       if (attachment.joined) connected.add(attachment.playerId);
     }
     return this.engine.snapshot(Date.now(), connected);
   }
 
-  broadcast(excluded) {
+  broadcast(skipped = null) {
     if (!this.engine) return;
-    const message = { v: PROTOCOL_VERSION, type: "snapshot", snapshot: this.snapshot(excluded) };
+    const message = { v: PROTOCOL_VERSION, type: "snapshot", snapshot: this.snapshot() };
     for (const socket of this.ctx.getWebSockets()) {
-      if (socket !== excluded && this.attachment(socket).joined) this.send(socket, message);
+      if (socket !== skipped && this.attachment(socket).joined) this.send(socket, message);
     }
+  }
+
+  // Every socket the room closes is retired first. A server-initiated close stays
+  // CLOSING until the peer answers and getWebSockets() may keep returning it, so
+  // the terminal `retired` mark (kept in the attachment, which survives
+  // hibernation) stops it counting as present, rejoining, or acting again.
+  retire(socket, code, reason) {
+    try {
+      socket.serializeAttachment({ ...this.attachment(socket), joined: false, playerId: null, retired: true });
+    } catch {}
+    this.close(socket, code, reason);
+  }
+
+  // Retires a socket; if it was playing, the others see it leave.
+  drop(socket, code, reason) {
+    const wasJoined = this.attachment(socket).joined;
+    this.retire(socket, code, reason);
+    if (wasJoined) this.broadcast();
   }
 
   async persistAndSchedule() {

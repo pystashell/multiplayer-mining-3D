@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
+  initialLanguage,
   normalizeLanguage,
   randomNickname,
   translate,
@@ -398,4 +399,31 @@ test('explains that a teammate ad locks the entire squad', () => {
   assert.match(translate('zh', 'revive.playingTeammate', { name: '队友A' }), /队友A.*无法操作.*所有人都要一起观看/);
   assert.match(translate('zh', 'revive.playingSelf'), /全员.*一起观看|全员.*同步观看/);
   assert.match(translate('en', 'revive.playingTeammate', { name: 'Player A' }), /Player A.*locked.*entire squad/i);
+});
+
+test('the first visit uses a saved language, then the browser language, even without storage', () => {
+  const originals = ['localStorage', 'navigator'].map((key) => [key, Object.getOwnPropertyDescriptor(globalThis, key)]);
+  const define = (key, descriptor) => Object.defineProperty(globalThis, key, { configurable: true, ...descriptor });
+  try {
+    define('navigator', { value: { language: 'zh-TW' } });
+    define('localStorage', { value: { getItem: () => 'en' } });
+    assert.equal(initialLanguage(), 'en', 'an explicit saved choice wins');
+
+    define('localStorage', { value: { getItem: () => 'fr' } });
+    assert.equal(initialLanguage(), 'zh', 'unsupported saved values fall back to the browser');
+
+    define('navigator', { value: { language: 'en-GB' } });
+    define('localStorage', { get() { throw new Error('SecurityError'); } });
+    assert.equal(initialLanguage(), 'en', 'blocked storage still yields a language');
+  } finally {
+    for (const [key, descriptor] of originals) {
+      if (descriptor) Object.defineProperty(globalThis, key, descriptor);
+      else delete globalThis[key];
+    }
+  }
+});
+
+test('input-specific lookups fall back to the raw key when no translation exists', () => {
+  assert.equal(translateForInput('en', 'missing.catalog.entry', 'touch'), 'missing.catalog.entry');
+  assert.equal(translateForInput('zh', 'missing.catalog.entry', 'mouse'), 'missing.catalog.entry');
 });

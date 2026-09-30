@@ -1,5 +1,52 @@
 # Changelog
 
+## [4.1.1] - Unreleased
+
+### Security
+
+- The multiplayer server now always uses its own clock for commands. A
+  crafted command could previously supply its own timestamp, which let it end
+  the 10-second revive countdown early or keep a room from ever expiring.
+
+### Fixed
+
+- Teammates now see a player who joins or reconnects to a squad as online
+  immediately, instead of offline until the next action.
+- A player whose connection hits an error, is replaced by a newer tab, or
+  sends a malformed message is now shown offline consistently. A connection
+  the server has closed can no longer act for them or rejoin to replace their
+  current connection.
+
+### Changed
+
+- `npm run deploy` now runs the release gate once instead of twice. The gate
+  is renamed from `npm run predeploy` to `npm run deploy:gate`: npm runs a
+  script named `predeploy` automatically before `deploy`, and `deploy` also
+  called it explicitly. `deploy` still calls the gate itself, so
+  `--ignore-scripts` cannot skip it.
+
+### Removed
+
+- Unreachable client code left over from an early relay-style multiplayer
+  design, including its untranslated system messages (no player-visible
+  change).
+
+### Verification
+
+- The automated suite grows from 315 to 428 tests, adding behavioral coverage
+  of the Worker routes, the room Durable Object (with runtime-faithful alarm
+  delivery and closing-socket handling), both room clients, the dialog focus
+  manager, the soundtrack lifecycle, the release tooling, and the deploy gate.
+- New `npm run test:coverage` reports deterministic line coverage for the full
+  `npm test` pipeline, including files no test loads. CI now runs the suite
+  once through it and shows the report on each run's summary page; the build
+  result still depends only on the tests.
+- A lightweight text check flags browser class methods whose names appear
+  nowhere else. It is a heuristic with documented blind spots, not a
+  reachability analysis.
+- Dependencies are unchanged; Three.js, Wrangler, and the fonts keep their
+  locked versions.
+
 ## [4.1.0] - Unreleased
 
 ### Changed
