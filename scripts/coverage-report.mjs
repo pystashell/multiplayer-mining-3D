@@ -12,17 +12,21 @@ import {
 // Node's built-in --experimental-test-coverage keys results by URL, so a module
 // loaded both directly and through a cache-busting `?v=` import is reported
 // from whichever test process finished last. Collect raw V8 data instead and
-// merge every execution of a file deterministically.
+// merge every execution of a file deterministically. Running the whole
+// `npm test` script also measures the catalog, manual, vendor, and version
+// gates that run before the test files.
 const directory = mkdtempSync(path.join(os.tmpdir(), 'zero-domain-coverage-'));
+const npmCli = process.env.npm_execpath;
 
 try {
   const run = spawnSync(
-    process.execPath,
-    ['--test', '--test-reporter=dot', 'tests/*.test.js'],
+    npmCli ? process.execPath : 'npm',
+    npmCli ? [npmCli, 'test'] : ['test'],
     {
       cwd: projectRoot,
       env: { ...process.env, NODE_V8_COVERAGE: directory },
       stdio: 'inherit',
+      shell: !npmCli && process.platform === 'win32',
     },
   );
   if (run.error) throw run.error;
