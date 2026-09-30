@@ -1,7 +1,8 @@
 // Deterministic scenes for render fingerprints. One seeded free-mode board is
 // walked through the states that exercise every material family the game
 // draws: translucent cubes, edges, flags, hover highlights, number sprites,
-// the number focus marker, and solver-hint markers with coordinate labels.
+// the number focus marker, solver-hint markers with coordinate labels, and the
+// revealed mines with their point light on a lost board.
 // Every capture renders one game frame at a pinned clock, so animated pulses
 // and the pre-game drift are identical between runs.
 import {
@@ -25,6 +26,7 @@ export const RENDER_SCENES = Object.freeze([
   'opened-matrix',
   'number-focus',
   'solver-hint',
+  'game-over',
 ]);
 
 // A spot on the canvas that shows no cube in the default view.
@@ -111,10 +113,37 @@ export async function captureRenderScenes(browser, baseUrl, { extraInitScripts =
       { timeoutMs: 30_000, message: 'a solver hint' });
     await restPointer(page);
     fingerprints['solver-hint'] = await renderFingerprint(page);
+    if (done()) return { fingerprints, problems: unexpectedPageProblems(page) };
 
+    // A squad's final loss reveals every mine and lights the one that went off
+    // with a red point light. Solo rooms rewind instead of losing, so draw that
+    // screen from this board's real mine layout, as a lost snapshot would.
+    await page.click('#btn-close-solver-hint');
+    await page.waitFor(() => !window.__game.solverHintMarker, { message: 'the hint to close' });
     const state = await boardState(page);
-    if (state.phase !== 'playing') throw new Error(`Render scenes ended in phase ${state.phase}`);
-    return { fingerprints, problems: unexpectedPageProblems(page) };
+    if (state.phase !== 'playing') throw new Error(`Render scenes reached phase ${state.phase} before the loss`);
+    await withFrozenFrames(page, () => page.evaluate(() => {
+      const game = window.__game;
+      const { config, mines } = game.roomClient.local.engine.state;
+      const cells = mines.map((index) => ({
+        x: Math.floor(index / (config.height * config.depth)),
+        y: Math.floor(index / config.depth) % config.height,
+        z: index % config.depth,
+      }));
+      for (const { x, y, z } of cells) game.grid[x][y][z].isMine = true;
+      // Explode the mine nearest the camera so its light is in view.
+      const distance = ({ x, y, z }) => game.grid[x][y][z].group.position.distanceTo(game.camera.position);
+      const [exploded] = [...cells].sort((a, b) => distance(a) - distance(b));
+      game.triggerGameOver(exploded.x, exploded.y, exploded.z, { playExplosionSound: false });
+    }));
+    await waitForBoardSettled(page);
+    fingerprints['game-over'] = await renderFingerprint(page);
+
+    return {
+      fingerprints,
+      problems: unexpectedPageProblems(page),
+      threeRevision: await page.evaluate(() => window.__THREE__),
+    };
   } finally {
     await page.close();
   }

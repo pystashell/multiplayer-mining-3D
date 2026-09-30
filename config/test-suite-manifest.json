@@ -77,7 +77,7 @@
     },
     "browser-render.test.js": {
       "category": "runtime-integration",
-      "purposeZh": "用固定时钟渲染五个确定性棋盘场景，与录制的画面指纹比对，捕捉颜色管理、光照单位和材质着色的变化，并证明比对能发现这种量级的偏移。"
+      "purposeZh": "用固定时钟渲染六个确定性棋盘场景（含终局雷区与点光源），与录制的画面指纹比对，捕捉颜色管理、光照单位和材质着色的变化，并证明比对能发现这种量级的偏移。"
     },
     "browser-replay.test.js": {
       "category": "runtime-integration",

@@ -214,8 +214,14 @@ export function cellCenterOnScreen(page, cell) {
 // pixels around it shows one cube, which keeps edge pixels out of the
 // comparison at any render scale.
 export function rasterPickCells(page, points, { radius = 2 } = {}) {
-  return page.evaluate(async (threePath, requested, cssRadius) => {
-    const THREE = await import(threePath);
+  return page.evaluate(async (requested, cssRadius) => {
+    // Import the build this page serves (read from its own vendor manifest),
+    // so the helper also works against an older checkout of public/.
+    if (!window.__holoThreePath) {
+      const manifest = await (await fetch('/vendor/manifest.json')).json();
+      window.__holoThreePath = `/${manifest.files.find((file) => /^vendor\/three-[^/]+\/build\/three\.module\.js$/.test(file))}`;
+    }
+    const THREE = await import(window.__holoThreePath);
     const game = window.__game;
     const { renderer, scene, camera } = game;
     const size = renderer.getDrawingBufferSize(new THREE.Vector2());
@@ -280,7 +286,7 @@ export function rasterPickCells(page, points, { radius = 2 } = {}) {
       target.dispose();
     }
     return results;
-  }, THREE_MODULE_PATH, points, radius);
+  }, points, radius);
 }
 
 // Cubes whose own centre is visibly theirs on screen, ordered front to back.
@@ -379,7 +385,6 @@ export function renderFingerprint(page, { columns = 16, rows = 16, now = 100_000
     const game = window.__game;
     const frames = window.__holoFrames;
     frames.now = frameTime;
-    game.clock.getDelta();
     // Run every waiting callback, as one browser frame would: the interface
     // schedules its own layout work alongside the game's render loop.
     for (const callback of frames.queue.splice(0)) callback(frameTime);
