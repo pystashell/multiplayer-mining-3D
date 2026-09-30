@@ -225,6 +225,10 @@
       "category": "release-security",
       "purposeZh": "验证 UI 人工验收记录必须绑定当前源码摘要、版本、完整场景和可追溯证据。"
     },
+    "unreferenced-methods.test.js": {
+      "category": "client-runtime",
+      "purposeZh": "扫描浏览器端全部类方法，确保每个方法都有调用点，阻止不可达的死代码重新积累。"
+    },
     "vendor-assets.test.js": {
       "category": "media-assets",
       "purposeZh": "验证运行时不依赖外部字体/CDN，固定版本资源、字体权重和许可证完整。"
