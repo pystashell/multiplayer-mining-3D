@@ -137,6 +137,10 @@
       "category": "ui-source-contract",
       "purposeZh": "验证移动端选择抑制、大厅宽度、手势、五键操作区、层级和提示面板结构。"
     },
+    "modal-focus.test.js": {
+      "category": "client-runtime",
+      "purposeZh": "验证弹窗焦点管理：打开时焦点进入弹窗并使页面惰性化，Tab 在弹窗内循环，关闭时焦点回到触发控件或安全回退，多层弹窗按优先级处理。"
+    },
     "pointer-targeting.test.js": {
       "category": "client-runtime",
       "purposeZh": "验证三维射线命中、数字纹理、代理壳、双键手势和拖拽取消不会误选格子。"

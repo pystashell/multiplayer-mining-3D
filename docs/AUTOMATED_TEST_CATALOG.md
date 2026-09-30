@@ -5,7 +5,7 @@
 
 ## 如何使用
 
-当前登记 **45 个测试套件、360 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
+当前登记 **46 个测试套件、369 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
 
 - “测试内容”直接取自可执行用例名称，因此目录不会与代码分叉。
 - 每个套件都明确说明失败处理和测试何时可能需要评审。
@@ -434,6 +434,26 @@
 | [L105](../tests/mobile-ui.test.js#L105) | `stacks the tutorial action above the solver hint and mobile dock` |
 | [L123](../tests/mobile-ui.test.js#L123) | `keeps mobile drawer actions clear of the guide hint panel` |
 | [L141](../tests/mobile-ui.test.js#L141) | `lets players exit reasoning mode and uses a transparent clue reticle` |
+
+### modal-focus.test.js
+
+- 分类：客户端运行时与交互逻辑
+- 自动化层级：行为级或源码契约自动化
+- 套件目的：验证弹窗焦点管理：打开时焦点进入弹窗并使页面惰性化，Tab 在弹窗内循环，关闭时焦点回到触发控件或安全回退，多层弹窗按优先级处理。
+- 任一用例失败：先判断是浏览器行为、会话状态还是事件路由发生回归，再修复实现。若仅重构内部结构，应把断言迁移到等价的公开行为，不能直接删除保护。
+- 有效性评审：用户可观察行为不变时测试仍应有效；事件模型、输入协议或持久化边界正式改变时才评审更新。
+
+| 源码 | 测试内容 |
+| --- | --- |
+| [L200](../tests/modal-focus.test.js#L200) | `watches every dialog overlay and the page body for visibility changes` |
+| [L223](../tests/modal-focus.test.js#L223) | `moves focus into an opened dialog and makes the rest of the page inert` |
+| [L239](../tests/modal-focus.test.js#L239) | `returns focus to the control that opened the dialog when it closes` |
+| [L255](../tests/modal-focus.test.js#L255) | `falls back to the guided pointer, then the first page control, when the opener is gone` |
+| [L274](../tests/modal-focus.test.js#L274) | `traps Tab and Shift+Tab inside the dialog and skips controls that cannot take focus` |
+| [L297](../tests/modal-focus.test.js#L297) | `focuses the dialog itself when it has no focusable controls` |
+| [L310](../tests/modal-focus.test.js#L310) | `pulls focus that escapes to the page back into the dialog` |
+| [L326](../tests/modal-focus.test.js#L326) | `gives priority to the topmost dialog and restores the dialog underneath` |
+| [L344](../tests/modal-focus.test.js#L344) | `ignores overlays hidden by computed style and re-homes focus when a control disappears` |
 
 ### pointer-targeting.test.js
 
