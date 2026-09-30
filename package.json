@@ -22,6 +22,7 @@
     "ui:check": "node scripts/check-ui-approval.mjs",
     "test": "npm run test:catalog:check && npm run ui:manual:check && npm run vendor:check && npm run version:check && node --test tests/*.test.js",
     "test:coverage": "node scripts/coverage-report.mjs",
+    "test:render-baseline": "node scripts/update-render-baseline.mjs",
     "test:live": "node tests/live-room-smoke.js",
     "verify:live-version": "node scripts/verify-live-version.mjs",
     "deploy:dry": "wrangler deploy --dry-run",

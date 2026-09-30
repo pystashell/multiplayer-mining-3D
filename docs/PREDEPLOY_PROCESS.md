@@ -14,10 +14,26 @@ npm test
 2. `npm run ui:manual:check`：UI 手册必须与机器可读清单一致。
 3. `npm run vendor:check`：固定的本地依赖和许可证不能漂移。
 4. `npm run version:check`：package、公开版本和缓存版本一致。
-5. `node --test tests/*.test.js`：运行全部规则、客户端、内容、UI 源码契约、安全和发布回归。
+5. `node --test tests/*.test.js`：运行全部规则、客户端、内容、UI 源码契约、安全和发布回归，以及真实浏览器与运行时集成测试。
 
 每个套件、每个可执行用例标题、失败处理和有效性边界见
 [自动化测试目录](AUTOMATED_TEST_CATALOG.md)。
+
+## 真实浏览器与运行时测试
+
+`tests/browser-*.test.js` 用本机的 Chrome、Chromium 或 Edge 以无头模式打开真实页面，
+WebGL 固定走 SwiftShader 软件渲染，所以开发机和 CI 得到相同的像素。它们覆盖
+Three.js 相关的实际行为：棋盘构建、鼠标与触屏拾取（用逐方块着色的光栅结果作为
+真值，不依赖被测的射线检测）、悬停、切片、相机、成功回放、字体和资源加载、控制台
+警告，以及五个固定场景的画面指纹。`tests/worker-runtime.test.js` 和
+`tests/browser-multiplayer.test.js` 通过 `wrangler dev --local` 启动真实 workerd，
+覆盖 Durable Object 闹钟、WebSocket 同步与关闭码、在线状态和静态资源响应头。
+
+- 找不到浏览器时，把 `HOLO_SWEEPER_BROWSER` 设为可执行文件路径。
+- 这些重型测试通过机器级槽位一次只运行一个，避免互相抢占 CPU 造成超时；
+  `HOLO_SWEEPER_HEAVY_SLOTS` 可以调整数量。
+- 画面指纹只能为经过 UI 人工验收的有意视觉改动重新录制（`npm run test:render-baseline`）。
+  依赖升级导致的指纹偏移必须通过兼容配置修复，不能重录基线或放宽容差。
 
 ## “通用测试”的判定
 

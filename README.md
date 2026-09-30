@@ -43,6 +43,12 @@ npm run deploy:dry
 推送任意分支或建立 Pull Request 后，GitHub Actions 也会自动执行以上检查。测试记录可以在仓库的 **Actions → CI** 中查看。
 
 `npm test` 中的测试是配置驱动的通用契约，不依赖当前角色姓名或素材文件名。
+其中一部分在真实运行时里执行：无头 Chrome（用 SwiftShader 软件渲染 WebGL，
+任何机器上像素一致）驱动真实页面检查棋盘拾取、相机、回放、画面颜色和双人联机，
+`wrangler dev --local` 启动真实 workerd 检查 Durable Object、闹钟、WebSocket 和
+静态资源响应头。因此本机需要安装 Chrome、Chromium 或 Edge；安装在非常规位置时，
+把 `HOLO_SWEEPER_BROWSER` 设为浏览器可执行文件路径。这些重型测试一次只运行一个，
+整套测试约需 3 分钟。
 每个测试的目的、失败处理和有效性边界见
 [自动化测试目录](docs/AUTOMATED_TEST_CATALOG.md)。
 正式发布还必须按 [UI 人工测试手册](docs/PREDEPLOY_UI_MANUAL.md)
@@ -55,10 +61,19 @@ npm run deploy:dry
 npm run test:coverage
 ```
 
-报告会合并同一模块通过不同 `?v=` 缓存参数加载的多次执行，并把从未被任何测试
-加载的文件（目前是 `public/app.js`）计为 0%，因此“全部运行时代码”一行才是
-真实覆盖率；“仅已加载文件”一行只反映被测试模块内部的完整度。CI 也用这个命令
-运行完整测试，每次运行的 Summary 页面都会附上这份报告。
+报告会合并同一模块通过不同 `?v=` 缓存参数加载的多次执行，也会并入浏览器测试
+在页面里实际执行的代码（例如 `public/app.js`），并把从未被任何测试加载的文件
+计为 0%，因此“全部运行时代码”一行才是真实覆盖率；“仅已加载文件”一行只反映
+被测试模块内部的完整度。CI 也用这个命令运行完整测试，每次运行的 Summary 页面
+都会附上这份报告。
+
+画面测试把固定场景的渲染结果与 `tests/fixtures/render-fingerprints.json` 比对。
+只有经过 UI 人工验收的有意视觉改动，才用下面的命令重新录制；依赖升级必须还原
+已录制的画面，而不是重录基线：
+
+```bash
+npm run test:render-baseline
+```
 
 开发服务器运行时，可以执行真实双 WebSocket 测试：
 

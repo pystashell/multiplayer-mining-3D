@@ -1,5 +1,25 @@
 # Changelog
 
+## [4.1.2] - Unreleased
+
+### Verification
+
+- Browser regression tests run the real page in headless Chrome or Edge with
+  software WebGL. They check the board build, mouse and touch picking against
+  a per-cube raster oracle, hover, slicing, the camera controls, the success
+  replay, asset and font loading, and console warnings.
+- Render fingerprints of five fixed board scenes are recorded from the
+  current Three.js build, so a library upgrade has to reproduce the same
+  colours and lighting.
+- Worker tests now also run under `wrangler dev --local` (real workerd):
+  static asset headers, Durable Object alarms, WebSocket sync and close codes,
+  presence, and a two-browser squad revive.
+- The coverage report includes code executed in the browser tests. Runtime
+  coverage rises from 50% to 82% of executable lines, and `public/app.js`
+  from 0% to 65%.
+- The page exposes a test hook, defined only by the browser tests, for
+  inspecting the running game. Players see no change.
+
 ## [4.1.1] - Unreleased
 
 ### Security

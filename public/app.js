@@ -6302,5 +6302,8 @@ class HoloSweeperGame {
 
 // 启动游戏实例
 window.addEventListener('DOMContentLoaded', () => {
-  new HoloSweeperGame();
+  const game = new HoloSweeperGame();
+  // Browser regression tests install this hook before any page script runs so
+  // they can inspect the live game; the shipped page never defines it.
+  window.__holoSweeperTestHook?.(game);
 });
