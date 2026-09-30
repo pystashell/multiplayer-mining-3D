@@ -92,6 +92,9 @@ export function createDurableObjectState(storedRoom) {
   const sockets = [];
   const alarmWrites = [];
   let alarm = null;
+  // Durable Objects getAlarm() returns null while an alarm handler runs, unless
+  // the handler has already called setAlarm() again.
+  let runningAlarm = null;
   let ready = Promise.resolve();
   const state = {
     storage: {
@@ -105,11 +108,12 @@ export function createDurableObjectState(storedRoom) {
         storage.clear();
       },
       async getAlarm() {
-        return alarm;
+        return runningAlarm && !runningAlarm.rescheduled ? null : alarm;
       },
       async setAlarm(time) {
         alarm = Number(time);
         alarmWrites.push(alarm);
+        if (runningAlarm) runningAlarm.rescheduled = true;
       },
     },
     autoResponse: null,
@@ -128,6 +132,14 @@ export function createDurableObjectState(storedRoom) {
       return sockets.filter((socket) => !socket.closed);
     },
   };
+  async function runAlarmHandler(room) {
+    runningAlarm = { rescheduled: false };
+    try {
+      await room.alarm();
+    } finally {
+      runningAlarm = null;
+    }
+  }
   return {
     state,
     storage,
@@ -136,10 +148,17 @@ export function createDurableObjectState(storedRoom) {
     get alarm() {
       return alarm;
     },
-    set alarm(value) {
-      alarm = value;
-    },
     ready: () => ready,
+    // The runtime fires an alarm only once it is due, and consumes it before
+    // the handler starts.
+    async fireAlarm(room) {
+      if (alarm === null) throw new Error('no alarm is scheduled');
+      if (Date.now() < alarm) throw new Error(`alarm is not due until ${alarm}`);
+      alarm = null;
+      await runAlarmHandler(room);
+    },
+    // Alarms are delivered at least once: a retry runs the handler again.
+    redeliverAlarm: runAlarmHandler,
   };
 }
 

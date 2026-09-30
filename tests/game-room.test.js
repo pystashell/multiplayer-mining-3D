@@ -318,21 +318,42 @@ test('broadcasts presence changes when sockets close or fail and tolerates dead 
   assert.equal(host.messages('snapshot').length, delivered, 'sends to a failed socket are dropped, not thrown');
 });
 
-test('expires idle rooms from the alarm and deletes every stored record', async () => {
+test('expires an idle room when its alarm fires and deletes every stored record', async (t) => {
+  t.mock.timers.enable({ apis: ['Date'], now: 1_800_000_000_000 });
   const { room, runtime, sessions } = await roomWithMembers(['Host']);
   const host = await joinSocket(room, runtime, sessions[0]);
-  room.engine.state.expiresAt = Date.now() - 1;
+  assert.equal(runtime.alarm, room.engine.state.expiresAt);
 
-  await room.alarm();
+  t.mock.timers.tick(ROOM_TTL_MS);
+  await runtime.fireAlarm(room);
   assert.deepEqual(host.closed, { code: 4404, reason: 'Room expired' });
   assert.equal(room.engine, null);
   assert.equal(runtime.storage.size, 0);
+  assert.equal(runtime.alarm, null, 'an expired room schedules nothing further');
   assert.equal((await room.fetch(socketRequest(CODE))).status, 404);
-  await room.alarm();
-  assert.equal(room.engine, null, 'an alarm without a room is a no-op');
+  await runtime.redeliverAlarm(room);
+  assert.equal(room.engine, null, 'a redelivered alarm after expiry is a no-op');
 });
 
-test('completes a squad revival when its alarm fires and keeps alarm writes idempotent', async (t) => {
+test('keeps an unchanged pending alarm when commands reschedule outside the alarm handler', async (t) => {
+  t.mock.timers.enable({ apis: ['Date'], now: 1_800_000_000_000 });
+  const { room, runtime, sessions } = await roomWithMembers(['Host']);
+  const host = await joinSocket(room, runtime, sessions[0]);
+  const pending = runtime.alarm;
+  const writes = runtime.alarmWrites.length;
+
+  t.mock.timers.tick(400);
+  await room.webSocketMessage(host, commandMessage('near', 1, { op: 'chat', content: 'same deadline' }));
+  assert.equal(runtime.alarm, pending, 'expiry moves by less than the 500 ms tolerance');
+  assert.equal(runtime.alarmWrites.length, writes);
+
+  t.mock.timers.tick(1_000);
+  await room.webSocketMessage(host, commandMessage('later', 2, { op: 'chat', content: 'new deadline' }));
+  assert.equal(runtime.alarm, room.engine.state.expiresAt);
+  assert.equal(runtime.alarmWrites.length, writes + 1);
+});
+
+test('fires the revive alarm only when due, re-arms room expiry, and tolerates repeated delivery', async (t) => {
   t.mock.timers.enable({ apis: ['Date'], now: 1_800_000_000_000 });
   const { room, runtime, sessions } = await roomWithMembers(['Host', 'Guest']);
   const host = await joinSocket(room, runtime, sessions[0]);
@@ -346,22 +367,33 @@ test('completes a squad revival when its alarm fires and keeps alarm writes idem
   assert.equal(room.engine.state.phase, 'revive');
 
   await send(guest, { op: 'watch_ad' });
-  assert.equal(room.engine.state.reviveEndsAt, 1_800_000_010_000);
-  assert.equal(runtime.alarm, 1_800_000_010_000, 'the alarm follows the earlier revive deadline');
+  const deadline = 1_800_000_010_000;
+  assert.equal(room.engine.state.reviveEndsAt, deadline);
+  assert.equal(runtime.alarm, deadline, 'the alarm follows the earlier revive deadline');
   assert.equal(host.last('snapshot').snapshot.reviveStartedBy.name, 'Guest');
+  await assert.rejects(runtime.fireAlarm(room), /not due/, 'the runtime never fires an alarm early');
 
-  const writes = runtime.alarmWrites.length;
+  // A retried delivery that runs before the deadline must neither revive early
+  // nor lose the deadline: the running alarm was consumed, so it is re-armed.
   t.mock.timers.tick(9_999);
-  await room.alarm();
+  await runtime.redeliverAlarm(room);
   assert.equal(room.engine.state.phase, 'revive');
-  assert.equal(runtime.alarmWrites.length, writes, 'an unchanged alarm is not rewritten');
+  assert.equal(runtime.alarm, deadline);
 
   t.mock.timers.tick(1);
-  await room.alarm();
+  await runtime.fireAlarm(room);
   assert.equal(room.engine.state.phase, 'playing');
   assert.equal(host.last('snapshot').snapshot.phase, 'playing');
   assert.equal(guest.last('snapshot').snapshot.phase, 'playing');
   assert.equal(runtime.storage.get('room').phase, 'playing');
+  assert.equal(runtime.alarm, room.engine.state.expiresAt, 'the handler re-arms the room expiry');
+
+  // Alarms are delivered at least once; a duplicate run changes nothing.
+  const settled = structuredClone(runtime.storage.get('room'));
+  const snapshots = host.messages('snapshot').length;
+  await runtime.redeliverAlarm(room);
+  assert.deepEqual(runtime.storage.get('room'), settled);
+  assert.equal(host.messages('snapshot').length, snapshots);
   assert.equal(runtime.alarm, room.engine.state.expiresAt);
 });
 
@@ -385,7 +417,7 @@ test('derives command timestamps from the server clock instead of the client env
   await send(guest, { op: 'watch_ad' }, { now: 0 });
   assert.equal(room.engine.state.reviveEndsAt, serverNow + 10_000, 'a forged clock cannot skip the revive countdown');
 
-  await room.alarm();
+  await runtime.redeliverAlarm(room);
   assert.equal(room.engine.state.phase, 'revive');
 });
 
