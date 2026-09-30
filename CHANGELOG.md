@@ -16,6 +16,14 @@
   sends a malformed message is now shown offline consistently, and the
   abandoned connection can no longer act for them.
 
+### Changed
+
+- `npm run deploy` now runs the release gate once instead of twice. The gate
+  is renamed from `npm run predeploy` to `npm run deploy:gate`: npm runs a
+  script named `predeploy` automatically before `deploy`, and `deploy` also
+  called it explicitly. `deploy` still calls the gate itself, so
+  `--ignore-scripts` cannot skip it.
+
 ### Removed
 
 - Unreachable client code left over from an early relay-style multiplayer

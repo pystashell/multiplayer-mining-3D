@@ -60,7 +60,7 @@ Durable Object migration、网络协议、存档格式、回放格式和第三�
 npm run dev
 # 按 docs/PREDEPLOY_UI_MANUAL.md 完成人工验收
 npm run ui:approve -- --reviewer "验收人" --browser "浏览器/系统" --evidence "证据路径或链接" --confirm-all
-npm run predeploy
+npm run deploy:gate
 git tag -a v4.0.0 -m "Zero Domain Protocol v4.0.0"
 git push origin v4.0.0
 ```

@@ -55,7 +55,7 @@ npm run ui:approve -- --reviewer "验收人" --browser "Chrome 版本/系统" --
 人工 UI 验收记录生成后运行：
 
 ```powershell
-npm run predeploy
+npm run deploy:gate
 ```
 
 该命令强制执行：
@@ -64,11 +64,15 @@ npm run predeploy
 2. `npm run deploy:dry`
 3. `npm run ui:check`
 
-只有三项全部通过，下面的生产部署命令才会调用 Wrangler：
+生产部署命令会先执行同一个门禁（只执行一次），三项全部通过后才调用 Wrangler：
 
 ```powershell
 npm run deploy
 ```
+
+门禁脚本刻意不命名为 `predeploy`：npm 会在 `npm run deploy` 之前自动运行同名的
+`pre` 脚本，导致整套门禁执行两次。由 `deploy` 显式调用门禁，也保证即使加上
+`--ignore-scripts` 也无法跳过检查。
 
 ## GitHub 与 Cloudflare 发布
 

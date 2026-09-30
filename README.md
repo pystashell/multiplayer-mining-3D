@@ -69,12 +69,12 @@ npm run test:live
 
 ```bash
 npx wrangler login
-npm run predeploy
 npm run deploy
 ```
 
-`npm run predeploy` 会运行全部自动化、Wrangler dry-run，并验证与当前源码绑定的
-UI 人工验收记录；`npm run deploy` 会再次执行这套门禁后才部署。
+`npm run deploy` 会先执行一次发布前门禁 `npm run deploy:gate`：运行全部自动化、
+Wrangler dry-run，并验证与当前源码绑定的 UI 人工验收记录，全部通过后才调用 Wrangler
+部署。只想检查、不部署时，单独运行 `npm run deploy:gate`。
 
 部署后，网页、房间 API 和 WebSocket 共用同一个 `workers.dev` 域名。创建房间后 URL 会自动附加 `?room=六位房间码`，可以直接复制给朋友。
 

@@ -110,10 +110,11 @@ test('package scripts keep local deployment and release verification gates avail
   assert.equal(packageJson.scripts['release:check'], 'node scripts/check-release.mjs');
   assert.equal(packageJson.scripts['verify:live-version'], 'node scripts/verify-live-version.mjs');
   assert.equal(
-    packageJson.scripts.predeploy,
+    packageJson.scripts['deploy:gate'],
     'npm test && npm run deploy:dry && npm run ui:check',
   );
-  assert.equal(packageJson.scripts.deploy, 'npm run predeploy && wrangler deploy');
+  assert.equal(packageJson.scripts.deploy, 'npm run deploy:gate && wrangler deploy');
+  assert.equal(packageJson.scripts.predeploy, undefined, 'npm would run a predeploy script a second time');
 });
 
 test('live-version verification exits naturally after success on Windows', () => {

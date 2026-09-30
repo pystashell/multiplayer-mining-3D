@@ -25,8 +25,8 @@
     "test:live": "node tests/live-room-smoke.js",
     "verify:live-version": "node scripts/verify-live-version.mjs",
     "deploy:dry": "wrangler deploy --dry-run",
-    "predeploy": "npm test && npm run deploy:dry && npm run ui:check",
-    "deploy": "npm run predeploy && wrangler deploy"
+    "deploy:gate": "npm test && npm run deploy:dry && npm run ui:check",
+    "deploy": "npm run deploy:gate && wrangler deploy"
   },
   "keywords": [],
   "author": "",

@@ -5,7 +5,7 @@
 
 ## 如何使用
 
-当前登记 **48 个测试套件、416 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
+当前登记 **48 个测试套件、418 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
 
 - “测试内容”直接取自可执行用例名称，因此目录不会与代码分叉。
 - 每个套件都明确说明失败处理和测试何时可能需要评审。
@@ -161,9 +161,11 @@
 
 | 源码 | 测试内容 |
 | --- | --- |
-| [L18](../tests/deploy-gate.test.js#L18) | `production deployment requires automated, bundle, and current UI approval gates` |
-| [L35](../tests/deploy-gate.test.js#L35) | `the complete regression command checks documentation, assets, version, and all test files` |
-| [L45](../tests/deploy-gate.test.js#L45) | `development, UI evidence, validation, and live-smoke scripts remain available` |
+| [L30](../tests/deploy-gate.test.js#L30) | `production deployment requires automated, bundle, and current UI approval gates` |
+| [L52](../tests/deploy-gate.test.js#L52) | `npm is started through its CLI file, falling back to a shell only when none is found` |
+| [L91](../tests/deploy-gate.test.js#L91) | `npm run deploy runs each gate exactly once, cannot skip it, and a failing gate blocks deployment` |
+| [L136](../tests/deploy-gate.test.js#L136) | `the complete regression command checks documentation, assets, version, and all test files` |
+| [L146](../tests/deploy-gate.test.js#L146) | `development, UI evidence, validation, and live-smoke scripts remain available` |
 
 ### dialogue-overlay.test.js
 
@@ -540,7 +542,7 @@
 | [L63](../tests/release-pipeline.test.js#L63) | `release remains draft until deploy and live verification both succeed` |
 | [L80](../tests/release-pipeline.test.js#L80) | `manual release recovery only publishes an existing tag after live verification` |
 | [L108](../tests/release-pipeline.test.js#L108) | `package scripts keep local deployment and release verification gates available` |
-| [L119](../tests/release-pipeline.test.js#L119) | `live-version verification exits naturally after success on Windows` |
+| [L120](../tests/release-pipeline.test.js#L120) | `live-version verification exits naturally after success on Windows` |
 
 ### release-version.test.js
 
