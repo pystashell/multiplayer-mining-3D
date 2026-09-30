@@ -1,5 +1,35 @@
 # Changelog
 
+## [4.1.1] - Unreleased
+
+### Security
+
+- The multiplayer server now always uses its own clock for commands. A
+  crafted command could previously supply its own timestamp, which let it end
+  the 10-second revive countdown early or keep a room from ever expiring.
+
+### Fixed
+
+- Teammates now see a player who joins or reconnects to a squad as online
+  immediately, instead of offline until the next action.
+
+### Removed
+
+- Unreachable client code left over from an early relay-style multiplayer
+  design, including its untranslated system messages (no player-visible
+  change).
+
+### Verification
+
+- The automated suite grows from 315 to 414 tests, adding behavioral coverage
+  of the Worker routes, the room Durable Object, both room clients, the dialog
+  focus manager, the soundtrack lifecycle, and the release tooling.
+- New `npm run test:coverage` reports deterministic line coverage for the full
+  `npm test` pipeline, including files no test loads.
+- A new check fails when a browser class method has no call site.
+- Dependencies are unchanged; Three.js, Wrangler, and the fonts keep their
+  locked versions.
+
 ## [4.1.0] - Unreleased
 
 ### Changed
