@@ -19,7 +19,12 @@ export class WorkersResponse extends NativeResponse {
 }
 
 export class FakeSocket {
+  static OPEN = 1;
+  static CLOSING = 2;
+  static CLOSED = 3;
+
   constructor() {
+    this.readyState = FakeSocket.OPEN;
     this.sent = [];
     this.closed = null;
     this.attachment = null;
@@ -28,13 +33,21 @@ export class FakeSocket {
   }
 
   send(data) {
-    if (this.failSend || this.closed) throw new Error('socket is not open');
+    if (this.failSend || this.readyState !== FakeSocket.OPEN) throw new Error('socket is not open');
     this.sent.push(JSON.parse(data));
   }
 
+  // A server-initiated close stays CLOSING until the peer answers; meanwhile
+  // the runtime may keep returning the socket from getWebSockets().
   close(code, reason) {
-    if (this.closed) throw new Error('socket already closed');
+    if (this.readyState !== FakeSocket.OPEN) throw new Error('socket is already closing');
+    this.readyState = FakeSocket.CLOSING;
     this.closed = { code, reason };
+  }
+
+  // The peer completed the close handshake (or closed first).
+  disconnect() {
+    this.readyState = FakeSocket.CLOSED;
   }
 
   serializeAttachment(value) {
@@ -129,7 +142,7 @@ export function createDurableObjectState(storedRoom) {
       sockets.push(socket);
     },
     getWebSockets() {
-      return sockets.filter((socket) => !socket.closed);
+      return sockets.filter((socket) => socket.readyState !== FakeSocket.CLOSED);
     },
   };
   async function runAlarmHandler(room) {
@@ -159,6 +172,13 @@ export function createDurableObjectState(storedRoom) {
     },
     // Alarms are delivered at least once: a retry runs the handler again.
     redeliverAlarm: runAlarmHandler,
+    // With web_socket_auto_reply_to_close (on for this project's compatibility
+    // date) the runtime answers a client close and marks the socket CLOSED
+    // before calling webSocketClose().
+    async clientClose(room, socket, code = 1000, reason = '') {
+      socket.disconnect();
+      await room.webSocketClose(socket, code, reason);
+    },
   };
 }
 

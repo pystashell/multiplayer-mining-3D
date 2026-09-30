@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 
 import { ROOM_TTL_MS, RoomEngine } from '../worker/room-engine.js';
 import {
+  FakeSocket,
   commandMessage,
   createGameRoom,
   installWorkersRuntime,
@@ -296,25 +297,94 @@ test('lets a player leave by command and detaches the socket from the room', asy
   assert.deepEqual(guest.closed, { code: 4401, reason: 'Join required' });
 });
 
-test('broadcasts presence changes when sockets close or fail and tolerates dead sockets', async () => {
+function presenceSeenBy(socket) {
+  return socket.last('snapshot').snapshot.players.map((player) => [player.name, player.connected]);
+}
+
+test('reports a disconnected player offline and keeps them offline on later broadcasts', async () => {
   const { room, runtime, sessions } = await roomWithMembers(['Host', 'Guest']);
   const host = await joinSocket(room, runtime, sessions[0]);
   const guest = await joinSocket(room, runtime, sessions[1]);
 
-  await room.webSocketClose(guest, 1001, 'navigated away');
-  assert.deepEqual(guest.closed, { code: 1001, reason: 'navigated away' });
-  assert.deepEqual(
-    host.last('snapshot').snapshot.players.map((player) => [player.name, player.connected]),
-    [['Host', true], ['Guest', false]],
-  );
-  await room.webSocketClose(guest, 1006, 'already closed');
-  assert.deepEqual(guest.closed, { code: 1001, reason: 'navigated away' }, 'closing twice is tolerated');
+  await runtime.clientClose(room, guest, 1001, 'navigated away');
+  assert.deepEqual(presenceSeenBy(host), [['Host', true], ['Guest', false]]);
+  await room.webSocketClose(guest, 1006, 'duplicate close event');
+  await room.webSocketMessage(host, commandMessage('later', 1, { op: 'chat', content: 'anyone there?' }));
+  assert.deepEqual(presenceSeenBy(host), [['Host', true], ['Guest', false]]);
+});
 
-  const delivered = host.messages('snapshot').length;
+test('retires a socket after a transport error so presence and commands stay consistent', async (t) => {
+  const logged = t.mock.method(console, 'error', () => {});
+  const { room, runtime, sessions } = await roomWithMembers(['Host', 'Guest']);
+  const host = await joinSocket(room, runtime, sessions[0]);
+  const guest = await joinSocket(room, runtime, sessions[1]);
+
+  await room.webSocketError(guest, new Error('protocol violation'));
+  assert.equal(logged.mock.callCount(), 1);
+  assert.deepEqual(guest.closed, { code: 1011, reason: 'Socket error' });
+  assert.equal(guest.attachment.joined, false);
+  assert.deepEqual(presenceSeenBy(host), [['Host', true], ['Guest', false]]);
+
+  // Later broadcasts must not flip the player back online...
+  await room.webSocketMessage(host, commandMessage('after-error', 1, { op: 'chat', content: 'still here' }));
+  assert.deepEqual(presenceSeenBy(host), [['Host', true], ['Guest', false]]);
+  // ...and the retired socket must not keep acting for the player.
+  const chat = room.engine.state.chat.length;
+  await room.webSocketMessage(guest, commandMessage('late', 1, { op: 'chat', content: 'from a dead socket' }));
+  assert.equal(room.engine.state.chat.length, chat);
+
+  // The client reconnects with its session and is online again.
+  await joinSocket(room, runtime, sessions[1]);
+  assert.deepEqual(presenceSeenBy(host), [['Host', true], ['Guest', true]]);
+});
+
+test('a replaced connection stops counting and acting while its close handshake is pending', async () => {
+  const { room, runtime, sessions } = await roomWithMembers(['Host', 'Guest']);
+  const stale = await joinSocket(room, runtime, sessions[0]);
+  const guest = await joinSocket(room, runtime, sessions[1]);
+  const fresh = await joinSocket(room, runtime, sessions[0]);
+
+  assert.deepEqual(stale.closed, { code: 4408, reason: 'Session replaced' });
+  assert.equal(stale.readyState, FakeSocket.CLOSING);
+  assert.ok(runtime.state.getWebSockets().includes(stale), 'the runtime may still list a closing socket');
+  assert.equal(stale.attachment.joined, false);
+  assert.deepEqual(presenceSeenBy(guest), [['Host', true], ['Guest', true]]);
+
+  const chat = room.engine.state.chat.length;
+  await room.webSocketMessage(stale, commandMessage('late', 99, { op: 'chat', content: 'from the old tab' }));
+  assert.equal(room.engine.state.chat.length, chat, 'a late frame from the replaced tab is not applied');
+  assert.deepEqual(stale.messages('ack'), []);
+
+  await runtime.clientClose(room, fresh, 1001, 'tab closed');
+  assert.deepEqual(
+    presenceSeenBy(guest),
+    [['Host', false], ['Guest', true]],
+    'a still-closing replaced socket must not keep the player online',
+  );
+  stale.disconnect();
+  assert.equal(runtime.state.getWebSockets().includes(stale), false);
+});
+
+test('closes a joined socket that breaks the protocol and shows the player leaving', async () => {
+  const { room, runtime, sessions } = await roomWithMembers(['Host', 'Guest']);
+  const host = await joinSocket(room, runtime, sessions[0]);
+  const guest = await joinSocket(room, runtime, sessions[1]);
+
+  await room.webSocketMessage(guest, '{"v":1,"type":');
+  assert.deepEqual(guest.closed, { code: 4400, reason: 'Invalid JSON' });
+  assert.deepEqual(presenceSeenBy(host), [['Host', true], ['Guest', false]]);
+});
+
+test('drops sends to a failing socket without breaking the broadcast to everyone else', async () => {
+  const { room, runtime, sessions } = await roomWithMembers(['Host', 'Guest']);
+  const host = await joinSocket(room, runtime, sessions[0]);
+  const guest = await joinSocket(room, runtime, sessions[1]);
   host.failSend = true;
-  await room.webSocketError(host);
-  const rejoined = await joinSocket(room, runtime, sessions[1]);
-  assert.equal(rejoined.last('welcome').identity.playerName, 'Guest');
+  const delivered = host.messages('snapshot').length;
+
+  await room.webSocketMessage(guest, commandMessage('hello', 1, { op: 'chat', content: 'hi' }));
+  assert.equal(guest.last('ack').id, 'hello');
+  assert.equal(guest.last('snapshot').snapshot.chat.at(-1).message, 'hi');
   assert.equal(host.messages('snapshot').length, delivered, 'sends to a failed socket are dropped, not thrown');
 });
 

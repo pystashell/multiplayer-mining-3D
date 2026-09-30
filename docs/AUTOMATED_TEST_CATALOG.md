@@ -5,7 +5,7 @@
 
 ## 如何使用
 
-当前登记 **48 个测试套件、411 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
+当前登记 **48 个测试套件、415 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
 
 - “测试内容”直接取自可执行用例名称，因此目录不会与代码分叉。
 - 每个套件都明确说明失败处理和测试何时可能需要评审。
@@ -201,23 +201,27 @@
 
 | 源码 | 测试内容 |
 | --- | --- |
-| [L79](../tests/game-room.test.js#L79) | `restores persisted room state before serving and answers ping frames without waking the room` |
-| [L91](../tests/game-room.test.js#L91) | `initializes a room once, persists it, and schedules the expiry alarm` |
-| [L114](../tests/game-room.test.js#L114) | `reserves members through the internal join route and broadcasts the new roster` |
-| [L137](../tests/game-room.test.js#L137) | `accepts hibernatable WebSockets only for live rooms, real upgrades, and below the socket cap` |
-| [L158](../tests/game-room.test.js#L158) | `closes sockets that send binary, oversized, or malformed frames` |
-| [L174](../tests/game-room.test.js#L174) | `requires a valid session join before any command and rejects forged sessions` |
-| [L195](../tests/game-room.test.js#L195) | `welcomes a joined player and replaces an older socket for the same session` |
-| [L219](../tests/game-room.test.js#L219) | `acknowledges each command once, replays duplicate acknowledgements, and rejects stale sequences` |
-| [L244](../tests/game-room.test.js#L244) | `serializes concurrent commands from one socket in arrival order` |
-| [L256](../tests/game-room.test.js#L256) | `validates command envelopes and reports engine rejections with stable error codes` |
-| [L283](../tests/game-room.test.js#L283) | `lets a player leave by command and detaches the socket from the room` |
-| [L299](../tests/game-room.test.js#L299) | `broadcasts presence changes when sockets close or fail and tolerates dead sockets` |
-| [L321](../tests/game-room.test.js#L321) | `expires an idle room when its alarm fires and deletes every stored record` |
-| [L338](../tests/game-room.test.js#L338) | `keeps an unchanged pending alarm when commands reschedule outside the alarm handler` |
-| [L356](../tests/game-room.test.js#L356) | `fires the revive alarm only when due, re-arms room expiry, and tolerates repeated delivery` |
-| [L400](../tests/game-room.test.js#L400) | `derives command timestamps from the server clock instead of the client envelope` |
-| [L424](../tests/game-room.test.js#L424) | `keeps processing queued room operations after a failed request` |
+| [L80](../tests/game-room.test.js#L80) | `restores persisted room state before serving and answers ping frames without waking the room` |
+| [L92](../tests/game-room.test.js#L92) | `initializes a room once, persists it, and schedules the expiry alarm` |
+| [L115](../tests/game-room.test.js#L115) | `reserves members through the internal join route and broadcasts the new roster` |
+| [L138](../tests/game-room.test.js#L138) | `accepts hibernatable WebSockets only for live rooms, real upgrades, and below the socket cap` |
+| [L159](../tests/game-room.test.js#L159) | `closes sockets that send binary, oversized, or malformed frames` |
+| [L175](../tests/game-room.test.js#L175) | `requires a valid session join before any command and rejects forged sessions` |
+| [L196](../tests/game-room.test.js#L196) | `welcomes a joined player and replaces an older socket for the same session` |
+| [L220](../tests/game-room.test.js#L220) | `acknowledges each command once, replays duplicate acknowledgements, and rejects stale sequences` |
+| [L245](../tests/game-room.test.js#L245) | `serializes concurrent commands from one socket in arrival order` |
+| [L257](../tests/game-room.test.js#L257) | `validates command envelopes and reports engine rejections with stable error codes` |
+| [L284](../tests/game-room.test.js#L284) | `lets a player leave by command and detaches the socket from the room` |
+| [L304](../tests/game-room.test.js#L304) | `reports a disconnected player offline and keeps them offline on later broadcasts` |
+| [L316](../tests/game-room.test.js#L316) | `retires a socket after a transport error so presence and commands stay consistent` |
+| [L341](../tests/game-room.test.js#L341) | `a replaced connection stops counting and acting while its close handshake is pending` |
+| [L368](../tests/game-room.test.js#L368) | `closes a joined socket that breaks the protocol and shows the player leaving` |
+| [L378](../tests/game-room.test.js#L378) | `drops sends to a failing socket without breaking the broadcast to everyone else` |
+| [L391](../tests/game-room.test.js#L391) | `expires an idle room when its alarm fires and deletes every stored record` |
+| [L408](../tests/game-room.test.js#L408) | `keeps an unchanged pending alarm when commands reschedule outside the alarm handler` |
+| [L426](../tests/game-room.test.js#L426) | `fires the revive alarm only when due, re-arms room expiry, and tolerates repeated delivery` |
+| [L470](../tests/game-room.test.js#L470) | `derives command timestamps from the server clock instead of the client envelope` |
+| [L494](../tests/game-room.test.js#L494) | `keeps processing queued room operations after a failed request` |
 
 ### guide-character.test.js
 

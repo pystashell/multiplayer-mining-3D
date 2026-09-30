@@ -200,14 +200,14 @@ export class GameRoom {
 
   async webSocketMessage(socket, raw) {
     if (typeof raw !== "string" || new TextEncoder().encode(raw).byteLength > MAX_MESSAGE_BYTES) {
-      this.close(socket, 4409, "Message too large");
+      await this.enqueue(async () => this.drop(socket, 4409, "Message too large"));
       return;
     }
     let message;
     try {
       message = JSON.parse(raw);
     } catch {
-      this.close(socket, 4400, "Invalid JSON");
+      await this.enqueue(async () => this.drop(socket, 4400, "Invalid JSON"));
       return;
     }
     await this.enqueue(async () => {
@@ -231,15 +231,14 @@ export class GameRoom {
     for (const existing of this.ctx.getWebSockets()) {
       if (existing === socket) continue;
       const previous = this.attachment(existing);
-      if (previous.joined && previous.playerId === member.id) this.close(existing, 4408, "Session replaced");
+      if (previous.joined && previous.playerId === member.id) this.retire(existing, 4408, "Session replaced");
     }
     socket.serializeAttachment({ ...attachment, joined: true, playerId: member.id });
     this.engine.touch(Date.now(), false);
     await this.persistAndSchedule();
     this.send(socket, { v: PROTOCOL_VERSION, type: "welcome", identity: { playerId: member.id, playerName: member.name }, snapshot: this.snapshot() });
-    // The joining socket already has its welcome snapshot, but everyone else
-    // must see this player as connected rather than as departed.
-    this.broadcast(socket, null);
+    // The joining socket already has its snapshot in the welcome.
+    this.broadcast(socket);
   }
 
   async handleCommand(socket, attachment, message) {
@@ -278,13 +277,20 @@ export class GameRoom {
 
   async webSocketClose(socket, code, reason) {
     await this.enqueue(async () => {
-      this.broadcast(socket);
-      try { socket.close(code, reason); } catch {}
+      this.retire(socket, code, reason);
+      this.broadcast();
     });
   }
 
-  async webSocketError(socket) {
-    await this.enqueue(() => this.broadcast(socket));
+  // A non-disconnection error leaves the socket in an unknown state. Retire it
+  // so presence stays consistent; the client reconnects with its session and
+  // resends any unacknowledged commands.
+  async webSocketError(socket, error) {
+    await this.enqueue(async () => {
+      console.error("Room WebSocket error", error);
+      this.retire(socket, 1011, "Socket error");
+      this.broadcast();
+    });
   }
 
   async alarm() {
@@ -292,7 +298,7 @@ export class GameRoom {
       if (!this.engine) return;
       const now = Date.now();
       if (now >= this.engine.state.expiresAt) {
-        for (const socket of this.ctx.getWebSockets()) this.close(socket, 4404, "Room expired");
+        for (const socket of this.ctx.getWebSockets()) this.retire(socket, 4404, "Room expired");
         this.engine = null;
         await this.ctx.storage.deleteAll();
         return;
@@ -306,24 +312,40 @@ export class GameRoom {
     });
   }
 
-  snapshot(excluded) {
+  // Presence comes only from joined attachments. Retired sockets are detached
+  // first, so a socket the runtime still lists while CLOSING never counts.
+  snapshot() {
     const connected = new Set();
     for (const socket of this.ctx.getWebSockets()) {
-      if (socket === excluded) continue;
       const attachment = this.attachment(socket);
       if (attachment.joined) connected.add(attachment.playerId);
     }
     return this.engine.snapshot(Date.now(), connected);
   }
 
-  // `skipped` receives no copy; `departed` is also reported as disconnected,
-  // which by default is the same socket (for example one that is closing).
-  broadcast(skipped, departed = skipped) {
+  broadcast(skipped = null) {
     if (!this.engine) return;
-    const message = { v: PROTOCOL_VERSION, type: "snapshot", snapshot: this.snapshot(departed) };
+    const message = { v: PROTOCOL_VERSION, type: "snapshot", snapshot: this.snapshot() };
     for (const socket of this.ctx.getWebSockets()) {
       if (socket !== skipped && this.attachment(socket).joined) this.send(socket, message);
     }
+  }
+
+  // Stop counting a socket as present and stop it acting for its player before
+  // closing it: a server-initiated close stays CLOSING until the peer answers,
+  // and getWebSockets() may keep returning it until then.
+  retire(socket, code, reason) {
+    try {
+      socket.serializeAttachment({ ...this.attachment(socket), joined: false, playerId: null });
+    } catch {}
+    this.close(socket, code, reason);
+  }
+
+  // Closes a socket that broke the protocol; if it was playing, others see it leave.
+  drop(socket, code, reason) {
+    const wasJoined = this.attachment(socket).joined;
+    this.retire(socket, code, reason);
+    if (wasJoined) this.broadcast();
   }
 
   async persistAndSchedule() {
