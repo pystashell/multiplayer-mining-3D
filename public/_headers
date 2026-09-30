@@ -15,11 +15,11 @@
 /vendor/three-0.150.0/*
   Cache-Control: public, max-age=31536000, immutable
 
-/vendor/fonts/orbitron-5.2.8/*
+/vendor/fonts/orbitron-5.3.0/*
   Cache-Control: public, max-age=31536000, immutable
 
-/vendor/fonts/share-tech-mono-5.2.7/*
+/vendor/fonts/share-tech-mono-5.3.0/*
   Cache-Control: public, max-age=31536000, immutable
 
-/vendor/fonts/inter-5.2.8/*
+/vendor/fonts/inter-5.3.0/*
   Cache-Control: public, max-age=31536000, immutable

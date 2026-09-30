@@ -16,9 +16,9 @@ const checkOnly = process.argv.includes('--check');
 
 const packages = Object.freeze({
   three: Object.freeze({ name: 'three', version: '0.150.0', license: 'MIT' }),
-  orbitron: Object.freeze({ name: '@fontsource/orbitron', version: '5.2.8', license: 'OFL-1.1' }),
-  shareTechMono: Object.freeze({ name: '@fontsource/share-tech-mono', version: '5.2.7', license: 'OFL-1.1' }),
-  inter: Object.freeze({ name: '@fontsource/inter', version: '5.2.8', license: 'OFL-1.1' }),
+  orbitron: Object.freeze({ name: '@fontsource/orbitron', version: '5.3.0', license: 'OFL-1.1' }),
+  shareTechMono: Object.freeze({ name: '@fontsource/share-tech-mono', version: '5.3.0', license: 'OFL-1.1' }),
+  inter: Object.freeze({ name: '@fontsource/inter', version: '5.3.0', license: 'OFL-1.1' }),
 });
 
 const manifestDestination = 'public/vendor/manifest.json';

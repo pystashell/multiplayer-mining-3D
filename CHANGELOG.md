@@ -8,6 +8,12 @@
   high-severity advisories `npm audit` reported in its local-development
   chain (miniflare, sharp, undici). The deployed Worker code is unchanged.
 
+### Changed
+
+- The bundled Inter, Orbitron, and Share Tech Mono fonts move to
+  @fontsource 5.3.0. The font files and licenses are byte-identical to the
+  5.2 releases; only their versioned asset paths change.
+
 ### Verification
 
 - Browser regression tests run the real page in headless Chrome or Edge with

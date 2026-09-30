@@ -86,7 +86,7 @@ test('versioned self-hosted vendor assets receive long-lived immutable caching',
 
   for (const pathname of [
     '/vendor/three-0.150.0/build/three.module.js',
-    '/vendor/fonts/inter-5.2.8/inter.woff2',
+    '/vendor/fonts/inter-5.3.0/inter.woff2',
     '/vendor/library/1.2.3/module.js',
   ]) {
     const response = await worker.fetch(new Request(`https://game.example${pathname}`), env);
