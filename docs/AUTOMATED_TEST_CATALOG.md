@@ -5,7 +5,7 @@
 
 ## 如何使用
 
-当前登记 **48 个测试套件、418 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
+当前登记 **48 个测试套件、421 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
 
 - “测试内容”直接取自可执行用例名称，因此目录不会与代码分叉。
 - 每个套件都明确说明失败处理和测试何时可能需要评审。
@@ -142,14 +142,17 @@
 
 | 源码 | 测试内容 |
 | --- | --- |
-| [L42](../tests/coverage-report.test.js#L42) | `counts only executable lines and ignores blank and comment-only lines` |
-| [L57](../tests/coverage-report.test.js#L57) | `applies nested V8 block ranges so inner counts override their parent` |
-| [L87](../tests/coverage-report.test.js#L87) | `merges executions line by line so any run that executed a line covers it` |
-| [L92](../tests/coverage-report.test.js#L92) | `maps coverage URLs to project files without cache-busting queries` |
-| [L101](../tests/coverage-report.test.js#L101) | `assigns files to report groups and skips generated vendor copies` |
-| [L122](../tests/coverage-report.test.js#L122) | `reports never-loaded files as uncovered and merges aliased copies by line` |
-| [L159](../tests/coverage-report.test.js#L159) | `formats uncovered line ranges and renders runtime and tooling totals separately` |
-| [L187](../tests/coverage-report.test.js#L187) | `merges real V8 coverage from a module imported under two cache-busting URLs` |
+| [L43](../tests/coverage-report.test.js#L43) | `counts only executable lines and ignores blank and comment-only lines` |
+| [L58](../tests/coverage-report.test.js#L58) | `applies nested V8 block ranges so inner counts override their parent` |
+| [L88](../tests/coverage-report.test.js#L88) | `merges executions line by line so any run that executed a line covers it` |
+| [L93](../tests/coverage-report.test.js#L93) | `maps coverage URLs to project files without cache-busting queries` |
+| [L102](../tests/coverage-report.test.js#L102) | `assigns files to report groups and skips generated vendor copies` |
+| [L123](../tests/coverage-report.test.js#L123) | `reports never-loaded files as uncovered and merges aliased copies by line` |
+| [L160](../tests/coverage-report.test.js#L160) | `formats uncovered line ranges and renders runtime and tooling totals separately` |
+| [L188](../tests/coverage-report.test.js#L188) | `merges real V8 coverage from a module imported under two cache-busting URLs` |
+| [L262](../tests/coverage-report.test.js#L262) | `the coverage run reports after passing tests and appends the report to the CI job summary` |
+| [L275](../tests/coverage-report.test.js#L275) | `the coverage run fails exactly when the tests fail and skips the report` |
+| [L286](../tests/coverage-report.test.js#L286) | `a coverage reporting problem after passing tests is logged without failing the run` |
 
 ### deploy-gate.test.js
 
@@ -538,11 +541,11 @@
 | 源码 | 测试内容 |
 | --- | --- |
 | [L34](../tests/release-pipeline.test.js#L34) | `CI runs complete tests before the Cloudflare deployment dry run` |
-| [L45](../tests/release-pipeline.test.js#L45) | `release workflow deploys only unsuffixed semantic tags from an approved branch` |
-| [L63](../tests/release-pipeline.test.js#L63) | `release remains draft until deploy and live verification both succeed` |
-| [L80](../tests/release-pipeline.test.js#L80) | `manual release recovery only publishes an existing tag after live verification` |
-| [L108](../tests/release-pipeline.test.js#L108) | `package scripts keep local deployment and release verification gates available` |
-| [L120](../tests/release-pipeline.test.js#L120) | `live-version verification exits naturally after success on Windows` |
+| [L49](../tests/release-pipeline.test.js#L49) | `release workflow deploys only unsuffixed semantic tags from an approved branch` |
+| [L67](../tests/release-pipeline.test.js#L67) | `release remains draft until deploy and live verification both succeed` |
+| [L84](../tests/release-pipeline.test.js#L84) | `manual release recovery only publishes an existing tag after live verification` |
+| [L112](../tests/release-pipeline.test.js#L112) | `package scripts keep local deployment and release verification gates available` |
+| [L124](../tests/release-pipeline.test.js#L124) | `live-version verification exits naturally after success on Windows` |
 
 ### release-version.test.js
 

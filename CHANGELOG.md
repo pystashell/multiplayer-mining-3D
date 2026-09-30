@@ -32,12 +32,14 @@
 
 ### Verification
 
-- The automated suite grows from 315 to 420 tests, adding behavioral coverage
+- The automated suite grows from 315 to 425 tests, adding behavioral coverage
   of the Worker routes, the room Durable Object (with runtime-faithful alarm
   delivery and closing-socket handling), both room clients, the dialog focus
-  manager, the soundtrack lifecycle, and the release tooling.
+  manager, the soundtrack lifecycle, the release tooling, and the deploy gate.
 - New `npm run test:coverage` reports deterministic line coverage for the full
-  `npm test` pipeline, including files no test loads.
+  `npm test` pipeline, including files no test loads. CI now runs the suite
+  once through it and shows the report on each run's summary page; the build
+  result still depends only on the tests.
 - A lightweight text check flags browser class methods whose names appear
   nowhere else. It is a heuristic with documented blind spots, not a
   reachability analysis.

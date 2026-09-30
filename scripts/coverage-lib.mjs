@@ -1,10 +1,17 @@
+import { spawnSync } from 'node:child_process';
 import {
+  appendFileSync,
+  mkdtempSync,
   readFileSync,
   readdirSync,
+  rmSync,
   statSync,
 } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { npmCommand } from './npm-command.mjs';
 
 export const projectRoot = fileURLToPath(new URL('..', import.meta.url));
 
@@ -244,4 +251,52 @@ export function renderCoverageReport(rows, { groups = COVERAGE_GROUPS, maxUncove
     format('all reported files', totalsFor(rows)),
   );
   return `${lines.join('\n').trim()}\n`;
+}
+
+// Runs the complete `npm test` once with raw V8 coverage enabled, then reports.
+// The exit code is always the test run's: when the tests pass, a problem while
+// building or publishing the report is logged but never fails the build.
+export function runCoverageReport({
+  root = projectRoot,
+  env = process.env,
+  groups = COVERAGE_GROUPS,
+  aliases = COVERAGE_ALIASES,
+  stdio = 'inherit',
+  log = console.log,
+  warn = console.error,
+} = {}) {
+  const directory = mkdtempSync(path.join(os.tmpdir(), 'zero-domain-coverage-'));
+  try {
+    const npm = npmCommand(env);
+    const run = spawnSync(npm.command, [...npm.args, '--prefix', root, 'test'], {
+      cwd: root,
+      env: { ...env, NODE_V8_COVERAGE: directory },
+      stdio,
+      shell: npm.shell,
+    });
+    if (run.error) throw run.error;
+    if (run.status !== 0) {
+      warn('\nTests failed; the coverage report was not generated.');
+      return run.status ?? 1;
+    }
+    try {
+      const rows = summarizeCoverage({
+        scripts: readCoverageDirectory(directory),
+        sourceFiles: collectSourceFiles({ root, groups }),
+        root,
+        groups,
+        aliases,
+      });
+      const report = renderCoverageReport(rows, { groups });
+      log(`\n${report}`);
+      if (env.GITHUB_STEP_SUMMARY) {
+        appendFileSync(env.GITHUB_STEP_SUMMARY, `## Test coverage (executable lines)\n\n\`\`\`text\n${report}\`\`\`\n`);
+      }
+    } catch (error) {
+      warn(`\nThe tests passed, but the coverage report failed: ${error?.stack ?? error}`);
+    }
+    return 0;
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 }

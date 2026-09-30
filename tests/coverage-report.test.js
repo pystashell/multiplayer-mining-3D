@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -17,6 +17,7 @@ import {
   projectFileFromCoverageUrl,
   readCoverageDirectory,
   renderCoverageReport,
+  runCoverageReport,
   summarizeCoverage,
   totalsFor,
 } from '../scripts/coverage-lib.mjs';
@@ -229,5 +230,65 @@ test('merges real V8 coverage from a module imported under two cache-busting URL
     // body of unused() remains. Its `export function` line runs at module
     // evaluation (V8's zero range starts at `function`), as in c8.
     assert.deepEqual(lib.uncovered, [9, 10], 'only unused() stays uncovered once both runs are merged');
+  });
+});
+
+// A throwaway project whose `npm test` covers part of src/lib.mjs.
+function coverageProject(testScript = 'node src/main.mjs') {
+  return {
+    'package.json': JSON.stringify({ name: 'coverage-probe', private: true, scripts: { test: testScript } }),
+    'src/lib.mjs': 'export function used() {\n  return 1;\n}\n\nexport function unused() {\n  return 2;\n}\n',
+    'src/main.mjs': "import { used } from './lib.mjs';\nused();\n",
+    'src/idle.mjs': 'export const idle = true;\n',
+  };
+}
+
+function runProbe(root, extraEnv = {}) {
+  const logs = [];
+  const warnings = [];
+  const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^(npm_|GITHUB_STEP_SUMMARY$)/i.test(key)));
+  const code = runCoverageReport({
+    root,
+    env: { ...env, ...extraEnv },
+    groups: FIXTURE_GROUPS,
+    aliases: {},
+    stdio: 'ignore',
+    log: (message) => logs.push(message),
+    warn: (message) => warnings.push(message),
+  });
+  return { code, output: logs.join('\n'), warnings: warnings.join('\n') };
+}
+
+test('the coverage run reports after passing tests and appends the report to the CI job summary', () => {
+  withTempProject(coverageProject(), (root) => {
+    const summary = path.join(root, 'step-summary.md');
+    const { code, output, warnings } = runProbe(root, { GITHUB_STEP_SUMMARY: summary });
+    assert.equal(code, 0, warnings);
+    assert.match(output, /src\/lib\.mjs\s+\d+\.\d%/);
+    assert.match(output, /src\/idle\.mjs\s+0\.0%\s+0\/1\s+never loaded by any test/);
+    const published = readFileSync(summary, 'utf8');
+    assert.match(published, /^## Test coverage \(executable lines\)/);
+    assert.ok(published.includes(output.trim()), 'the job summary carries the same report');
+  });
+});
+
+test('the coverage run fails exactly when the tests fail and skips the report', () => {
+  withTempProject(coverageProject('node -e "process.exit(3)"'), (root) => {
+    const summary = path.join(root, 'step-summary.md');
+    const { code, output, warnings } = runProbe(root, { GITHUB_STEP_SUMMARY: summary });
+    assert.equal(code, 3, 'the test exit code is propagated');
+    assert.match(warnings, /Tests failed; the coverage report was not generated/);
+    assert.equal(output, '');
+    assert.equal(existsSync(summary), false);
+  });
+});
+
+test('a coverage reporting problem after passing tests is logged without failing the run', () => {
+  withTempProject(coverageProject(), (root) => {
+    // A directory cannot be appended to, so publishing the summary throws.
+    const { code, output, warnings } = runProbe(root, { GITHUB_STEP_SUMMARY: path.join(root, 'src') });
+    assert.equal(code, 0);
+    assert.match(output, /src\/lib\.mjs/);
+    assert.match(warnings, /The tests passed, but the coverage report failed/);
   });
 });

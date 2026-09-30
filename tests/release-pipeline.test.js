@@ -37,7 +37,11 @@ test('CI runs complete tests before the Cloudflare deployment dry run', () => {
   assert.match(ciWorkflow, /pull_request:/);
   assert.match(ciWorkflow, /workflow_dispatch:/);
   assert.match(ciWorkflow, /permissions:\s+contents: read/s);
-  requireOrder(ciWorkflow, ['npm ci', 'npm test', 'npm run deploy:dry']);
+  // test:coverage runs the complete `npm test` once (see coverage-report.test.js),
+  // so CI must not also run a separate full `npm test`.
+  requireOrder(ciWorkflow, ['npm ci', 'npm run test:coverage', 'npm run deploy:dry']);
+  assert.doesNotMatch(ciWorkflow, /run:\s*npm test\s*$/m);
+  assert.equal(packageJson.scripts['test:coverage'], 'node scripts/coverage-report.mjs');
   assert.match(ciWorkflow, /actions\/checkout@[0-9a-f]{40} # v6/);
   assert.match(ciWorkflow, /actions\/setup-node@[0-9a-f]{40} # v6/);
 });

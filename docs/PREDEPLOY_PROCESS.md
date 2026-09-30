@@ -76,7 +76,7 @@ npm run deploy
 
 ## GitHub 与 Cloudflare 发布
 
-分支 CI 自动运行 `npm test` 和 `npm run deploy:dry`，用于持续反馈；它不会假装完成真人视觉验收。
+分支 CI 自动运行 `npm run test:coverage`（完整执行一次 `npm test`，并在运行摘要中附上覆盖率报告）和 `npm run deploy:dry`，用于持续反馈；它不会假装完成真人视觉验收。
 
 正式 SemVer 标签工作流还会对标签中的验收记录运行
 `npm run ui:check -- <tag>`。通过后才会建立 Release 草稿、部署 Cloudflare、验证线上版本、运行真实双 WebSocket 冒烟测试，最后公开 Release。

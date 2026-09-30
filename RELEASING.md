@@ -41,10 +41,11 @@ Durable Object migration、网络协议、存档格式、回放格式和第三�
 每次分支推送和 Pull Request 都会运行 `.github/workflows/ci.yml`：
 
 1. `npm ci`
-2. `npm test`
+2. `npm run test:coverage`：完整执行一次 `npm test`（任何失败都会让 CI 失败），
+   并把覆盖率报告写入该次运行的 Summary 页面；报告本身出错只记录警告，不改变结果
 3. `npm run deploy:dry`
 
-测试记录位于 GitHub 仓库的 **Actions → CI**。建议在 GitHub 的 `main` 分支保护规则中，把 `Test and deployment dry run` 设为合并前必须通过的检查。
+测试记录和覆盖率报告位于 GitHub 仓库的 **Actions → CI**。建议在 GitHub 的 `main` 分支保护规则中，把 `Test and deployment dry run` 设为合并前必须通过的检查。
 
 自动化测试的登记、目的、失败处理和有效性边界见
 `docs/AUTOMATED_TEST_CATALOG.md`。CI 的源码级 UI 契约不能替代真人视觉检查；

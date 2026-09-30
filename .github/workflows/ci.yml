@@ -33,8 +33,10 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
-      - name: Run the complete regression suite
-        run: npm test
+      # test:coverage runs the complete `npm test` exactly once, fails whenever
+      # it fails, and adds a line-coverage report to the job summary.
+      - name: Run the complete regression suite with a coverage report
+        run: npm run test:coverage
 
       - name: Validate the Cloudflare bundle
         run: npm run deploy:dry
