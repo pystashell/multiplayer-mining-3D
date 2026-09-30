@@ -237,7 +237,9 @@ export class GameRoom {
     this.engine.touch(Date.now(), false);
     await this.persistAndSchedule();
     this.send(socket, { v: PROTOCOL_VERSION, type: "welcome", identity: { playerId: member.id, playerName: member.name }, snapshot: this.snapshot() });
-    this.broadcast(socket);
+    // The joining socket already has its welcome snapshot, but everyone else
+    // must see this player as connected rather than as departed.
+    this.broadcast(socket, null);
   }
 
   async handleCommand(socket, attachment, message) {
@@ -308,11 +310,13 @@ export class GameRoom {
     return this.engine.snapshot(Date.now(), connected);
   }
 
-  broadcast(excluded) {
+  // `skipped` receives no copy; `departed` is also reported as disconnected,
+  // which by default is the same socket (for example one that is closing).
+  broadcast(skipped, departed = skipped) {
     if (!this.engine) return;
-    const message = { v: PROTOCOL_VERSION, type: "snapshot", snapshot: this.snapshot(excluded) };
+    const message = { v: PROTOCOL_VERSION, type: "snapshot", snapshot: this.snapshot(departed) };
     for (const socket of this.ctx.getWebSockets()) {
-      if (socket !== excluded && this.attachment(socket).joined) this.send(socket, message);
+      if (socket !== skipped && this.attachment(socket).joined) this.send(socket, message);
     }
   }
 

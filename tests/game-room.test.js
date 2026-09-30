@@ -203,7 +203,11 @@ test('welcomes a joined player and replaces an older socket for the same session
   );
 
   const guest = await joinSocket(room, runtime, sessions[1]);
-  assert.deepEqual(host.last('snapshot').snapshot.players.map((player) => player.name), ['Host', 'Guest']);
+  assert.deepEqual(
+    host.last('snapshot').snapshot.players.map((player) => [player.name, player.connected]),
+    [['Host', true], ['Guest', true]],
+    'teammates must see a newly joined or reconnected player as online',
+  );
   assert.equal(guest.messages('snapshot').length, 0, 'a joining socket gets the welcome, not a duplicate broadcast');
 
   const replacement = await joinSocket(room, runtime, sessions[0]);
