@@ -6,16 +6,17 @@ const indexSource = readFileSync(new URL('../public/index.html', import.meta.url
 const appSource = readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
 const styleSource = readFileSync(new URL('../public/style.css', import.meta.url), 'utf8');
 const orbitControlsSource = readFileSync(
-  new URL('../public/vendor/three-0.150.0/examples/jsm/controls/OrbitControls.js', import.meta.url),
+  new URL('../public/vendor/three-0.186.1/examples/jsm/controls/OrbitControls.js', import.meta.url),
   'utf8',
 );
 
 const expectedVendorFiles = [
   'public/vendor/game-core/room-engine.js',
   'public/vendor/game-core/beginner-layout.js',
-  'public/vendor/three-0.150.0/build/three.module.js',
-  'public/vendor/three-0.150.0/examples/jsm/controls/OrbitControls.js',
-  'public/vendor/three-0.150.0/LICENSE',
+  'public/vendor/three-0.186.1/build/three.module.js',
+  'public/vendor/three-0.186.1/build/three.core.js',
+  'public/vendor/three-0.186.1/examples/jsm/controls/OrbitControls.js',
+  'public/vendor/three-0.186.1/LICENSE',
   'public/vendor/fonts/orbitron-5.3.0/orbitron-latin-800-normal.woff2',
   'public/vendor/fonts/orbitron-5.3.0/orbitron-latin-900-normal.woff2',
   'public/vendor/fonts/orbitron-5.3.0/LICENSE',
@@ -32,8 +33,8 @@ test('the application has no runtime Google Fonts or jsDelivr dependency', () =>
   assert.doesNotMatch(indexSource, /fonts\.(?:googleapis|gstatic)\.com/);
   assert.doesNotMatch(indexSource, /cdn\.jsdelivr\.net/);
   assert.doesNotMatch(indexSource, /<script\s+type=["']importmap["']/);
-  assert.match(appSource, /\.\/vendor\/three-0\.150\.0\/build\/three\.module\.js/);
-  assert.match(appSource, /\.\/vendor\/three-0\.150\.0\/examples\/jsm\/controls\/OrbitControls\.js/);
+  assert.match(appSource, /\.\/vendor\/three-0\.186\.1\/build\/three\.module\.js/);
+  assert.match(appSource, /\.\/vendor\/three-0\.186\.1\/examples\/jsm\/controls\/OrbitControls\.js/);
 });
 
 test('vendored OrbitControls resolves the local pinned Three.js module', () => {
@@ -61,7 +62,7 @@ test('vendored runtime files and upstream licenses are present', () => {
   }
 
   assert.match(
-    readFileSync(new URL('../public/vendor/three-0.150.0/LICENSE', import.meta.url), 'utf8'),
+    readFileSync(new URL('../public/vendor/three-0.186.1/LICENSE', import.meta.url), 'utf8'),
     /MIT License/,
   );
   for (const font of ['orbitron-5.3.0', 'share-tech-mono-5.3.0', 'inter-5.3.0']) {

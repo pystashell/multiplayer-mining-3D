@@ -12,7 +12,7 @@
 /*.html
   Cache-Control: no-cache
 
-/vendor/three-0.150.0/*
+/vendor/three-0.186.1/*
   Cache-Control: public, max-age=31536000, immutable
 
 /vendor/fonts/orbitron-5.3.0/*

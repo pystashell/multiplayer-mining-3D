@@ -10,6 +10,18 @@
 
 ### Changed
 
+- Three.js is upgraded from 0.150.0 (r150) to 0.186.1 (r186) with the look
+  kept as it was. Newer releases changed several rendering defaults, so the
+  game now sets them explicitly: colour management off, linear canvas
+  output, the r150 light scale (×π) for the scene lights, and the r150
+  transmission buffer and alpha for the glass cubes. The frame clock moves
+  from the deprecated `THREE.Clock` to `THREE.Timer`.
+- Since r171 the Three.js module build is split into `three.module.js` and
+  `three.core.js`, and both are now vendored. The first visit downloads
+  about 417 KB of gzipped Three.js instead of 239 KB; the files stay
+  immutably cached afterwards.
+- WebGL 2 is now required: Three.js removed its WebGL 1 fallback in r163.
+  Current desktop and mobile browsers all support WebGL 2 (Safari since 15).
 - The bundled Inter, Orbitron, and Share Tech Mono fonts move to
   @fontsource 5.3.0. The font files and licenses are byte-identical to the
   5.2 releases; only their versioned asset paths change.
@@ -20,9 +32,9 @@
   software WebGL. They check the board build, mouse and touch picking against
   a per-cube raster oracle, hover, slicing, the camera controls, the success
   replay, asset and font loading, and console warnings.
-- Render fingerprints of five fixed board scenes are recorded from the
-  current Three.js build, so a library upgrade has to reproduce the same
-  colours and lighting.
+- Render fingerprints of six fixed board scenes, recorded from the r150
+  build, confirm the upgraded renderer reproduces the same colours, lighting,
+  and glass.
 - Worker tests now also run under `wrangler dev --local` (real workerd):
   static asset headers, Durable Object alarms, WebSocket sync and close codes,
   presence, and a two-browser squad revive.

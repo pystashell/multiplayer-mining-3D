@@ -1037,10 +1037,10 @@
 
 | 源码 | 测试内容 |
 | --- | --- |
-| [L31](../tests/vendor-assets.test.js#L31) | `the application has no runtime Google Fonts or jsDelivr dependency` |
-| [L39](../tests/vendor-assets.test.js#L39) | `vendored OrbitControls resolves the local pinned Three.js module` |
-| [L44](../tests/vendor-assets.test.js#L44) | `only the selected local WOFF2 weights are declared` |
-| [L58](../tests/vendor-assets.test.js#L58) | `vendored runtime files and upstream licenses are present` |
+| [L32](../tests/vendor-assets.test.js#L32) | `the application has no runtime Google Fonts or jsDelivr dependency` |
+| [L40](../tests/vendor-assets.test.js#L40) | `vendored OrbitControls resolves the local pinned Three.js module` |
+| [L45](../tests/vendor-assets.test.js#L45) | `only the selected local WOFF2 weights are declared` |
+| [L59](../tests/vendor-assets.test.js#L59) | `vendored runtime files and upstream licenses are present` |
 
 ### worker-routes.test.js
 

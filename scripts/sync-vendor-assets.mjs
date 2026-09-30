@@ -15,13 +15,14 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const checkOnly = process.argv.includes('--check');
 
 const packages = Object.freeze({
-  three: Object.freeze({ name: 'three', version: '0.150.0', license: 'MIT' }),
+  three: Object.freeze({ name: 'three', version: '0.186.1', license: 'MIT' }),
   orbitron: Object.freeze({ name: '@fontsource/orbitron', version: '5.3.0', license: 'OFL-1.1' }),
   shareTechMono: Object.freeze({ name: '@fontsource/share-tech-mono', version: '5.3.0', license: 'OFL-1.1' }),
   inter: Object.freeze({ name: '@fontsource/inter', version: '5.3.0', license: 'OFL-1.1' }),
 });
 
 const manifestDestination = 'public/vendor/manifest.json';
+const threeDestination = `public/vendor/three-${packages.three.version}`;
 
 const outputs = [
   {
@@ -41,13 +42,19 @@ const outputs = [
       return Buffer.from(source.replace(workerImport, '"../../minesweeper-solver.js"'));
     },
   },
+  // Since r171 the module build is split: three.module.js imports the shared
+  // core from ./three.core.js, so both files ship side by side.
   {
     source: 'node_modules/three/build/three.module.js',
-    destination: 'public/vendor/three-0.150.0/build/three.module.js',
+    destination: `${threeDestination}/build/three.module.js`,
+  },
+  {
+    source: 'node_modules/three/build/three.core.js',
+    destination: `${threeDestination}/build/three.core.js`,
   },
   {
     source: 'node_modules/three/examples/jsm/controls/OrbitControls.js',
-    destination: 'public/vendor/three-0.150.0/examples/jsm/controls/OrbitControls.js',
+    destination: `${threeDestination}/examples/jsm/controls/OrbitControls.js`,
     transform(content) {
       const source = content.toString('utf8');
       const importPattern = /from 'three';/g;
@@ -60,7 +67,7 @@ const outputs = [
   },
   {
     source: 'node_modules/three/LICENSE',
-    destination: 'public/vendor/three-0.150.0/LICENSE',
+    destination: `${threeDestination}/LICENSE`,
   },
   ...fontOutputs('orbitron', packages.orbitron, [800, 900]),
   ...fontOutputs('share-tech-mono', packages.shareTechMono, [400]),
