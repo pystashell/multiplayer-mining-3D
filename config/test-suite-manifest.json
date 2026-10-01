@@ -227,6 +227,10 @@
       "category": "release-security",
       "purposeZh": "验证 HTML、API、静态资源、异常响应和 WebSocket 的安全头与缓存策略。"
     },
+    "site-icon.test.js": {
+      "category": "media-assets",
+      "purposeZh": "确认页面声明了网站图标（SVG 与 16/32/48 像素 ICO 备用），两个文件格式完整，浏览器不再在每次访问时请求到 /favicon.ico 404。"
+    },
     "solver-explanation.test.js": {
       "category": "ui-source-contract",
       "purposeZh": "验证求解证据以可读、可滚动的逐条证明呈现，而不是不可解释的文本块。"

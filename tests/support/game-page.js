@@ -17,10 +17,6 @@ const vendorManifest = JSON.parse(
 export const THREE_MODULE_PATH = `/${vendorManifest.files.find((file) => /^vendor\/three-[^/]+\/build\/three\.module\.js$/.test(file))}`;
 export const THREE_REVISION = String(Number(vendorManifest.packages.three.version.split('.')[1]));
 
-// Browsers ask for /favicon.ico on their own; the game ships no icon, so the
-// 404 is expected on every host, including production.
-const EXPECTED_MISSING = [/\/favicon\.ico\b/];
-
 // Three.js draws on Math.random for every object UUID, so how many numbers it
 // consumes changes between releases. __holoReseed lets a test restart the
 // sequence right before the first dig, which makes the mine layout depend on
@@ -140,11 +136,10 @@ export async function openGame(browser, baseUrl, {
 }
 
 export function unexpectedPageProblems(page) {
-  const expected = (entry) => EXPECTED_MISSING.some((pattern) => pattern.test(entry));
   return {
-    consoleErrors: page.consoleErrors.filter((entry) => !expected(entry)),
+    consoleErrors: page.consoleErrors,
     pageErrors: page.pageErrors,
-    failedRequests: page.failedRequests.filter((entry) => !expected(entry)),
+    failedRequests: page.failedRequests,
   };
 }
 

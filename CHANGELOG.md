@@ -13,6 +13,8 @@
 - Resetting the view right after rotating the board lands exactly on the
   default view. The reset used to add the drag's remaining eased motion on
   top of the new view, which could leave the camera far from it.
+- The site now has a tab icon (an SVG with a 16/32/48-pixel ICO fallback),
+  so browsers no longer log a 404 for `/favicon.ico` on every visit.
 
 ### Changed
 

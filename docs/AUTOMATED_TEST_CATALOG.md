@@ -5,7 +5,7 @@
 
 ## 如何使用
 
-当前登记 **55 个测试套件、449 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
+当前登记 **56 个测试套件、452 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
 
 - “测试内容”直接取自可执行用例名称，因此目录不会与代码分叉。
 - 每个套件都明确说明失败处理和测试何时可能需要评审。
@@ -113,9 +113,9 @@
 | 源码 | 测试内容 |
 | --- | --- |
 | [L72](../tests/browser-boot.test.js#L72) | `serves the page with the production Content Security Policy and logs no errors or warnings` |
-| [L80](../tests/browser-boot.test.js#L80) | `loads the vendored Three.js modules and every font face with the right content types` |
-| [L95](../tests/browser-boot.test.js#L95) | `runs the vendored Three.js revision on a WebGL2 context with the game settings` |
-| [L153](../tests/browser-boot.test.js#L153) | `loads every bundled font face and keeps its recorded text metrics` |
+| [L82](../tests/browser-boot.test.js#L82) | `loads the vendored Three.js modules and every font face with the right content types` |
+| [L97](../tests/browser-boot.test.js#L97) | `runs the vendored Three.js revision on a WebGL2 context with the game settings` |
+| [L155](../tests/browser-boot.test.js#L155) | `loads every bundled font face and keeps its recorded text metrics` |
 
 ### browser-multiplayer.test.js
 
@@ -869,6 +869,20 @@
 | [L150](../tests/security-headers.test.js#L150) | `HTTP rejections on the WebSocket path still receive security headers` |
 | [L162](../tests/security-headers.test.js#L162) | `thrown HTTP errors are also covered by the security baseline` |
 
+### site-icon.test.js
+
+- 分类：美术、字体、音频与静态资源
+- 自动化层级：资源完整性与映射自动化
+- 套件目的：确认页面声明了网站图标（SVG 与 16/32/48 像素 ICO 备用），两个文件格式完整，浏览器不再在每次访问时请求到 /favicon.ico 404。
+- 任一用例失败：检查配置映射、文件存在性、尺寸/格式、缓存版本和运行时引用。素材替换应改配置或资源，不应把当前角色文件名写死进测试。
+- 有效性评审：允许更换具体素材，但完整覆盖、可加载、版本化和配置驱动这些契约必须保留。
+
+| 源码 | 测试内容 |
+| --- | --- |
+| [L11](../tests/site-icon.test.js#L11) | `the page declares an SVG icon with a 32-pixel ICO fallback` |
+| [L16](../tests/site-icon.test.js#L16) | `the SVG icon is a self-contained square vector image` |
+| [L23](../tests/site-icon.test.js#L23) | `the ICO bundles 16, 32, and 48 pixel PNG images that match their entries` |
+
 ### solver-explanation.test.js
 
 - 分类：UI 结构与源码契约
@@ -1075,7 +1089,7 @@
 | 源码 | 测试内容 |
 | --- | --- |
 | [L117](../tests/worker-runtime.test.js#L117) | `serves the game and its vendored files through Workers Static Assets with the production headers` |
-| [L146](../tests/worker-runtime.test.js#L146) | `refuses cross-origin and oversized room requests before any room is created` |
-| [L155](../tests/worker-runtime.test.js#L155) | `two players stay in sync over hibernatable WebSockets, see each other online, and resume sessions` |
-| [L202](../tests/worker-runtime.test.js#L202) | `protocol violations close the socket with the documented close codes` |
-| [L223](../tests/worker-runtime.test.js#L223) | `a watched ad revives the squad when the Durable Object alarm fires ten seconds later` |
+| [L153](../tests/worker-runtime.test.js#L153) | `refuses cross-origin and oversized room requests before any room is created` |
+| [L162](../tests/worker-runtime.test.js#L162) | `two players stay in sync over hibernatable WebSockets, see each other online, and resume sessions` |
+| [L209](../tests/worker-runtime.test.js#L209) | `protocol violations close the socket with the documented close codes` |
+| [L230](../tests/worker-runtime.test.js#L230) | `a watched ad revives the squad when the Durable Object alarm fires ten seconds later` |

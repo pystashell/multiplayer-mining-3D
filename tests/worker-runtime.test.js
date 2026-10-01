@@ -133,6 +133,13 @@ test('serves the game and its vendored files through Workers Static Assets with 
     await response.arrayBuffer();
   }
 
+  for (const [path, type] of [['/favicon.ico', /^image\//], ['/favicon.svg', /^image\/svg\+xml/]]) {
+    const icon = await fetch(`${dev.url}${path}`);
+    assert.equal(icon.status, 200, path);
+    assert.match(icon.headers.get('content-type'), type, path);
+    await icon.arrayBuffer();
+  }
+
   const version = await fetch(`${dev.url}/version.json`);
   assert.equal((await version.json()).version, packageJson.version);
   assert.equal((await fetch(`${dev.url}/definitely-missing.txt`)).status, 404);

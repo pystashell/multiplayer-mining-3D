@@ -75,6 +75,8 @@ test('serves the page with the production Content Security Policy and logs no er
   assert.equal(document.headers['Content-Security-Policy'] ?? document.headers['content-security-policy'], productionPolicy);
   assert.deepEqual(unexpectedPageProblems(page), { consoleErrors: [], pageErrors: [], failedRequests: [] });
   assert.deepEqual(page.consoleWarnings, [], 'deprecated or misused library APIs warn in the console');
+  const icon = page.responses.find((response) => /^\/favicon\.(svg|ico)$/.test(new URL(response.url).pathname));
+  assert.equal(icon?.status, 200, 'the browser fetches the site icon');
 });
 
 test('loads the vendored Three.js modules and every font face with the right content types', () => {
