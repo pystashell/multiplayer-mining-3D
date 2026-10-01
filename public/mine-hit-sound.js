@@ -1,6 +1,6 @@
 // The selected audition file is a shipped asset, not a regenerated synth.
 // A relative URL works on both the website and Steam's offline holo:// origin.
-export const MINE_HIT_SOUND_PATH = 'audio/sfx/11-tile-hit.wav';
+export const MINE_HIT_SOUND_PATH = 'audio/sfx/mine-hit-cartoon-pop.wav';
 const sampleUrl = new URL(`./${MINE_HIT_SOUND_PATH}`, import.meta.url).href;
 
 export class MineHitSound {

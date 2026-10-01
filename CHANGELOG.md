@@ -18,6 +18,11 @@
 
 ### Changed
 
+- Mine hits play a new short cartoon-style blast
+  (`audio/sfx/mine-hit-cartoon-pop.wav`, 0.72 s), chosen by ear from a set
+  of candidates. The previous sample held a flat low drone for about a
+  quarter of a second after its click, which sounded odd. It still plays
+  through the SFX volume and mute controls.
 - Three.js is upgraded from 0.150.0 (r150) to 0.186.1 (r186) with the look
   kept as it was. Newer releases changed several rendering defaults, so the
   game now sets them explicitly: colour management off, linear canvas
