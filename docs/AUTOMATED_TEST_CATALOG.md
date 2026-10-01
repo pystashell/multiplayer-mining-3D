@@ -5,7 +5,7 @@
 
 ## 如何使用
 
-当前登记 **55 个测试套件、448 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
+当前登记 **55 个测试套件、449 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
 
 - “测试内容”直接取自可执行用例名称，因此目录不会与代码分叉。
 - 每个套件都明确说明失败处理和测试何时可能需要评审。
@@ -99,7 +99,8 @@
 | [L221](../tests/browser-board.test.js#L221) | `hovering highlights the cube under the pointer and leaving the board restores it` |
 | [L244](../tests/browser-board.test.js#L244) | `slicing hides cubes outside the range and clicks reach the layer it uncovers` |
 | [L286](../tests/browser-board.test.js#L286) | `right-dragging orbits the camera, the wheel zooms within limits, and reset restores the default view` |
-| [L331](../tests/browser-board.test.js#L331) | `on a touch phone a tap digs the tapped cube once the double-tap window closes` |
+| [L331](../tests/browser-board.test.js#L331) | `resetting the view while the camera still eases after a drag lands exactly on the default view` |
+| [L347](../tests/browser-board.test.js#L347) | `on a touch phone a tap digs the tapped cube once the double-tap window closes` |
 
 ### browser-boot.test.js
 

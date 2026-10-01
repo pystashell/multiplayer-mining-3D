@@ -328,6 +328,22 @@ test('right-dragging orbits the camera, the wheel zooms within limits, and reset
   });
 });
 
+test('resetting the view while the camera still eases after a drag lands exactly on the default view', { timeout: 240_000 }, async () => {
+  await withFreeplayPage({}, async (page) => {
+    const empty = { x: 1150, y: 420 };
+    // With the render loop paused, the eased motion OrbitControls keeps after a
+    // drag is still pending when Reset is pressed, as it is for a player who
+    // resets right after flicking the board.
+    await withFrozenFrames(page, async () => {
+      await page.mouseDrag(empty, { x: empty.x - 220, y: empty.y + 60 }, { button: 'right', steps: 16 });
+      await page.click('#btn-reset-camera');
+    });
+    const reset = await settleCamera(page);
+    assert.deepEqual(round(reset.position), [11, 9.9, 11]);
+    assert.deepEqual(round(reset.target), [0, 0, 0]);
+  });
+});
+
 test('on a touch phone a tap digs the tapped cube once the double-tap window closes', { timeout: 240_000 }, async () => {
   await withFreeplayPage({ width: 390, height: 844, mobile: true, touch: true }, async (page) => {
     assert.equal(await page.evaluate(() => document.body.dataset.inputMode), 'touch');

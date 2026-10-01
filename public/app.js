@@ -6211,8 +6211,24 @@ class HoloSweeperGame {
   // -------------------------------------------------------------
   // 12. 摄像机控制
   // -------------------------------------------------------------
+  // OrbitControls keeps easing the camera for a moment after a drag (damping).
+  // An update with damping off applies and clears that pending motion, so run
+  // one and put the camera back: the motion stops where it is instead of being
+  // added on top of the view placed next.
+  stopCameraEasing() {
+    const position = this.camera.position.clone();
+    const target = this.controls.target.clone();
+    const dampingEnabled = this.controls.enableDamping;
+    this.controls.enableDamping = false;
+    this.controls.update();
+    this.controls.enableDamping = dampingEnabled;
+    this.camera.position.copy(position);
+    this.controls.target.copy(target);
+  }
+
   centerCameraTarget() {
     if (!this.camera || !this.controls) return;
+    this.stopCameraEasing();
     const offset = this.camera.position.clone().sub(this.controls.target);
     const recentered = recenterCameraKeepingOffset(this.camera.position, this.controls.target);
     offset.set(
@@ -6238,6 +6254,7 @@ class HoloSweeperGame {
     // 设置斜向下看 45 度的初始透视视角
     this.endMousePan();
     this.endTouchPan({ force: true });
+    this.stopCameraEasing();
     const dampingEnabled = this.controls.enableDamping;
     this.controls.enableDamping = false;
     this.camera.position.set(distance, distance * 0.9, distance);

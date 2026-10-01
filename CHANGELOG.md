@@ -8,6 +8,12 @@
   high-severity advisories `npm audit` reported in its local-development
   chain (miniflare, sharp, undici). The deployed Worker code is unchanged.
 
+### Fixed
+
+- Resetting the view right after rotating the board lands exactly on the
+  default view. The reset used to add the drag's remaining eased motion on
+  top of the new view, which could leave the camera far from it.
+
 ### Changed
 
 - Three.js is upgraded from 0.150.0 (r150) to 0.186.1 (r186) with the look
