@@ -1,5 +1,34 @@
 # Changelog
 
+## [4.1.3] - Unreleased
+
+### Changed
+
+- Interface text that the stylesheet assigns to `--font-ui` now gets the
+  weight, line height, and Inter typeface it declares. The variable was
+  never defined, so those declarations had always been dropped. Text sizes
+  stay exactly as players have seen them: these rules now take the size
+  they inherit, which a check of every affected element on desktop and
+  phone confirms is unchanged. The guide's action hints (the instruction in
+  the mission card and the matching hint at the bottom) stay regular weight.
+
+### Fixed
+
+- The lobby's settings and language buttons are now the same height, level,
+  and a fixed 6 px apart, whether the toggle reads "EN" or "中文".
+- On desktop, the dialogue's Skip and Successful Replay buttons sit under
+  the guide portrait with equal 10 px margins and line up with Continue.
+  They used to spill over the portrait with a wider margin on the left.
+- Two button colours read an undefined `--text-secondary` variable; they now
+  say `inherit`, which is what they always did.
+
+### Verification
+
+- A stylesheet check fails on any `var()` whose custom property is not
+  defined, and on any `--font-ui` font rule that sets its own size.
+- Browser layout tests cover the lobby corner buttons and the dialogue
+  buttons in both languages.
+
 ## [4.1.2] - 2026-10-02
 
 This release also ships the 4.1.1 changes below, which were not released on

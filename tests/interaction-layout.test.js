@@ -116,7 +116,7 @@ test('makes solver actions visual-first while keeping coordinates as secondary c
   assert.match(appSource, /solver\.coordinate/);
   assert.match(appSource, /preferMines: this\.reductionEnabled/);
   assert.match(appSource, /hint\.action === 'flag' && this\.reductionEnabled \? 'reduce' : hint\.action/);
-  assert.match(styleSource, /\.solver-hint-action strong\s*\{[^}]*font:\s*800 15px/s);
+  assert.match(styleSource, /\.solver-hint-action strong\s*\{[^}]*font:\s*800 1em/s);
   assert.match(styleSource, /\.solver-hint-result\.mine \.solver-hint-action strong\s*\{\s*color:#ff4fd8/);
   assert.match(styleSource, /\.solver-hint-result\.guess \.solver-hint-action strong\s*\{\s*color:#ffb347/);
 });
@@ -157,7 +157,7 @@ test('keeps the illustrated background inside the dialogue frame without coverin
   assert.doesNotMatch(indexSource, /id="tutorial-art"[^>]*\ssrc=/);
   assert.doesNotMatch(indexSource, /id="tutorial-art"[^>]*class="is-cutout"/);
   assert.match(appSource, /tutorialArt\.classList\.toggle\('is-cutout', source\.includes\('-cutout-'\)\)/);
-  assert.match(styleSource, /\.tutorial-dialog\s*\{[^}]*grid-template-columns:\s*180px minmax\(0, 560px\)[^}]*overflow:\s*hidden[^}]*background:\s*rgba\(11,7,30,\.94\)/s);
+  assert.match(styleSource, /\.tutorial-dialog\s*\{[^}]*--tutorial-portrait-width:\s*180px;[^}]*grid-template-columns:\s*var\(--tutorial-portrait-width\) minmax\(0, 560px\)[^}]*overflow:\s*hidden[^}]*background:\s*rgba\(11,7,30,\.94\)/s);
   assert.match(styleSource, /\.tutorial-portrait\s*\{[^}]*min-height:\s*210px[^}]*overflow:\s*hidden/s);
   assert.match(styleSource, /\.tutorial-portrait img\s*\{[^}]*width:\s*100%[^}]*height:\s*100%[^}]*object-fit:\s*cover/s);
   assert.match(styleSource, /\.tutorial-portrait::after\s*\{[^}]*linear-gradient\(90deg,transparent 55%,rgba\(11,7,30,\.98\)\)/s);
