@@ -25,9 +25,23 @@ their own.
   and 1365 px the three axes now take their own row below the title, and
   between 901 and 1120 px they stack, with the Sector Purge banner moved
   below the taller bar.
-- Both layout problems were found in the v4.1.2 UI review. A browser test
-  now checks the lobby label at both phone sizes and the slice bar from 1024
-  to 1920 px, in Chinese and English.
+- The volume labels no longer break mid-word ("音效音 / 量") or take three
+  lines ("Sound Effects Volume"): each label now sits on its own line above a
+  full-width slider.
+- On phones the status bar keeps the flag count on one line (it showed
+  "2 /" over "3" in English), the Chinese label breaks only at its slash, and
+  a three-digit count still fits its cell on 360 px screens.
+- From 901 to 1000 px the slice bar narrows to fit between the side panels
+  instead of running over them, and in squads it also clears the wider chat
+  panel; from 1121 to 1365 px the squad chat panel starts below the taller
+  bar.
+- On desktops the bottom hint bar and the reasoning panel stay between the
+  side panels from 1080 px up (at 1280 px they covered the edge of the left
+  panel); narrower windows keep a 360 px minimum.
+- These layout problems were found in the v4.1.2 UI review. A browser test
+  now checks the lobby label and the phone status bar at both phone sizes,
+  and the slice bar, hint bar, and volume labels from 901 to 1920 px, in
+  Chinese and English, for solo and squad layouts.
 
 ### Changed
 
