@@ -1,6 +1,9 @@
 # Changelog
 
-## [4.1.2] - Unreleased
+## [4.1.2] - 2026-10-02
+
+This release also ships the 4.1.1 changes below, which were not released on
+their own.
 
 ### Security
 
