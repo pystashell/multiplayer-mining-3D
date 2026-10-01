@@ -3,9 +3,9 @@
   "checklistVersion": "2026-09-23.1",
   "releaseTag": "v4.1.2",
   "status": "passed",
-  "uiDigest": "sha256:494d33d5722a9fd70ff3deebbd6f6a4456f48b4065c6a93a2746eca9f228c7b2",
+  "uiDigest": "sha256:e89f174e6d19dfbccd9d05c69e249c69b2fba74503a888fc117e0785c452f493",
   "reviewer": "Claude browser and screenshot review",
-  "reviewedAt": "2026-10-01T16:04:38.663Z",
+  "reviewedAt": "2026-10-01T16:50:12.308Z",
   "browsers": [
     "Chrome 154.0.8037.59 on Windows 11 (headless, SwiftShader WebGL)"
   ],

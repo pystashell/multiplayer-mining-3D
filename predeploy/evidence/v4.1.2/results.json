@@ -943,6 +943,85 @@
         "detail": []
       },
       {
+        "name": "squad guest mobile-standard en: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "squad guest mobile-standard en: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "squad guest mobile-standard en: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "squad guest mobile-standard en: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "squad guest mobile-standard en: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "squad guest mobile-standard en: room socket stays same-origin and never sends the mine layout",
+        "pass": true,
+        "detail": {
+          "sockets": [
+            "ws://127.0.0.1:26615/api/rooms/C5XWCH/socket",
+            "ws://127.0.0.1:26615/api/rooms/C5XWCH/socket"
+          ],
+          "frames": 12,
+          "leaks": 0
+        }
+      },
+      {
+        "name": "squad host desktop-wide zh: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "squad host desktop-wide zh: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "squad host desktop-wide zh: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "squad host desktop-wide zh: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "squad host desktop-wide zh: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "squad host desktop-wide zh: room socket stays same-origin and never sends the mine layout",
+        "pass": true,
+        "detail": {
+          "sockets": [
+            "ws://127.0.0.1:26615/api/rooms/C5XWCH/socket"
+          ],
+          "frames": 16,
+          "leaks": 0
+        }
+      },
+      {
         "name": "loss desktop-wide zh: no uncaught exceptions",
         "pass": true,
         "detail": []
@@ -1081,85 +1160,6 @@
         "name": "keyboard desktop-wide en: no keys or tokens in URLs or logs",
         "pass": true,
         "detail": []
-      },
-      {
-        "name": "squad guest mobile-standard en: no uncaught exceptions",
-        "pass": true,
-        "detail": []
-      },
-      {
-        "name": "squad guest mobile-standard en: no console errors or warnings",
-        "pass": true,
-        "detail": {
-          "errors": [],
-          "warnings": []
-        }
-      },
-      {
-        "name": "squad guest mobile-standard en: no failed requests",
-        "pass": true,
-        "detail": []
-      },
-      {
-        "name": "squad guest mobile-standard en: no third-party runtime requests",
-        "pass": true,
-        "detail": []
-      },
-      {
-        "name": "squad guest mobile-standard en: no keys or tokens in URLs or logs",
-        "pass": true,
-        "detail": []
-      },
-      {
-        "name": "squad guest mobile-standard en: room socket stays same-origin and never sends the mine layout",
-        "pass": true,
-        "detail": {
-          "sockets": [
-            "ws://127.0.0.1:8799/api/rooms/RSQPQ3/socket",
-            "ws://127.0.0.1:8799/api/rooms/RSQPQ3/socket"
-          ],
-          "frames": 12,
-          "leaks": 0
-        }
-      },
-      {
-        "name": "squad host desktop-wide zh: no uncaught exceptions",
-        "pass": true,
-        "detail": []
-      },
-      {
-        "name": "squad host desktop-wide zh: no console errors or warnings",
-        "pass": true,
-        "detail": {
-          "errors": [],
-          "warnings": []
-        }
-      },
-      {
-        "name": "squad host desktop-wide zh: no failed requests",
-        "pass": true,
-        "detail": []
-      },
-      {
-        "name": "squad host desktop-wide zh: no third-party runtime requests",
-        "pass": true,
-        "detail": []
-      },
-      {
-        "name": "squad host desktop-wide zh: no keys or tokens in URLs or logs",
-        "pass": true,
-        "detail": []
-      },
-      {
-        "name": "squad host desktop-wide zh: room socket stays same-origin and never sends the mine layout",
-        "pass": true,
-        "detail": {
-          "sockets": [
-            "ws://127.0.0.1:8799/api/rooms/RSQPQ3/socket"
-          ],
-          "frames": 16,
-          "leaks": 0
-        }
       }
     ],
     "screenshots": [],
@@ -2048,6 +2048,10 @@
         "detail": "assets/parallax-easy-scan.webp"
       },
       {
+        "name": "desktop-wide en easy: completed without an exception",
+        "pass": true
+      },
+      {
         "name": "desktop-wide zh medium: lobby shows the route's story art",
         "pass": true,
         "detail": "url(\"assets/parallax-neighbor-perspective.png\")"
@@ -2122,6 +2126,10 @@
         "detail": "assets/parallax-medium-ready.webp"
       },
       {
+        "name": "desktop-wide zh medium: completed without an exception",
+        "pass": true
+      },
+      {
         "name": "desktop-wide en hard: lobby shows the route's story art",
         "pass": true,
         "detail": "url(\"assets/parallax-final-protocol.png\")"
@@ -2181,6 +2189,10 @@
         "name": "desktop-wide en hard page 2: art belongs to the configured guide",
         "pass": true,
         "detail": "assets/parallax-final-protocol.png"
+      },
+      {
+        "name": "desktop-wide en hard: completed without an exception",
+        "pass": true
       },
       {
         "name": "desktop-wide zh ultimate: lobby shows the route's story art",
@@ -2244,6 +2256,10 @@
         "detail": "assets/parallax-final-protocol.png"
       },
       {
+        "name": "desktop-wide zh ultimate: completed without an exception",
+        "pass": true
+      },
+      {
         "name": "desktop-compact zh easy: lobby shows the route's story art",
         "pass": true,
         "detail": "url(\"assets/guide-zero-domain-cartographer.png\")"
@@ -2290,6 +2306,10 @@
         "name": "desktop-compact zh easy page 2: art belongs to the configured guide",
         "pass": true,
         "detail": "assets/parallax-easy-scan.webp"
+      },
+      {
+        "name": "desktop-compact zh easy: completed without an exception",
+        "pass": true
       },
       {
         "name": "desktop-compact en medium: lobby shows the route's story art",
@@ -2366,6 +2386,10 @@
         "detail": "assets/parallax-medium-ready.webp"
       },
       {
+        "name": "desktop-compact en medium: completed without an exception",
+        "pass": true
+      },
+      {
         "name": "mobile-standard zh easy: lobby shows the route's story art",
         "pass": true,
         "detail": "url(\"assets/guide-zero-domain-cartographer.png\")"
@@ -2427,6 +2451,10 @@
         "detail": "assets/parallax-easy-scan.webp"
       },
       {
+        "name": "mobile-standard zh easy: completed without an exception",
+        "pass": true
+      },
+      {
         "name": "mobile-small en easy: lobby shows the route's story art",
         "pass": true,
         "detail": "url(\"assets/guide-zero-domain-cartographer.png\")"
@@ -2486,6 +2514,10 @@
         "name": "mobile-small en easy page 2: art belongs to the configured guide",
         "pass": true,
         "detail": "assets/parallax-easy-scan.webp"
+      },
+      {
+        "name": "mobile-small en easy: completed without an exception",
+        "pass": true
       },
       {
         "name": "mobile-small zh medium: lobby shows the route's story art",
@@ -2560,6 +2592,10 @@
         "name": "mobile-small zh medium page 3: art belongs to the configured guide",
         "pass": true,
         "detail": "assets/parallax-medium-ready.webp"
+      },
+      {
+        "name": "mobile-small zh medium: completed without an exception",
+        "pass": true
       },
       {
         "name": "every configured guide image loads",
@@ -3841,7 +3877,7 @@
           "revealed": 88,
           "flags": 0,
           "revision": 3,
-          "save": "cf740ce1-ad0d-4fc9-b302-5227399f8eb4"
+          "save": "bc870019-3f40-4e0a-aeeb-541bd1ff9b17"
         }
       },
       {
@@ -4046,6 +4082,10 @@
         "pass": true
       },
       {
+        "name": "desktop-wide en: completed without an exception",
+        "pass": true
+      },
+      {
         "name": "desktop-compact zh: the first click digs the corner cube",
         "pass": true,
         "detail": {
@@ -4053,7 +4093,7 @@
           "revealed": 88,
           "flags": 0,
           "revision": 3,
-          "save": "a864b4e4-ab31-4c1b-b8fc-93e5f53b531d"
+          "save": "0facc5e0-5c6e-4d09-a975-e061294769de"
         }
       },
       {
@@ -4188,9 +4228,9 @@
             0
           ],
           "after": [
-            -3.0756515306096324,
-            1.3011496558288078,
-            -2.5629315044947667
+            -3.07565153055426,
+            1.3011496558364597,
+            -2.5629315045573327
           ]
         }
       },
@@ -4256,6 +4296,10 @@
       {
         "name": "desktop-compact zh: Return to Lobby leaves the room",
         "pass": true
+      },
+      {
+        "name": "desktop-compact zh: completed without an exception",
+        "pass": true
       }
     ],
     "screenshots": [
@@ -4305,7 +4349,7 @@
           "revealed": 88,
           "flags": 0,
           "revision": 3,
-          "save": "61b53a88-bc42-41d0-8316-2a22d75c1643"
+          "save": "19d49c8b-9b70-4c1f-8957-00136bd4f43f"
         }
       },
       {
@@ -4375,14 +4419,14 @@
             "revealed": 88,
             "flags": 1,
             "revision": 4,
-            "save": "61b53a88-bc42-41d0-8316-2a22d75c1643"
+            "save": "19d49c8b-9b70-4c1f-8957-00136bd4f43f"
           },
           "after": {
             "phase": "playing",
             "revealed": 88,
             "flags": 1,
             "revision": 4,
-            "save": "61b53a88-bc42-41d0-8316-2a22d75c1643"
+            "save": "19d49c8b-9b70-4c1f-8957-00136bd4f43f"
           }
         }
       },
@@ -4464,14 +4508,14 @@
             "revealed": 88,
             "flags": 1,
             "revision": 4,
-            "save": "61b53a88-bc42-41d0-8316-2a22d75c1643"
+            "save": "19d49c8b-9b70-4c1f-8957-00136bd4f43f"
           },
           "boardAfterGestures": {
             "phase": "playing",
             "revealed": 88,
             "flags": 1,
             "revision": 4,
-            "save": "61b53a88-bc42-41d0-8316-2a22d75c1643"
+            "save": "19d49c8b-9b70-4c1f-8957-00136bd4f43f"
           }
         }
       },
@@ -4524,7 +4568,7 @@
         "detail": {
           "open": true,
           "inView": true,
-          "top": 58.43941879272461
+          "top": 58
         }
       },
       {
@@ -4563,14 +4607,14 @@
             "revealed": 88,
             "flags": 1,
             "revision": 4,
-            "save": "61b53a88-bc42-41d0-8316-2a22d75c1643"
+            "save": "19d49c8b-9b70-4c1f-8957-00136bd4f43f"
           },
           "afterTurn": {
             "phase": "playing",
             "revealed": 88,
             "flags": 1,
             "revision": 4,
-            "save": "61b53a88-bc42-41d0-8316-2a22d75c1643"
+            "save": "19d49c8b-9b70-4c1f-8957-00136bd4f43f"
           }
         }
       },
@@ -4583,16 +4627,20 @@
             "revealed": 88,
             "flags": 1,
             "revision": 4,
-            "save": "61b53a88-bc42-41d0-8316-2a22d75c1643"
+            "save": "19d49c8b-9b70-4c1f-8957-00136bd4f43f"
           },
           "after": {
             "phase": "playing",
             "revealed": 89,
             "flags": 1,
             "revision": 5,
-            "save": "61b53a88-bc42-41d0-8316-2a22d75c1643"
+            "save": "19d49c8b-9b70-4c1f-8957-00136bd4f43f"
           }
         }
+      },
+      {
+        "name": "mobile-standard zh: completed without an exception",
+        "pass": true
       },
       {
         "name": "mobile-small en: a tap digs the tapped cube",
@@ -4602,7 +4650,7 @@
           "revealed": 88,
           "flags": 0,
           "revision": 3,
-          "save": "c8b2aaeb-7204-44ca-afff-4062c3812d7d"
+          "save": "b62af1db-aff9-42c6-8bde-e2b5fb4502d6"
         }
       },
       {
@@ -4672,14 +4720,14 @@
             "revealed": 88,
             "flags": 1,
             "revision": 4,
-            "save": "c8b2aaeb-7204-44ca-afff-4062c3812d7d"
+            "save": "b62af1db-aff9-42c6-8bde-e2b5fb4502d6"
           },
           "after": {
             "phase": "playing",
             "revealed": 88,
             "flags": 1,
             "revision": 4,
-            "save": "c8b2aaeb-7204-44ca-afff-4062c3812d7d"
+            "save": "b62af1db-aff9-42c6-8bde-e2b5fb4502d6"
           }
         }
       },
@@ -4707,12 +4755,12 @@
           },
           "afterPan": {
             "position": [
-              9.083323260275174,
+              9.083323260275176,
               11.022682798775632,
-              11.906262220826765
+              11.906262220826763
             ],
             "target": [
-              -1.9166767397248183,
+              -1.9166767397248181,
               1.1226827987756234,
               0.9062622208267562
             ],
@@ -4726,12 +4774,12 @@
         "detail": {
           "afterPan": {
             "position": [
-              9.083323260275174,
+              9.083323260275176,
               11.022682798775632,
-              11.906262220826765
+              11.906262220826763
             ],
             "target": [
-              -1.9166767397248183,
+              -1.9166767397248181,
               1.1226827987756234,
               0.9062622208267562
             ],
@@ -4739,12 +4787,12 @@
           },
           "afterPinch": {
             "position": [
-              1.383323260275186,
+              1.3833232602751862,
               4.0926827987756305,
               4.206262220826763
             ],
             "target": [
-              -1.9166767397248183,
+              -1.9166767397248181,
               1.1226827987756234,
               0.9062622208267562
             ],
@@ -4761,14 +4809,14 @@
             "revealed": 88,
             "flags": 1,
             "revision": 4,
-            "save": "c8b2aaeb-7204-44ca-afff-4062c3812d7d"
+            "save": "b62af1db-aff9-42c6-8bde-e2b5fb4502d6"
           },
           "boardAfterGestures": {
             "phase": "playing",
             "revealed": 88,
             "flags": 1,
             "revision": 4,
-            "save": "c8b2aaeb-7204-44ca-afff-4062c3812d7d"
+            "save": "b62af1db-aff9-42c6-8bde-e2b5fb4502d6"
           }
         }
       },
@@ -4860,14 +4908,14 @@
             "revealed": 88,
             "flags": 1,
             "revision": 4,
-            "save": "c8b2aaeb-7204-44ca-afff-4062c3812d7d"
+            "save": "b62af1db-aff9-42c6-8bde-e2b5fb4502d6"
           },
           "afterTurn": {
             "phase": "playing",
             "revealed": 88,
             "flags": 1,
             "revision": 4,
-            "save": "c8b2aaeb-7204-44ca-afff-4062c3812d7d"
+            "save": "b62af1db-aff9-42c6-8bde-e2b5fb4502d6"
           }
         }
       },
@@ -4880,16 +4928,20 @@
             "revealed": 88,
             "flags": 1,
             "revision": 4,
-            "save": "c8b2aaeb-7204-44ca-afff-4062c3812d7d"
+            "save": "b62af1db-aff9-42c6-8bde-e2b5fb4502d6"
           },
           "after": {
             "phase": "playing",
             "revealed": 89,
             "flags": 1,
             "revision": 5,
-            "save": "c8b2aaeb-7204-44ca-afff-4062c3812d7d"
+            "save": "b62af1db-aff9-42c6-8bde-e2b5fb4502d6"
           }
         }
+      },
+      {
+        "name": "mobile-small en: completed without an exception",
+        "pass": true
       }
     ],
     "screenshots": [
@@ -4946,12 +4998,12 @@
       {
         "name": "creating a squad puts the room code in the page URL",
         "pass": true,
-        "detail": "?room=RSQPQ3"
+        "detail": "?room=C5XWCH"
       },
       {
         "name": "the invite link fills in the room code",
         "pass": true,
-        "detail": "RSQPQ3"
+        "detail": "C5XWCH"
       },
       {
         "name": "both clients list the same two members",
@@ -4976,7 +5028,7 @@
         "pass": true,
         "detail": {
           "revision": 4,
-          "revealed": 1,
+          "revealed": 16,
           "flags": 0,
           "phase": "playing"
         }
@@ -4986,7 +5038,7 @@
         "pass": true,
         "detail": {
           "revision": 5,
-          "revealed": 1,
+          "revealed": 16,
           "flags": 1,
           "phase": "playing"
         }
@@ -4997,13 +5049,13 @@
         "detail": {
           "beforeGuestDig": {
             "revision": 5,
-            "revealed": 1,
+            "revealed": 16,
             "flags": 1,
             "phase": "playing"
           },
           "board": {
             "revision": 6,
-            "revealed": 2,
+            "revealed": 17,
             "flags": 1,
             "phase": "playing"
           }
@@ -5014,7 +5066,7 @@
         "pass": true,
         "detail": {
           "revision": 7,
-          "revealed": 2,
+          "revealed": 17,
           "flags": 2,
           "phase": "playing"
         }
@@ -5046,7 +5098,7 @@
         "pass": true,
         "detail": {
           "revision": 7,
-          "revealed": 2,
+          "revealed": 17,
           "flags": 2,
           "phase": "playing"
         }
@@ -5080,8 +5132,8 @@
     ],
     "notes": {
       "room": {
-        "code": "RSQPQ3",
-        "testedAt": "2026-10-01T16:02:55.657Z"
+        "code": "C5XWCH",
+        "testedAt": "2026-10-01T16:47:12.200Z"
       }
     }
   },
@@ -5102,7 +5154,7 @@
         "name": "desktop zh: the mine hit loads the new blast sample",
         "pass": true,
         "detail": {
-          "url": "http://127.0.0.1:8799/audio/sfx/mine-hit-cartoon-pop.wav",
+          "url": "http://127.0.0.1:26615/audio/sfx/mine-hit-cartoon-pop.wav",
           "status": 200,
           "mimeType": "audio/wav",
           "headers": {
@@ -5138,14 +5190,14 @@
             "revealed": 88,
             "flags": 0,
             "revision": 3,
-            "save": "dd25c645-1e7c-4cf8-9d30-6c4d2876c55f"
+            "save": "85c1dad5-84cf-464a-87be-bbf962bbc9e4"
           },
           "rewound": {
             "phase": "playing",
             "revealed": 88,
             "flags": 0,
             "revision": 5,
-            "save": "dd25c645-1e7c-4cf8-9d30-6c4d2876c55f"
+            "save": "85c1dad5-84cf-464a-87be-bbf962bbc9e4"
           },
           "beforeProgress": "77%",
           "rewoundProgress": "77%"
@@ -5162,6 +5214,10 @@
           "hint": false,
           "replay": false
         }
+      },
+      {
+        "name": "desktop-wide zh solo loss: completed without an exception",
+        "pass": true
       },
       {
         "name": "desktop-wide en: the win dialogue offers the success replay and is fully in view",
@@ -5223,6 +5279,10 @@
         }
       },
       {
+        "name": "desktop-wide en win and replay: completed without an exception",
+        "pass": true
+      },
+      {
         "name": "mobile-standard zh: the win dialogue offers the success replay and is fully in view",
         "pass": true,
         "detail": {
@@ -5259,7 +5319,7 @@
           "pauseOnTop": true,
           "exitOnTop": true,
           "lobbyButtonShown": false,
-          "progress": "步骤 1 / 4"
+          "progress": "步骤 0 / 4"
         }
       },
       {
@@ -5273,7 +5333,7 @@
           "pauseOnTop": true,
           "exitOnTop": true,
           "lobbyButtonShown": false,
-          "progress": "步骤 1 / 4"
+          "progress": "步骤 0 / 4"
         }
       },
       {
@@ -5294,6 +5354,10 @@
           "replay": false,
           "modal": false
         }
+      },
+      {
+        "name": "mobile-standard zh win and replay: completed without an exception",
+        "pass": true
       },
       {
         "name": "mobile-small en: the win dialogue offers the success replay and is fully in view",
@@ -5332,7 +5396,7 @@
           "pauseOnTop": true,
           "exitOnTop": true,
           "lobbyButtonShown": false,
-          "progress": "Step 0 / 4"
+          "progress": "Step 1 / 4"
         }
       },
       {
@@ -5346,7 +5410,7 @@
           "pauseOnTop": true,
           "exitOnTop": true,
           "lobbyButtonShown": false,
-          "progress": "Step 0 / 4"
+          "progress": "Step 1 / 4"
         }
       },
       {
@@ -5367,6 +5431,10 @@
           "replay": false,
           "modal": false
         }
+      },
+      {
+        "name": "mobile-small en win and replay: completed without an exception",
+        "pass": true
       }
     ],
     "screenshots": [
@@ -5515,6 +5583,10 @@
             "label": "FREE MODE CLEARED"
           }
         ]
+      },
+      {
+        "name": "desktop-wide en keyboard only: completed without an exception",
+        "pass": true
       }
     ],
     "screenshots": [
