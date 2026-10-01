@@ -45,7 +45,7 @@ test('Cloudflare static-asset bypasses receive the same security baseline via _h
   for (const fragments of Object.values(expectedHeaders)) {
     for (const fragment of fragments) assert.match(source, new RegExp(fragment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   }
-  assert.match(source, /\/vendor\/three-0\.150\.0\/\*/);
+  assert.match(source, /\/vendor\/three-0\.186\.1\/\*/);
   assert.match(source, /Cache-Control: public, max-age=31536000, immutable/);
   assert.doesNotMatch(source, /googleapis|gstatic|jsdelivr/);
 });
@@ -85,8 +85,8 @@ test('versioned self-hosted vendor assets receive long-lived immutable caching',
   }));
 
   for (const pathname of [
-    '/vendor/three-0.150.0/build/three.module.js',
-    '/vendor/fonts/inter-5.2.8/inter.woff2',
+    '/vendor/three-0.186.1/build/three.module.js',
+    '/vendor/fonts/inter-5.3.0/inter.woff2',
     '/vendor/library/1.2.3/module.js',
   ]) {
     const response = await worker.fetch(new Request(`https://game.example${pathname}`), env);

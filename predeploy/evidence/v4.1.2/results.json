@@ -1,0 +1,5745 @@
+{
+  "browser": "Chrome/154.0.8037.59",
+  "desktop-lobby-bilingual": {
+    "checks": [
+      {
+        "name": "desktop-wide zh: page language",
+        "pass": true,
+        "detail": "zh-CN"
+      },
+      {
+        "name": "desktop-wide zh: mission view names the configured guide",
+        "pass": true
+      },
+      {
+        "name": "desktop-wide zh: no template markers",
+        "pass": true
+      },
+      {
+        "name": "desktop-wide zh: no horizontal overflow",
+        "pass": true
+      },
+      {
+        "name": "desktop-wide zh: no control outside the viewport",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "desktop-wide zh: no clipped label",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "desktop-wide zh: protocol label clear of the corner buttons",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "desktop-wide zh: btn-lobby-task actions reachable",
+        "pass": true,
+        "detail": {
+          "scrollable": [],
+          "reachable": {
+            "btn-task-campaign": true,
+            "btn-task-freeplay": true,
+            "btn-start-task": true
+          }
+        }
+      },
+      {
+        "name": "desktop-wide zh: btn-lobby-multiplayer actions reachable",
+        "pass": true,
+        "detail": {
+          "scrollable": [],
+          "reachable": {
+            "input-nickname": true,
+            "input-room": true,
+            "btn-create-room": true,
+            "btn-join-room": true
+          }
+        }
+      },
+      {
+        "name": "desktop-wide zh: squad view carries the configured codename",
+        "pass": true,
+        "detail": "视差测绘小队"
+      },
+      {
+        "name": "desktop-wide zh: squad view has no template markers or clipped labels",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "desktop-wide zh: the language toggle switches the lobby",
+        "pass": true,
+        "detail": {
+          "from": "选择行动模式",
+          "to": "SELECT OPERATION MODE"
+        }
+      },
+      {
+        "name": "desktop-wide en: page language",
+        "pass": true,
+        "detail": "en"
+      },
+      {
+        "name": "desktop-wide en: mission view names the configured guide",
+        "pass": true
+      },
+      {
+        "name": "desktop-wide en: no template markers",
+        "pass": true
+      },
+      {
+        "name": "desktop-wide en: no horizontal overflow",
+        "pass": true
+      },
+      {
+        "name": "desktop-wide en: no control outside the viewport",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "desktop-wide en: no clipped label",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "desktop-wide en: protocol label clear of the corner buttons",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "desktop-wide en: no Chinese text in English mode",
+        "pass": true,
+        "detail": 0
+      },
+      {
+        "name": "desktop-wide en: btn-lobby-task actions reachable",
+        "pass": true,
+        "detail": {
+          "scrollable": [],
+          "reachable": {
+            "btn-task-campaign": true,
+            "btn-task-freeplay": true,
+            "btn-start-task": true
+          }
+        }
+      },
+      {
+        "name": "desktop-wide en: btn-lobby-multiplayer actions reachable",
+        "pass": true,
+        "detail": {
+          "scrollable": [],
+          "reachable": {
+            "input-nickname": true,
+            "input-room": true,
+            "btn-create-room": true,
+            "btn-join-room": true
+          }
+        }
+      },
+      {
+        "name": "desktop-wide en: squad view carries the configured codename",
+        "pass": true,
+        "detail": "Parallax Survey Squad"
+      },
+      {
+        "name": "desktop-wide en: squad view has no template markers or clipped labels",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "desktop-wide en: the language toggle switches the lobby",
+        "pass": true,
+        "detail": {
+          "from": "SELECT OPERATION MODE",
+          "to": "选择行动模式"
+        }
+      },
+      {
+        "name": "desktop-compact zh: page language",
+        "pass": true,
+        "detail": "zh-CN"
+      },
+      {
+        "name": "desktop-compact zh: mission view names the configured guide",
+        "pass": true
+      },
+      {
+        "name": "desktop-compact zh: no template markers",
+        "pass": true
+      },
+      {
+        "name": "desktop-compact zh: no horizontal overflow",
+        "pass": true
+      },
+      {
+        "name": "desktop-compact zh: no control outside the viewport",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "desktop-compact zh: no clipped label",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "desktop-compact zh: protocol label clear of the corner buttons",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "desktop-compact zh: btn-lobby-task actions reachable",
+        "pass": true,
+        "detail": {
+          "scrollable": [],
+          "reachable": {
+            "btn-task-campaign": true,
+            "btn-task-freeplay": true,
+            "btn-start-task": true
+          }
+        }
+      },
+      {
+        "name": "desktop-compact zh: btn-lobby-multiplayer actions reachable",
+        "pass": true,
+        "detail": {
+          "scrollable": [],
+          "reachable": {
+            "input-nickname": true,
+            "input-room": true,
+            "btn-create-room": true,
+            "btn-join-room": true
+          }
+        }
+      },
+      {
+        "name": "desktop-compact zh: squad view carries the configured codename",
+        "pass": true,
+        "detail": "视差测绘小队"
+      },
+      {
+        "name": "desktop-compact zh: squad view has no template markers or clipped labels",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "desktop-compact zh: the language toggle switches the lobby",
+        "pass": true,
+        "detail": {
+          "from": "选择行动模式",
+          "to": "SELECT OPERATION MODE"
+        }
+      },
+      {
+        "name": "desktop-compact en: page language",
+        "pass": true,
+        "detail": "en"
+      },
+      {
+        "name": "desktop-compact en: mission view names the configured guide",
+        "pass": true
+      },
+      {
+        "name": "desktop-compact en: no template markers",
+        "pass": true
+      },
+      {
+        "name": "desktop-compact en: no horizontal overflow",
+        "pass": true
+      },
+      {
+        "name": "desktop-compact en: no control outside the viewport",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "desktop-compact en: no clipped label",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "desktop-compact en: protocol label clear of the corner buttons",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "desktop-compact en: no Chinese text in English mode",
+        "pass": true,
+        "detail": 0
+      },
+      {
+        "name": "desktop-compact en: btn-lobby-task actions reachable",
+        "pass": true,
+        "detail": {
+          "scrollable": [],
+          "reachable": {
+            "btn-task-campaign": true,
+            "btn-task-freeplay": true,
+            "btn-start-task": true
+          }
+        }
+      },
+      {
+        "name": "desktop-compact en: btn-lobby-multiplayer actions reachable",
+        "pass": true,
+        "detail": {
+          "scrollable": [],
+          "reachable": {
+            "input-nickname": true,
+            "input-room": true,
+            "btn-create-room": true,
+            "btn-join-room": true
+          }
+        }
+      },
+      {
+        "name": "desktop-compact en: squad view carries the configured codename",
+        "pass": true,
+        "detail": "Parallax Survey Squad"
+      },
+      {
+        "name": "desktop-compact en: squad view has no template markers or clipped labels",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "desktop-compact en: the language toggle switches the lobby",
+        "pass": true,
+        "detail": {
+          "from": "SELECT OPERATION MODE",
+          "to": "选择行动模式"
+        }
+      }
+    ],
+    "screenshots": [
+      "lobby-desktop-wide-zh.jpg",
+      "lobby-desktop-wide-zh-multiplayer.jpg",
+      "lobby-desktop-wide-en.jpg",
+      "lobby-desktop-wide-en-multiplayer.jpg",
+      "lobby-desktop-compact-zh.jpg",
+      "lobby-desktop-compact-zh-multiplayer.jpg",
+      "lobby-desktop-compact-en.jpg",
+      "lobby-desktop-compact-en-multiplayer.jpg"
+    ]
+  },
+  "console-network-clean": {
+    "checks": [
+      {
+        "name": "lobby desktop-wide zh: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby desktop-wide zh: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "lobby desktop-wide zh: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby desktop-wide zh: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby desktop-wide zh: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby desktop-wide en: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby desktop-wide en: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "lobby desktop-wide en: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby desktop-wide en: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby desktop-wide en: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby desktop-compact zh: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby desktop-compact zh: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "lobby desktop-compact zh: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby desktop-compact zh: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby desktop-compact zh: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby desktop-compact en: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby desktop-compact en: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "lobby desktop-compact en: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby desktop-compact en: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby desktop-compact en: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby mobile-standard zh: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby mobile-standard zh: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "lobby mobile-standard zh: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby mobile-standard zh: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby mobile-standard zh: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby mobile-standard en: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby mobile-standard en: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "lobby mobile-standard en: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby mobile-standard en: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby mobile-standard en: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby mobile-small zh: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby mobile-small zh: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "lobby mobile-small zh: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby mobile-small zh: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby mobile-small zh: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby mobile-small en: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby mobile-small en: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "lobby mobile-small en: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby mobile-small en: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby mobile-small en: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story desktop-wide en easy: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story desktop-wide en easy: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "story desktop-wide en easy: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story desktop-wide en easy: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story desktop-wide en easy: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story desktop-wide zh medium: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story desktop-wide zh medium: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "story desktop-wide zh medium: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story desktop-wide zh medium: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story desktop-wide zh medium: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story desktop-wide en hard: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story desktop-wide en hard: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "story desktop-wide en hard: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story desktop-wide en hard: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story desktop-wide en hard: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story desktop-wide zh ultimate: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story desktop-wide zh ultimate: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "story desktop-wide zh ultimate: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story desktop-wide zh ultimate: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story desktop-wide zh ultimate: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story desktop-compact zh easy: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story desktop-compact zh easy: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "story desktop-compact zh easy: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story desktop-compact zh easy: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story desktop-compact zh easy: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story desktop-compact en medium: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story desktop-compact en medium: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "story desktop-compact en medium: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story desktop-compact en medium: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story desktop-compact en medium: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story mobile-standard zh easy: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story mobile-standard zh easy: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "story mobile-standard zh easy: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story mobile-standard zh easy: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story mobile-standard zh easy: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story mobile-small en easy: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story mobile-small en easy: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "story mobile-small en easy: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story mobile-small en easy: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story mobile-small en easy: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story mobile-small zh medium: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story mobile-small zh medium: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "story mobile-small zh medium: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story mobile-small zh medium: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story mobile-small zh medium: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story art sheet: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story art sheet: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "story art sheet: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story art sheet: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "story art sheet: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "controls desktop-wide en: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "controls desktop-wide en: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "controls desktop-wide en: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "controls desktop-wide en: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "controls desktop-wide en: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "controls desktop-compact zh: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "controls desktop-compact zh: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "controls desktop-compact zh: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "controls desktop-compact zh: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "controls desktop-compact zh: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "controls mobile-standard zh: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "controls mobile-standard zh: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "controls mobile-standard zh: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "controls mobile-standard zh: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "controls mobile-standard zh: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "controls mobile-small en: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "controls mobile-small en: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "controls mobile-small en: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "controls mobile-small en: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "controls mobile-small en: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "squad guest mobile-standard en: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "squad guest mobile-standard en: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "squad guest mobile-standard en: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "squad guest mobile-standard en: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "squad guest mobile-standard en: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "squad guest mobile-standard en: room socket stays same-origin and never sends the mine layout",
+        "pass": true,
+        "detail": {
+          "sockets": [
+            "ws://127.0.0.1:26615/api/rooms/C5XWCH/socket",
+            "ws://127.0.0.1:26615/api/rooms/C5XWCH/socket"
+          ],
+          "frames": 12,
+          "leaks": 0
+        }
+      },
+      {
+        "name": "squad host desktop-wide zh: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "squad host desktop-wide zh: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "squad host desktop-wide zh: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "squad host desktop-wide zh: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "squad host desktop-wide zh: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "squad host desktop-wide zh: room socket stays same-origin and never sends the mine layout",
+        "pass": true,
+        "detail": {
+          "sockets": [
+            "ws://127.0.0.1:26615/api/rooms/C5XWCH/socket"
+          ],
+          "frames": 16,
+          "leaks": 0
+        }
+      },
+      {
+        "name": "loss desktop-wide zh: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "loss desktop-wide zh: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "loss desktop-wide zh: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "loss desktop-wide zh: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "loss desktop-wide zh: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "replay desktop-wide en: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "replay desktop-wide en: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "replay desktop-wide en: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "replay desktop-wide en: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "replay desktop-wide en: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "replay mobile-standard zh: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "replay mobile-standard zh: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "replay mobile-standard zh: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "replay mobile-standard zh: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "replay mobile-standard zh: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "replay mobile-small en: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "replay mobile-small en: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "replay mobile-small en: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "replay mobile-small en: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "replay mobile-small en: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "keyboard desktop-wide en: no uncaught exceptions",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "keyboard desktop-wide en: no console errors or warnings",
+        "pass": true,
+        "detail": {
+          "errors": [],
+          "warnings": []
+        }
+      },
+      {
+        "name": "keyboard desktop-wide en: no failed requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "keyboard desktop-wide en: no third-party runtime requests",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "keyboard desktop-wide en: no keys or tokens in URLs or logs",
+        "pass": true,
+        "detail": []
+      }
+    ],
+    "screenshots": [],
+    "notes": {
+      "requests": {
+        "lobby desktop-wide zh": 35,
+        "lobby desktop-wide en": 35,
+        "lobby desktop-compact zh": 35,
+        "lobby desktop-compact en": 35,
+        "lobby mobile-standard zh": 35,
+        "lobby mobile-standard en": 35,
+        "lobby mobile-small zh": 35,
+        "lobby mobile-small en": 35,
+        "story desktop-wide en easy": 37,
+        "story desktop-wide zh medium": 38,
+        "story desktop-wide en hard": 36,
+        "story desktop-wide zh ultimate": 36,
+        "story desktop-compact zh easy": 37,
+        "story desktop-compact en medium": 38,
+        "story mobile-standard zh easy": 37,
+        "story mobile-small en easy": 37,
+        "story mobile-small zh medium": 38,
+        "story art sheet": 43,
+        "controls desktop-wide en": 37,
+        "controls desktop-compact zh": 37,
+        "controls mobile-standard zh": 37,
+        "controls mobile-small en": 37,
+        "squad guest mobile-standard en": 71,
+        "squad host desktop-wide zh": 39,
+        "loss desktop-wide zh": 39,
+        "replay desktop-wide en": 35,
+        "replay mobile-standard zh": 35,
+        "replay mobile-small en": 35,
+        "keyboard desktop-wide en": 39
+      }
+    }
+  },
+  "mobile-lobby-dialogue": {
+    "checks": [
+      {
+        "name": "mobile-standard zh: page language",
+        "pass": true,
+        "detail": "zh-CN"
+      },
+      {
+        "name": "mobile-standard zh: mission view names the configured guide",
+        "pass": true
+      },
+      {
+        "name": "mobile-standard zh: no template markers",
+        "pass": true
+      },
+      {
+        "name": "mobile-standard zh: no horizontal overflow",
+        "pass": true
+      },
+      {
+        "name": "mobile-standard zh: no control outside the viewport",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "mobile-standard zh: no clipped label",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "mobile-standard zh: protocol label clear of the corner buttons",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "mobile-standard zh: btn-lobby-task actions reachable",
+        "pass": true,
+        "detail": {
+          "scrollable": [],
+          "reachable": {
+            "btn-task-campaign": true,
+            "btn-task-freeplay": true,
+            "btn-start-task": true
+          }
+        }
+      },
+      {
+        "name": "mobile-standard zh: btn-lobby-multiplayer actions reachable",
+        "pass": true,
+        "detail": {
+          "scrollable": [],
+          "reachable": {
+            "input-nickname": true,
+            "input-room": true,
+            "btn-create-room": true,
+            "btn-join-room": true
+          }
+        }
+      },
+      {
+        "name": "mobile-standard zh: squad view carries the configured codename",
+        "pass": true,
+        "detail": "视差测绘小队"
+      },
+      {
+        "name": "mobile-standard zh: squad view has no template markers or clipped labels",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "mobile-standard zh: the language toggle switches the lobby",
+        "pass": true,
+        "detail": {
+          "from": "选择行动模式",
+          "to": "SELECT OPERATION MODE"
+        }
+      },
+      {
+        "name": "mobile-standard en: page language",
+        "pass": true,
+        "detail": "en"
+      },
+      {
+        "name": "mobile-standard en: mission view names the configured guide",
+        "pass": true
+      },
+      {
+        "name": "mobile-standard en: no template markers",
+        "pass": true
+      },
+      {
+        "name": "mobile-standard en: no horizontal overflow",
+        "pass": true
+      },
+      {
+        "name": "mobile-standard en: no control outside the viewport",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "mobile-standard en: no clipped label",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "mobile-standard en: protocol label clear of the corner buttons",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "mobile-standard en: no Chinese text in English mode",
+        "pass": true,
+        "detail": 0
+      },
+      {
+        "name": "mobile-standard en: btn-lobby-task actions reachable",
+        "pass": true,
+        "detail": {
+          "scrollable": [],
+          "reachable": {
+            "btn-task-campaign": true,
+            "btn-task-freeplay": true,
+            "btn-start-task": true
+          }
+        }
+      },
+      {
+        "name": "mobile-standard en: btn-lobby-multiplayer actions reachable",
+        "pass": true,
+        "detail": {
+          "scrollable": [],
+          "reachable": {
+            "input-nickname": true,
+            "input-room": true,
+            "btn-create-room": true,
+            "btn-join-room": true
+          }
+        }
+      },
+      {
+        "name": "mobile-standard en: squad view carries the configured codename",
+        "pass": true,
+        "detail": "Parallax Survey Squad"
+      },
+      {
+        "name": "mobile-standard en: squad view has no template markers or clipped labels",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "mobile-standard en: the language toggle switches the lobby",
+        "pass": true,
+        "detail": {
+          "from": "SELECT OPERATION MODE",
+          "to": "选择行动模式"
+        }
+      },
+      {
+        "name": "mobile-small zh: page language",
+        "pass": true,
+        "detail": "zh-CN"
+      },
+      {
+        "name": "mobile-small zh: mission view names the configured guide",
+        "pass": true
+      },
+      {
+        "name": "mobile-small zh: no template markers",
+        "pass": true
+      },
+      {
+        "name": "mobile-small zh: no horizontal overflow",
+        "pass": true
+      },
+      {
+        "name": "mobile-small zh: no control outside the viewport",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "mobile-small zh: no clipped label",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "mobile-small zh: protocol label clear of the corner buttons",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "mobile-small zh: btn-lobby-task actions reachable",
+        "pass": true,
+        "detail": {
+          "scrollable": [],
+          "reachable": {
+            "btn-task-campaign": true,
+            "btn-task-freeplay": true,
+            "btn-start-task": true
+          }
+        }
+      },
+      {
+        "name": "mobile-small zh: btn-lobby-multiplayer actions reachable",
+        "pass": true,
+        "detail": {
+          "scrollable": [],
+          "reachable": {
+            "input-nickname": true,
+            "input-room": true,
+            "btn-create-room": true,
+            "btn-join-room": true
+          }
+        }
+      },
+      {
+        "name": "mobile-small zh: squad view carries the configured codename",
+        "pass": true,
+        "detail": "视差测绘小队"
+      },
+      {
+        "name": "mobile-small zh: squad view has no template markers or clipped labels",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "mobile-small zh: the language toggle switches the lobby",
+        "pass": true,
+        "detail": {
+          "from": "选择行动模式",
+          "to": "SELECT OPERATION MODE"
+        }
+      },
+      {
+        "name": "mobile-small en: page language",
+        "pass": true,
+        "detail": "en"
+      },
+      {
+        "name": "mobile-small en: mission view names the configured guide",
+        "pass": true
+      },
+      {
+        "name": "mobile-small en: no template markers",
+        "pass": true
+      },
+      {
+        "name": "mobile-small en: no horizontal overflow",
+        "pass": true
+      },
+      {
+        "name": "mobile-small en: no control outside the viewport",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "mobile-small en: no clipped label",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "mobile-small en: protocol label clear of the corner buttons",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "mobile-small en: no Chinese text in English mode",
+        "pass": true,
+        "detail": 0
+      },
+      {
+        "name": "mobile-small en: btn-lobby-task actions reachable",
+        "pass": true,
+        "detail": {
+          "scrollable": [],
+          "reachable": {
+            "btn-task-campaign": true,
+            "btn-task-freeplay": true,
+            "btn-start-task": true
+          }
+        }
+      },
+      {
+        "name": "mobile-small en: btn-lobby-multiplayer actions reachable",
+        "pass": true,
+        "detail": {
+          "scrollable": [],
+          "reachable": {
+            "input-nickname": true,
+            "input-room": true,
+            "btn-create-room": true,
+            "btn-join-room": true
+          }
+        }
+      },
+      {
+        "name": "mobile-small en: squad view carries the configured codename",
+        "pass": true,
+        "detail": "Parallax Survey Squad"
+      },
+      {
+        "name": "mobile-small en: squad view has no template markers or clipped labels",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "mobile-small en: the language toggle switches the lobby",
+        "pass": true,
+        "detail": {
+          "from": "SELECT OPERATION MODE",
+          "to": "选择行动模式"
+        }
+      },
+      {
+        "name": "mobile-standard zh easy: dialogue is a labelled modal dialog with focus inside",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 0,
+          "steps": 3,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "陆霁",
+          "message": "“接下来我会直接接入你的任务频道。别只看说明书——每个操作都亲手做一次，我们再进入真正的零域航道。”",
+          "art": "assets/guide-zero-domain-cartographer.png",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "mobile-standard zh easy page 0: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 0,
+          "steps": 3,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "陆霁",
+          "message": "“接下来我会直接接入你的任务频道。别只看说明书——每个操作都亲手做一次，我们再进入真正的零域航道。”",
+          "art": "assets/guide-zero-domain-cartographer.png",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "mobile-standard zh easy page 0: one tap advances exactly one page",
+        "pass": true,
+        "detail": {
+          "before": 0,
+          "after": 1
+        }
+      },
+      {
+        "name": "mobile-standard zh easy page 1: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 1,
+          "steps": 3,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "先定义“周围格”",
+          "message": "当前规则把目标格周围三层 3×3 区域里的其他格子都视为相邻：上层 9 格、同层 8 格、下层 9 格，每个坐标只计算一次。数字显示的不是格子数，而是这些位置里实际存在的雷数。",
+          "art": "assets/parallax-easy-neighbors.webp",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "mobile-standard zh easy page 1: one tap advances exactly one page",
+        "pass": true,
+        "detail": {
+          "before": 1,
+          "after": 2
+        }
+      },
+      {
+        "name": "mobile-standard zh easy page 2: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 2,
+          "steps": 3,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "开始连续实操：挖掘模式",
+          "message": "“现在开始实操。选择底部的‘挖掘’，再轻触青色目标。青色外框是本步要打开的安全格。你每完成一步，我都会自动推理并指出下一步。”",
+          "art": "assets/parallax-easy-scan.webp",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "mobile-standard zh easy: focus leaves the dialogue when it closes",
+        "pass": true,
+        "detail": {
+          "inHiddenOverlay": false,
+          "active": "btn-return-lobby"
+        }
+      },
+      {
+        "name": "mobile-standard zh easy: after the guided action the dialogue reopens with focus inside",
+        "pass": true,
+        "detail": {
+          "action": null,
+          "resumed": {
+            "open": true,
+            "index": 0,
+            "steps": 2,
+            "explicit": false,
+            "waitingAction": null,
+            "kicker": "MISSION GUIDE // 实时通讯",
+            "title": "先看清数字管哪些格",
+            "message": "“数字关系开始变复杂了。长按一个已翻开的数字，它负责的所有相邻单元格就会一起亮起来。这个操作只查看范围，不会挖掘或标记。”",
+            "art": "assets/parallax-easy-neighbors.webp",
+            "artLoaded": true,
+            "role": "dialog",
+            "ariaModal": "true",
+            "labelledBy": "tutorial-title",
+            "dialogInView": true,
+            "nextInView": true,
+            "nextOnTop": true,
+            "messageOnTop": true,
+            "textClipped": false,
+            "horizontalOverflow": false,
+            "focusInside": true
+          }
+        }
+      },
+      {
+        "name": "mobile-small en easy: dialogue is a labelled modal dialog with focus inside",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 0,
+          "steps": 3,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // LIVE COMMS",
+          "title": "Lu Ji",
+          "message": "“I’m joining your mission channel. Don’t just read the manual—perform every action once before we enter a live zero-domain route.”",
+          "art": "assets/guide-zero-domain-cartographer.png",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "mobile-small en easy page 0: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 0,
+          "steps": 3,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // LIVE COMMS",
+          "title": "Lu Ji",
+          "message": "“I’m joining your mission channel. Don’t just read the manual—perform every action once before we enter a live zero-domain route.”",
+          "art": "assets/guide-zero-domain-cartographer.png",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "mobile-small en easy page 0: one tap advances exactly one page",
+        "pass": true,
+        "detail": {
+          "before": 0,
+          "after": 1
+        }
+      },
+      {
+        "name": "mobile-small en easy page 1: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 1,
+          "steps": 3,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // LIVE COMMS",
+          "title": "Define neighboring cells",
+          "message": "This ruleset treats every other cube in the three 3×3 layers around a target as adjacent: 9 above, 8 on the same layer, and 9 below. Each coordinate is counted once. The number shows how many actual mines occupy those positions.",
+          "art": "assets/parallax-easy-neighbors.webp",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "mobile-small en easy page 1: one tap advances exactly one page",
+        "pass": true,
+        "detail": {
+          "before": 1,
+          "after": 2
+        }
+      },
+      {
+        "name": "mobile-small en easy page 2: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 2,
+          "steps": 3,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // LIVE COMMS",
+          "title": "Hands-on Sequence: Dig Mode",
+          "message": "“Time for the live run. Select Dig in the bottom dock, then tap the cyan target. The cyan frame marks this step’s safe cube. Each time you finish a move, I’ll automatically deduce and mark the next one.”",
+          "art": "assets/parallax-easy-scan.webp",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "mobile-small en easy: focus leaves the dialogue when it closes",
+        "pass": true,
+        "detail": {
+          "inHiddenOverlay": false,
+          "active": "btn-return-lobby"
+        }
+      },
+      {
+        "name": "mobile-small en easy: after the guided action the dialogue reopens with focus inside",
+        "pass": true,
+        "detail": {
+          "action": null,
+          "resumed": {
+            "open": true,
+            "index": 0,
+            "steps": 2,
+            "explicit": false,
+            "waitingAction": null,
+            "kicker": "MISSION GUIDE // LIVE COMMS",
+            "title": "See Which Cells a Number Controls",
+            "message": "“The clue relationships are getting denser. Long-press a revealed number, and every neighboring cell controlled by that clue will light up. This only inspects the range—it does not dig or flag.”",
+            "art": "assets/parallax-easy-neighbors.webp",
+            "artLoaded": true,
+            "role": "dialog",
+            "ariaModal": "true",
+            "labelledBy": "tutorial-title",
+            "dialogInView": true,
+            "nextInView": true,
+            "nextOnTop": true,
+            "messageOnTop": true,
+            "textClipped": false,
+            "horizontalOverflow": false,
+            "focusInside": true
+          }
+        }
+      },
+      {
+        "name": "mobile-small zh medium: dialogue is a labelled modal dialog with focus inside",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 0,
+          "steps": 4,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "MISSION 02 // 握手迷宫",
+          "message": "“幻影端口给出的坐标有效。握手迷宫把路径信标拆进了五层矩阵，必须从不同角度逐层验证。”",
+          "art": "assets/parallax-neighbor-perspective.png",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "mobile-small zh medium page 0: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 0,
+          "steps": 4,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "MISSION 02 // 握手迷宫",
+          "message": "“幻影端口给出的坐标有效。握手迷宫把路径信标拆进了五层矩阵，必须从不同角度逐层验证。”",
+          "art": "assets/parallax-neighbor-perspective.png",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "mobile-small zh medium page 0: one tap advances exactly one page",
+        "pass": true,
+        "detail": {
+          "before": 0,
+          "after": 1
+        }
+      },
+      {
+        "name": "mobile-small zh medium page 1: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 1,
+          "steps": 4,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "SECTOR PURGE // 区块清除",
+          "message": "“新规则：当你从矩阵里切出一个不再与其他未开启方块相连的实体孤岛，而且岛里的方块已经全部被正确标雷，我会删除这个雷岛，再重算周围所有数字。”",
+          "art": "assets/parallax-medium-tip.webp",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "mobile-small zh medium page 1: one tap advances exactly one page",
+        "pass": true,
+        "detail": {
+          "before": 1,
+          "after": 2
+        }
+      },
+      {
+        "name": "mobile-small zh medium page 2: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 2,
+          "steps": 4,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "陆霁的视角窍门",
+          "message": "“这里的节点更密。记得初级学过的邻域高亮：拿不准一个数字管哪些格时，就用它快速看清范围。”",
+          "art": "assets/parallax-medium-tip.webp",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "mobile-small zh medium page 2: one tap advances exactly one page",
+        "pass": true,
+        "detail": {
+          "before": 2,
+          "after": 3
+        }
+      },
+      {
+        "name": "mobile-small zh medium page 3: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 3,
+          "steps": 4,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "MISSION 02 // 握手迷宫",
+          "message": "“五层矩阵虽然更密，也可以随时问我下一步。继续从外围逐步推理，把握手一层层拆开。”",
+          "art": "assets/parallax-medium-ready.webp",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "mobile-small zh medium: focus leaves the dialogue when it closes",
+        "pass": true,
+        "detail": {
+          "inHiddenOverlay": false,
+          "active": "btn-return-lobby"
+        }
+      }
+    ],
+    "screenshots": [
+      "lobby-mobile-standard-zh.jpg",
+      "lobby-mobile-standard-zh-multiplayer.jpg",
+      "lobby-mobile-standard-en.jpg",
+      "lobby-mobile-standard-en-multiplayer.jpg",
+      "lobby-mobile-small-zh.jpg",
+      "lobby-mobile-small-zh-multiplayer.jpg",
+      "lobby-mobile-small-en.jpg",
+      "lobby-mobile-small-en-multiplayer.jpg"
+    ]
+  },
+  "story-guide-consistency": {
+    "checks": [
+      {
+        "name": "desktop-wide en easy: lobby shows the route's story art",
+        "pass": true,
+        "detail": "url(\"assets/guide-zero-domain-cartographer.png\")"
+      },
+      {
+        "name": "desktop-wide en easy: opening dialogue shows the route's main art",
+        "pass": true,
+        "detail": "assets/guide-zero-domain-cartographer.png"
+      },
+      {
+        "name": "desktop-wide en easy: dialogue heading names the configured guide or the mission",
+        "pass": true,
+        "detail": {
+          "kicker": "MISSION GUIDE // LIVE COMMS",
+          "title": "Lu Ji"
+        }
+      },
+      {
+        "name": "desktop-wide en easy: dialogue text has no template markers",
+        "pass": true
+      },
+      {
+        "name": "desktop-wide en easy page 1: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "Define neighboring cells",
+          "retired": []
+        }
+      },
+      {
+        "name": "desktop-wide en easy page 1: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-easy-neighbors.webp"
+      },
+      {
+        "name": "desktop-wide en easy page 2: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "Hands-on Sequence: Dig Mode",
+          "retired": []
+        }
+      },
+      {
+        "name": "desktop-wide en easy page 2: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-easy-scan.webp"
+      },
+      {
+        "name": "desktop-wide en easy: completed without an exception",
+        "pass": true
+      },
+      {
+        "name": "desktop-wide zh medium: lobby shows the route's story art",
+        "pass": true,
+        "detail": "url(\"assets/parallax-neighbor-perspective.png\")"
+      },
+      {
+        "name": "desktop-wide zh medium: opening dialogue shows the route's main art",
+        "pass": true,
+        "detail": "assets/parallax-neighbor-perspective.png"
+      },
+      {
+        "name": "desktop-wide zh medium: dialogue heading names the configured guide or the mission",
+        "pass": true,
+        "detail": {
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "MISSION 02 // 握手迷宫"
+        }
+      },
+      {
+        "name": "desktop-wide zh medium: dialogue text has no template markers",
+        "pass": true
+      },
+      {
+        "name": "desktop-wide zh medium page 0: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "MISSION 02 // 握手迷宫",
+          "retired": []
+        }
+      },
+      {
+        "name": "desktop-wide zh medium page 0: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-neighbor-perspective.png"
+      },
+      {
+        "name": "desktop-wide zh medium page 1: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "SECTOR PURGE // 区块清除",
+          "retired": []
+        }
+      },
+      {
+        "name": "desktop-wide zh medium page 1: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-medium-tip.webp"
+      },
+      {
+        "name": "desktop-wide zh medium page 2: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "陆霁的视角窍门",
+          "retired": []
+        }
+      },
+      {
+        "name": "desktop-wide zh medium page 2: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-medium-tip.webp"
+      },
+      {
+        "name": "desktop-wide zh medium page 3: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "MISSION 02 // 握手迷宫",
+          "retired": []
+        }
+      },
+      {
+        "name": "desktop-wide zh medium page 3: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-medium-ready.webp"
+      },
+      {
+        "name": "desktop-wide zh medium: completed without an exception",
+        "pass": true
+      },
+      {
+        "name": "desktop-wide en hard: lobby shows the route's story art",
+        "pass": true,
+        "detail": "url(\"assets/parallax-final-protocol.png\")"
+      },
+      {
+        "name": "desktop-wide en hard: opening dialogue shows the route's main art",
+        "pass": true,
+        "detail": "assets/parallax-final-protocol.png"
+      },
+      {
+        "name": "desktop-wide en hard: dialogue heading names the configured guide or the mission",
+        "pass": true,
+        "detail": {
+          "kicker": "MISSION GUIDE // LIVE COMMS",
+          "title": "MISSION 03 // FINAL PROTOCOL"
+        }
+      },
+      {
+        "name": "desktop-wide en hard: dialogue text has no template markers",
+        "pass": true
+      },
+      {
+        "name": "desktop-wide en hard page 0: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "MISSION 03 // FINAL PROTOCOL",
+          "retired": []
+        }
+      },
+      {
+        "name": "desktop-wide en hard page 0: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-final-protocol.png"
+      },
+      {
+        "name": "desktop-wide en hard page 1: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "ENTROPY FIELD // COMPRESSION",
+          "retired": []
+        }
+      },
+      {
+        "name": "desktop-wide en hard page 1: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-final-protocol.png"
+      },
+      {
+        "name": "desktop-wide en hard page 2: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "MISSION 03 // FINAL PROTOCOL",
+          "retired": []
+        }
+      },
+      {
+        "name": "desktop-wide en hard page 2: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-final-protocol.png"
+      },
+      {
+        "name": "desktop-wide en hard: completed without an exception",
+        "pass": true
+      },
+      {
+        "name": "desktop-wide zh ultimate: lobby shows the route's story art",
+        "pass": true,
+        "detail": "url(\"assets/parallax-final-protocol.png\")"
+      },
+      {
+        "name": "desktop-wide zh ultimate: opening dialogue shows the route's main art",
+        "pass": true,
+        "detail": "assets/parallax-final-protocol.png"
+      },
+      {
+        "name": "desktop-wide zh ultimate: dialogue heading names the configured guide or the mission",
+        "pass": true,
+        "detail": {
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "MISSION EX // 回声矩阵"
+        }
+      },
+      {
+        "name": "desktop-wide zh ultimate: dialogue text has no template markers",
+        "pass": true
+      },
+      {
+        "name": "desktop-wide zh ultimate page 0: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "MISSION EX // 回声矩阵",
+          "retired": []
+        }
+      },
+      {
+        "name": "desktop-wide zh ultimate page 0: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-final-protocol.png"
+      },
+      {
+        "name": "desktop-wide zh ultimate page 1: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "陆霁的固定测绘协议",
+          "retired": []
+        }
+      },
+      {
+        "name": "desktop-wide zh ultimate page 1: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-final-protocol.png"
+      },
+      {
+        "name": "desktop-wide zh ultimate page 2: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "自动测绘授权",
+          "retired": []
+        }
+      },
+      {
+        "name": "desktop-wide zh ultimate page 2: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-final-protocol.png"
+      },
+      {
+        "name": "desktop-wide zh ultimate: completed without an exception",
+        "pass": true
+      },
+      {
+        "name": "desktop-compact zh easy: lobby shows the route's story art",
+        "pass": true,
+        "detail": "url(\"assets/guide-zero-domain-cartographer.png\")"
+      },
+      {
+        "name": "desktop-compact zh easy: opening dialogue shows the route's main art",
+        "pass": true,
+        "detail": "assets/guide-zero-domain-cartographer.png"
+      },
+      {
+        "name": "desktop-compact zh easy: dialogue heading names the configured guide or the mission",
+        "pass": true,
+        "detail": {
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "陆霁"
+        }
+      },
+      {
+        "name": "desktop-compact zh easy: dialogue text has no template markers",
+        "pass": true
+      },
+      {
+        "name": "desktop-compact zh easy page 1: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "先定义“周围格”",
+          "retired": []
+        }
+      },
+      {
+        "name": "desktop-compact zh easy page 1: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-easy-neighbors.webp"
+      },
+      {
+        "name": "desktop-compact zh easy page 2: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "开始连续实操：挖掘模式",
+          "retired": []
+        }
+      },
+      {
+        "name": "desktop-compact zh easy page 2: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-easy-scan.webp"
+      },
+      {
+        "name": "desktop-compact zh easy: completed without an exception",
+        "pass": true
+      },
+      {
+        "name": "desktop-compact en medium: lobby shows the route's story art",
+        "pass": true,
+        "detail": "url(\"assets/parallax-neighbor-perspective.png\")"
+      },
+      {
+        "name": "desktop-compact en medium: opening dialogue shows the route's main art",
+        "pass": true,
+        "detail": "assets/parallax-neighbor-perspective.png"
+      },
+      {
+        "name": "desktop-compact en medium: dialogue heading names the configured guide or the mission",
+        "pass": true,
+        "detail": {
+          "kicker": "MISSION GUIDE // LIVE COMMS",
+          "title": "MISSION 02 // HANDSHAKE MAZE"
+        }
+      },
+      {
+        "name": "desktop-compact en medium: dialogue text has no template markers",
+        "pass": true
+      },
+      {
+        "name": "desktop-compact en medium page 0: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "MISSION 02 // HANDSHAKE MAZE",
+          "retired": []
+        }
+      },
+      {
+        "name": "desktop-compact en medium page 0: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-neighbor-perspective.png"
+      },
+      {
+        "name": "desktop-compact en medium page 1: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "SECTOR PURGE // NEW PROTOCOL",
+          "retired": []
+        }
+      },
+      {
+        "name": "desktop-compact en medium page 1: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-medium-tip.webp"
+      },
+      {
+        "name": "desktop-compact en medium page 2: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "LU JI’S PERSPECTIVE TRICK",
+          "retired": []
+        }
+      },
+      {
+        "name": "desktop-compact en medium page 2: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-medium-tip.webp"
+      },
+      {
+        "name": "desktop-compact en medium page 3: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "MISSION 02 // HANDSHAKE MAZE",
+          "retired": []
+        }
+      },
+      {
+        "name": "desktop-compact en medium page 3: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-medium-ready.webp"
+      },
+      {
+        "name": "desktop-compact en medium: completed without an exception",
+        "pass": true
+      },
+      {
+        "name": "mobile-standard zh easy: lobby shows the route's story art",
+        "pass": true,
+        "detail": "url(\"assets/guide-zero-domain-cartographer.png\")"
+      },
+      {
+        "name": "mobile-standard zh easy: opening dialogue shows the route's main art",
+        "pass": true,
+        "detail": "assets/guide-zero-domain-cartographer.png"
+      },
+      {
+        "name": "mobile-standard zh easy: dialogue heading names the configured guide or the mission",
+        "pass": true,
+        "detail": {
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "陆霁"
+        }
+      },
+      {
+        "name": "mobile-standard zh easy: dialogue text has no template markers",
+        "pass": true
+      },
+      {
+        "name": "mobile-standard zh easy page 0: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "陆霁",
+          "retired": []
+        }
+      },
+      {
+        "name": "mobile-standard zh easy page 0: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/guide-zero-domain-cartographer.png"
+      },
+      {
+        "name": "mobile-standard zh easy page 1: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "先定义“周围格”",
+          "retired": []
+        }
+      },
+      {
+        "name": "mobile-standard zh easy page 1: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-easy-neighbors.webp"
+      },
+      {
+        "name": "mobile-standard zh easy page 2: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "开始连续实操：挖掘模式",
+          "retired": []
+        }
+      },
+      {
+        "name": "mobile-standard zh easy page 2: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-easy-scan.webp"
+      },
+      {
+        "name": "mobile-standard zh easy: completed without an exception",
+        "pass": true
+      },
+      {
+        "name": "mobile-small en easy: lobby shows the route's story art",
+        "pass": true,
+        "detail": "url(\"assets/guide-zero-domain-cartographer.png\")"
+      },
+      {
+        "name": "mobile-small en easy: opening dialogue shows the route's main art",
+        "pass": true,
+        "detail": "assets/guide-zero-domain-cartographer.png"
+      },
+      {
+        "name": "mobile-small en easy: dialogue heading names the configured guide or the mission",
+        "pass": true,
+        "detail": {
+          "kicker": "MISSION GUIDE // LIVE COMMS",
+          "title": "Lu Ji"
+        }
+      },
+      {
+        "name": "mobile-small en easy: dialogue text has no template markers",
+        "pass": true
+      },
+      {
+        "name": "mobile-small en easy page 0: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "Lu Ji",
+          "retired": []
+        }
+      },
+      {
+        "name": "mobile-small en easy page 0: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/guide-zero-domain-cartographer.png"
+      },
+      {
+        "name": "mobile-small en easy page 1: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "Define neighboring cells",
+          "retired": []
+        }
+      },
+      {
+        "name": "mobile-small en easy page 1: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-easy-neighbors.webp"
+      },
+      {
+        "name": "mobile-small en easy page 2: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "Hands-on Sequence: Dig Mode",
+          "retired": []
+        }
+      },
+      {
+        "name": "mobile-small en easy page 2: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-easy-scan.webp"
+      },
+      {
+        "name": "mobile-small en easy: completed without an exception",
+        "pass": true
+      },
+      {
+        "name": "mobile-small zh medium: lobby shows the route's story art",
+        "pass": true,
+        "detail": "url(\"assets/parallax-neighbor-perspective.png\")"
+      },
+      {
+        "name": "mobile-small zh medium: opening dialogue shows the route's main art",
+        "pass": true,
+        "detail": "assets/parallax-neighbor-perspective.png"
+      },
+      {
+        "name": "mobile-small zh medium: dialogue heading names the configured guide or the mission",
+        "pass": true,
+        "detail": {
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "MISSION 02 // 握手迷宫"
+        }
+      },
+      {
+        "name": "mobile-small zh medium: dialogue text has no template markers",
+        "pass": true
+      },
+      {
+        "name": "mobile-small zh medium page 0: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "MISSION 02 // 握手迷宫",
+          "retired": []
+        }
+      },
+      {
+        "name": "mobile-small zh medium page 0: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-neighbor-perspective.png"
+      },
+      {
+        "name": "mobile-small zh medium page 1: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "SECTOR PURGE // 区块清除",
+          "retired": []
+        }
+      },
+      {
+        "name": "mobile-small zh medium page 1: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-medium-tip.webp"
+      },
+      {
+        "name": "mobile-small zh medium page 2: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "陆霁的视角窍门",
+          "retired": []
+        }
+      },
+      {
+        "name": "mobile-small zh medium page 2: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-medium-tip.webp"
+      },
+      {
+        "name": "mobile-small zh medium page 3: no retired identity or unresolved template in the dialogue",
+        "pass": true,
+        "detail": {
+          "title": "MISSION 02 // 握手迷宫",
+          "retired": []
+        }
+      },
+      {
+        "name": "mobile-small zh medium page 3: art belongs to the configured guide",
+        "pass": true,
+        "detail": "assets/parallax-medium-ready.webp"
+      },
+      {
+        "name": "mobile-small zh medium: completed without an exception",
+        "pass": true
+      },
+      {
+        "name": "every configured guide image loads",
+        "pass": true,
+        "detail": [
+          {
+            "src": "assets/guide-zero-domain-cartographer.png",
+            "size": "1024x1536"
+          },
+          {
+            "src": "assets/parallax-neighbor-perspective.png",
+            "size": "971x1619"
+          },
+          {
+            "src": "assets/parallax-final-protocol.png",
+            "size": "1023x1537"
+          },
+          {
+            "src": "assets/parallax-squad-command.png",
+            "size": "1023x1537"
+          },
+          {
+            "src": "assets/parallax-easy-neighbors.webp",
+            "size": "692x1152"
+          },
+          {
+            "src": "assets/parallax-easy-scan.webp",
+            "size": "692x1152"
+          },
+          {
+            "src": "assets/parallax-easy-finish.webp",
+            "size": "692x1152"
+          },
+          {
+            "src": "assets/parallax-medium-tip.webp",
+            "size": "692x1152"
+          },
+          {
+            "src": "assets/parallax-medium-scan.webp",
+            "size": "692x1152"
+          },
+          {
+            "src": "assets/parallax-medium-inspect.webp",
+            "size": "692x1152"
+          },
+          {
+            "src": "assets/parallax-medium-ready.webp",
+            "size": "692x1152"
+          }
+        ]
+      },
+      {
+        "name": "squad lobby shows the squad story art",
+        "pass": true,
+        "detail": "url(\"assets/parallax-squad-command.png\")"
+      }
+    ],
+    "screenshots": [
+      "story-desktop-wide-easy-dialogue.jpg",
+      "story-desktop-wide-easy-longest.jpg",
+      "story-desktop-wide-easy-reopened.jpg",
+      "story-desktop-wide-easy-board.jpg",
+      "story-desktop-wide-medium-dialogue.jpg",
+      "story-desktop-wide-medium-longest.jpg",
+      "story-desktop-wide-medium-board.jpg",
+      "story-desktop-wide-hard-dialogue.jpg",
+      "story-desktop-wide-hard-longest.jpg",
+      "story-desktop-wide-hard-board.jpg",
+      "story-desktop-wide-ultimate-dialogue.jpg",
+      "story-desktop-wide-ultimate-longest.jpg",
+      "story-desktop-compact-easy-dialogue.jpg",
+      "story-desktop-compact-easy-longest.jpg",
+      "story-desktop-compact-easy-reopened.jpg",
+      "story-desktop-compact-medium-dialogue.jpg",
+      "story-desktop-compact-medium-longest.jpg",
+      "story-mobile-standard-easy-dialogue.jpg",
+      "story-mobile-standard-easy-longest.jpg",
+      "story-mobile-standard-easy-reopened.jpg",
+      "story-mobile-standard-easy-board.jpg",
+      "story-mobile-small-easy-dialogue.jpg",
+      "story-mobile-small-easy-longest.jpg",
+      "story-mobile-small-easy-reopened.jpg",
+      "story-mobile-small-easy-board.jpg",
+      "story-mobile-small-medium-dialogue.jpg",
+      "story-mobile-small-medium-longest.jpg",
+      "story-art-sheet.jpg"
+    ],
+    "notes": {
+      "desktop-wide en easy pages": [
+        {
+          "index": 1,
+          "title": "Define neighboring cells",
+          "chars": 228,
+          "art": "assets/parallax-easy-neighbors.webp"
+        },
+        {
+          "index": 2,
+          "title": "Hands-on Sequence: Dig Mode",
+          "chars": 163,
+          "art": "assets/parallax-easy-scan.webp"
+        }
+      ],
+      "desktop-wide en easy hand-over": {
+        "waitingAction": null,
+        "guidedPointer": true
+      },
+      "desktop-wide zh medium pages": [
+        {
+          "index": 0,
+          "title": "MISSION 02 // 握手迷宫",
+          "chars": 43,
+          "art": "assets/parallax-neighbor-perspective.png"
+        },
+        {
+          "index": 1,
+          "title": "SECTOR PURGE // 区块清除",
+          "chars": 70,
+          "art": "assets/parallax-medium-tip.webp"
+        },
+        {
+          "index": 2,
+          "title": "陆霁的视角窍门",
+          "chars": 45,
+          "art": "assets/parallax-medium-tip.webp"
+        },
+        {
+          "index": 3,
+          "title": "MISSION 02 // 握手迷宫",
+          "chars": 41,
+          "art": "assets/parallax-medium-ready.webp"
+        }
+      ],
+      "desktop-wide zh medium hand-over": {
+        "waitingAction": null,
+        "guidedPointer": false
+      },
+      "desktop-wide en hard pages": [
+        {
+          "index": 0,
+          "title": "MISSION 03 // FINAL PROTOCOL",
+          "chars": 107,
+          "art": "assets/parallax-final-protocol.png"
+        },
+        {
+          "index": 1,
+          "title": "ENTROPY FIELD // COMPRESSION",
+          "chars": 272,
+          "art": "assets/parallax-final-protocol.png"
+        },
+        {
+          "index": 2,
+          "title": "MISSION 03 // FINAL PROTOCOL",
+          "chars": 117,
+          "art": "assets/parallax-final-protocol.png"
+        }
+      ],
+      "desktop-wide en hard hand-over": {
+        "waitingAction": null,
+        "guidedPointer": false
+      },
+      "desktop-wide zh ultimate pages": [
+        {
+          "index": 0,
+          "title": "MISSION EX // 回声矩阵",
+          "chars": 39,
+          "art": "assets/parallax-final-protocol.png"
+        },
+        {
+          "index": 1,
+          "title": "陆霁的固定测绘协议",
+          "chars": 41,
+          "art": "assets/parallax-final-protocol.png"
+        },
+        {
+          "index": 2,
+          "title": "自动测绘授权",
+          "chars": 35,
+          "art": "assets/parallax-final-protocol.png"
+        }
+      ],
+      "desktop-wide zh ultimate hand-over": {
+        "waitingAction": null,
+        "guidedPointer": false
+      },
+      "desktop-compact zh easy pages": [
+        {
+          "index": 1,
+          "title": "先定义“周围格”",
+          "chars": 88,
+          "art": "assets/parallax-easy-neighbors.webp"
+        },
+        {
+          "index": 2,
+          "title": "开始连续实操：挖掘模式",
+          "chars": 54,
+          "art": "assets/parallax-easy-scan.webp"
+        }
+      ],
+      "desktop-compact zh easy hand-over": {
+        "waitingAction": null,
+        "guidedPointer": true
+      },
+      "desktop-compact en medium pages": [
+        {
+          "index": 0,
+          "title": "MISSION 02 // HANDSHAKE MAZE",
+          "chars": 116,
+          "art": "assets/parallax-neighbor-perspective.png"
+        },
+        {
+          "index": 1,
+          "title": "SECTOR PURGE // NEW PROTOCOL",
+          "chars": 214,
+          "art": "assets/parallax-medium-tip.webp"
+        },
+        {
+          "index": 2,
+          "title": "LU JI’S PERSPECTIVE TRICK",
+          "chars": 159,
+          "art": "assets/parallax-medium-tip.webp"
+        },
+        {
+          "index": 3,
+          "title": "MISSION 02 // HANDSHAKE MAZE",
+          "chars": 172,
+          "art": "assets/parallax-medium-ready.webp"
+        }
+      ],
+      "desktop-compact en medium hand-over": {
+        "waitingAction": null,
+        "guidedPointer": false
+      },
+      "mobile-standard zh easy pages": [
+        {
+          "index": 0,
+          "title": "陆霁",
+          "chars": 50,
+          "art": "assets/guide-zero-domain-cartographer.png"
+        },
+        {
+          "index": 1,
+          "title": "先定义“周围格”",
+          "chars": 88,
+          "art": "assets/parallax-easy-neighbors.webp"
+        },
+        {
+          "index": 2,
+          "title": "开始连续实操：挖掘模式",
+          "chars": 63,
+          "art": "assets/parallax-easy-scan.webp"
+        }
+      ],
+      "mobile-standard zh easy hand-over": {
+        "waitingAction": null,
+        "guidedPointer": true
+      },
+      "mobile-small en easy pages": [
+        {
+          "index": 0,
+          "title": "Lu Ji",
+          "chars": 130,
+          "art": "assets/guide-zero-domain-cartographer.png"
+        },
+        {
+          "index": 1,
+          "title": "Define neighboring cells",
+          "chars": 228,
+          "art": "assets/parallax-easy-neighbors.webp"
+        },
+        {
+          "index": 2,
+          "title": "Hands-on Sequence: Dig Mode",
+          "chars": 203,
+          "art": "assets/parallax-easy-scan.webp"
+        }
+      ],
+      "mobile-small en easy hand-over": {
+        "waitingAction": null,
+        "guidedPointer": true
+      },
+      "mobile-small zh medium pages": [
+        {
+          "index": 0,
+          "title": "MISSION 02 // 握手迷宫",
+          "chars": 43,
+          "art": "assets/parallax-neighbor-perspective.png"
+        },
+        {
+          "index": 1,
+          "title": "SECTOR PURGE // 区块清除",
+          "chars": 70,
+          "art": "assets/parallax-medium-tip.webp"
+        },
+        {
+          "index": 2,
+          "title": "陆霁的视角窍门",
+          "chars": 45,
+          "art": "assets/parallax-medium-tip.webp"
+        },
+        {
+          "index": 3,
+          "title": "MISSION 02 // 握手迷宫",
+          "chars": 41,
+          "art": "assets/parallax-medium-ready.webp"
+        }
+      ],
+      "mobile-small zh medium hand-over": {
+        "waitingAction": null,
+        "guidedPointer": false
+      },
+      "guide images": [
+        {
+          "src": "assets/guide-zero-domain-cartographer.png",
+          "size": "1024x1536"
+        },
+        {
+          "src": "assets/parallax-neighbor-perspective.png",
+          "size": "971x1619"
+        },
+        {
+          "src": "assets/parallax-final-protocol.png",
+          "size": "1023x1537"
+        },
+        {
+          "src": "assets/parallax-squad-command.png",
+          "size": "1023x1537"
+        },
+        {
+          "src": "assets/parallax-easy-neighbors.webp",
+          "size": "692x1152"
+        },
+        {
+          "src": "assets/parallax-easy-scan.webp",
+          "size": "692x1152"
+        },
+        {
+          "src": "assets/parallax-easy-finish.webp",
+          "size": "692x1152"
+        },
+        {
+          "src": "assets/parallax-medium-tip.webp",
+          "size": "692x1152"
+        },
+        {
+          "src": "assets/parallax-medium-scan.webp",
+          "size": "692x1152"
+        },
+        {
+          "src": "assets/parallax-medium-inspect.webp",
+          "size": "692x1152"
+        },
+        {
+          "src": "assets/parallax-medium-ready.webp",
+          "size": "692x1152"
+        }
+      ]
+    }
+  },
+  "desktop-dialogue-readability": {
+    "checks": [
+      {
+        "name": "desktop-wide en easy: dialogue is a labelled modal dialog with focus inside",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 0,
+          "steps": 3,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // LIVE COMMS",
+          "title": "Lu Ji",
+          "message": "“I’m joining your mission channel. Don’t just read the manual—perform every action once before we enter a live zero-domain route.”",
+          "art": "assets/guide-zero-domain-cartographer.png",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-wide en easy: Tab and Shift+Tab stay inside the dialogue",
+        "pass": true,
+        "detail": {
+          "steps": 22,
+          "escapes": []
+        }
+      },
+      {
+        "name": "desktop-wide en easy: clicking the portrait does not advance the dialogue",
+        "pass": true,
+        "detail": {
+          "before": 0,
+          "after": 0
+        }
+      },
+      {
+        "name": "desktop-wide en easy: one click outside the dialogue advances exactly one page",
+        "pass": true,
+        "detail": {
+          "before": 0,
+          "after": 1,
+          "open": true
+        }
+      },
+      {
+        "name": "desktop-wide en easy page 1: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 1,
+          "steps": 3,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // LIVE COMMS",
+          "title": "Define neighboring cells",
+          "message": "This ruleset treats every other cube in the three 3×3 layers around a target as adjacent: 9 above, 8 on the same layer, and 9 below. Each coordinate is counted once. The number shows how many actual mines occupy those positions.",
+          "art": "assets/parallax-easy-neighbors.webp",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-wide en easy page 1: one click advances exactly one page",
+        "pass": true,
+        "detail": {
+          "before": 1,
+          "after": 2
+        }
+      },
+      {
+        "name": "desktop-wide en easy page 2: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 2,
+          "steps": 3,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // LIVE COMMS",
+          "title": "Hands-on Sequence: Dig Mode",
+          "message": "“Time for the live run. Left-click digs. The cyan frame marks this step’s safe cube. Each time you finish a move, I’ll automatically deduce and mark the next one.”",
+          "art": "assets/parallax-easy-scan.webp",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-wide en easy: focus leaves the dialogue when it closes",
+        "pass": true,
+        "detail": {
+          "inHiddenOverlay": false,
+          "active": "btn-return-lobby"
+        }
+      },
+      {
+        "name": "desktop-wide en easy: after the guided action the dialogue reopens with focus inside",
+        "pass": true,
+        "detail": {
+          "action": null,
+          "resumed": {
+            "open": true,
+            "index": 0,
+            "steps": 2,
+            "explicit": false,
+            "waitingAction": null,
+            "kicker": "MISSION GUIDE // LIVE COMMS",
+            "title": "See Which Cells a Number Controls",
+            "message": "“The clue relationships are getting denser. Hold right-click on a revealed number, and every neighboring cell controlled by that clue will light up. This only inspects the range—it does not dig or flag.”",
+            "art": "assets/parallax-easy-neighbors.webp",
+            "artLoaded": true,
+            "role": "dialog",
+            "ariaModal": "true",
+            "labelledBy": "tutorial-title",
+            "dialogInView": true,
+            "nextInView": true,
+            "nextOnTop": true,
+            "messageOnTop": true,
+            "textClipped": false,
+            "horizontalOverflow": false,
+            "focusInside": true
+          }
+        }
+      },
+      {
+        "name": "desktop-wide zh medium: dialogue is a labelled modal dialog with focus inside",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 0,
+          "steps": 4,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "MISSION 02 // 握手迷宫",
+          "message": "“幻影端口给出的坐标有效。握手迷宫把路径信标拆进了五层矩阵，必须从不同角度逐层验证。”",
+          "art": "assets/parallax-neighbor-perspective.png",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-wide zh medium: Tab and Shift+Tab stay inside the dialogue",
+        "pass": true,
+        "detail": {
+          "steps": 22,
+          "escapes": []
+        }
+      },
+      {
+        "name": "desktop-wide zh medium page 0: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 0,
+          "steps": 4,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "MISSION 02 // 握手迷宫",
+          "message": "“幻影端口给出的坐标有效。握手迷宫把路径信标拆进了五层矩阵，必须从不同角度逐层验证。”",
+          "art": "assets/parallax-neighbor-perspective.png",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-wide zh medium page 0: one click advances exactly one page",
+        "pass": true,
+        "detail": {
+          "before": 0,
+          "after": 1
+        }
+      },
+      {
+        "name": "desktop-wide zh medium page 1: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 1,
+          "steps": 4,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "SECTOR PURGE // 区块清除",
+          "message": "“新规则：当你从矩阵里切出一个不再与其他未开启方块相连的实体孤岛，而且岛里的方块已经全部被正确标雷，我会删除这个雷岛，再重算周围所有数字。”",
+          "art": "assets/parallax-medium-tip.webp",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-wide zh medium page 1: one click advances exactly one page",
+        "pass": true,
+        "detail": {
+          "before": 1,
+          "after": 2
+        }
+      },
+      {
+        "name": "desktop-wide zh medium page 2: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 2,
+          "steps": 4,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "陆霁的视角窍门",
+          "message": "“这里的节点更密。记得初级学过的邻域高亮：拿不准一个数字管哪些格时，就用它快速看清范围。”",
+          "art": "assets/parallax-medium-tip.webp",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-wide zh medium page 2: one click advances exactly one page",
+        "pass": true,
+        "detail": {
+          "before": 2,
+          "after": 3
+        }
+      },
+      {
+        "name": "desktop-wide zh medium page 3: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 3,
+          "steps": 4,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "MISSION 02 // 握手迷宫",
+          "message": "“五层矩阵虽然更密，也可以随时问我下一步。继续从外围逐步推理，把握手一层层拆开。”",
+          "art": "assets/parallax-medium-ready.webp",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-wide zh medium: focus leaves the dialogue when it closes",
+        "pass": true,
+        "detail": {
+          "inHiddenOverlay": false,
+          "active": "btn-return-lobby"
+        }
+      },
+      {
+        "name": "desktop-wide en hard: dialogue is a labelled modal dialog with focus inside",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 0,
+          "steps": 3,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // LIVE COMMS",
+          "title": "MISSION 03 // FINAL PROTOCOL",
+          "message": "“Final target confirmed. Seven-layer core matrix, thirty anomaly nodes, and the coordinates keep drifting.”",
+          "art": "assets/parallax-final-protocol.png",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-wide en hard: Tab and Shift+Tab stay inside the dialogue",
+        "pass": true,
+        "detail": {
+          "steps": 22,
+          "escapes": []
+        }
+      },
+      {
+        "name": "desktop-wide en hard page 0: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 0,
+          "steps": 3,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // LIVE COMMS",
+          "title": "MISSION 03 // FINAL PROTOCOL",
+          "message": "“Final target confirmed. Seven-layer core matrix, thirty anomaly nodes, and the coordinates keep drifting.”",
+          "art": "assets/parallax-final-protocol.png",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-wide en hard page 0: one click advances exactly one page",
+        "pass": true,
+        "detail": {
+          "before": 0,
+          "after": 1
+        }
+      },
+      {
+        "name": "desktop-wide en hard page 1: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 1,
+          "steps": 3,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // LIVE COMMS",
+          "title": "ENTROPY FIELD // COMPRESSION",
+          "message": "“The seven-layer matrix carries too much raw information, so I added Entropy-Field Compression to your terminal. Once you know an unopened cell is a mine, remove it directly from the matrix; its position and every affected clue will recalculate the remaining mine counts.”",
+          "art": "assets/parallax-final-protocol.png",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-wide en hard page 1: one click advances exactly one page",
+        "pass": true,
+        "detail": {
+          "before": 1,
+          "after": 2
+        }
+      },
+      {
+        "name": "desktop-wide en hard page 2: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 2,
+          "steps": 3,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // LIVE COMMS",
+          "title": "MISSION 03 // FINAL PROTOCOL",
+          "message": "“The stability window is closing fast. Push inward from the perimeter and converge every evidence chain on the core.”",
+          "art": "assets/parallax-final-protocol.png",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-wide en hard: focus leaves the dialogue when it closes",
+        "pass": true,
+        "detail": {
+          "inHiddenOverlay": false,
+          "active": "btn-return-lobby"
+        }
+      },
+      {
+        "name": "desktop-wide zh ultimate: dialogue is a labelled modal dialog with focus inside",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 0,
+          "steps": 3,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "MISSION EX // 回声矩阵",
+          "message": "“坐标确认：9×9×9，六十个异常节点。它不在导航网内，却持续回传稳定信号。”",
+          "art": "assets/parallax-final-protocol.png",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-wide zh ultimate: Tab and Shift+Tab stay inside the dialogue",
+        "pass": true,
+        "detail": {
+          "steps": 22,
+          "escapes": []
+        }
+      },
+      {
+        "name": "desktop-wide zh ultimate page 0: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 0,
+          "steps": 3,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "MISSION EX // 回声矩阵",
+          "message": "“坐标确认：9×9×9，六十个异常节点。它不在导航网内，却持续回传稳定信号。”",
+          "art": "assets/parallax-final-protocol.png",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-wide zh ultimate page 0: one click advances exactly one page",
+        "pass": true,
+        "detail": {
+          "before": 0,
+          "after": 1
+        }
+      },
+      {
+        "name": "desktop-wide zh ultimate page 1: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 1,
+          "steps": 3,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "陆霁的固定测绘协议",
+          "message": "“我已经把之前的每一条经验写进固定测绘协议。这一次，让程序沿着确定路线自动演算。”",
+          "art": "assets/parallax-final-protocol.png",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-wide zh ultimate page 1: one click advances exactly one page",
+        "pass": true,
+        "detail": {
+          "before": 1,
+          "after": 2
+        }
+      },
+      {
+        "name": "desktop-wide zh ultimate page 2: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 2,
+          "steps": 3,
+          "explicit": true,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "自动测绘授权",
+          "message": "“点下按钮后测绘协议会自动运行，直到你中止，或者回声矩阵被完整测绘。”",
+          "art": "assets/parallax-final-protocol.png",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-wide zh ultimate: focus leaves the dialogue when it closes",
+        "pass": true,
+        "detail": {
+          "inHiddenOverlay": false,
+          "active": "btn-return-lobby"
+        }
+      },
+      {
+        "name": "desktop-compact zh easy: dialogue is a labelled modal dialog with focus inside",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 0,
+          "steps": 3,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "陆霁",
+          "message": "“接下来我会直接接入你的任务频道。别只看说明书——每个操作都亲手做一次，我们再进入真正的零域航道。”",
+          "art": "assets/guide-zero-domain-cartographer.png",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-compact zh easy: Tab and Shift+Tab stay inside the dialogue",
+        "pass": true,
+        "detail": {
+          "steps": 22,
+          "escapes": []
+        }
+      },
+      {
+        "name": "desktop-compact zh easy: clicking the portrait does not advance the dialogue",
+        "pass": true,
+        "detail": {
+          "before": 0,
+          "after": 0
+        }
+      },
+      {
+        "name": "desktop-compact zh easy: one click outside the dialogue advances exactly one page",
+        "pass": true,
+        "detail": {
+          "before": 0,
+          "after": 1,
+          "open": true
+        }
+      },
+      {
+        "name": "desktop-compact zh easy page 1: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 1,
+          "steps": 3,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "先定义“周围格”",
+          "message": "当前规则把目标格周围三层 3×3 区域里的其他格子都视为相邻：上层 9 格、同层 8 格、下层 9 格，每个坐标只计算一次。数字显示的不是格子数，而是这些位置里实际存在的雷数。",
+          "art": "assets/parallax-easy-neighbors.webp",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-compact zh easy page 1: one click advances exactly one page",
+        "pass": true,
+        "detail": {
+          "before": 1,
+          "after": 2
+        }
+      },
+      {
+        "name": "desktop-compact zh easy page 2: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 2,
+          "steps": 3,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "开始连续实操：挖掘模式",
+          "message": "“现在开始实操。鼠标左键负责挖掘。青色外框是本步要打开的安全格。你每完成一步，我都会自动推理并指出下一步。”",
+          "art": "assets/parallax-easy-scan.webp",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-compact zh easy: focus leaves the dialogue when it closes",
+        "pass": true,
+        "detail": {
+          "inHiddenOverlay": false,
+          "active": "btn-return-lobby"
+        }
+      },
+      {
+        "name": "desktop-compact zh easy: after the guided action the dialogue reopens with focus inside",
+        "pass": true,
+        "detail": {
+          "action": null,
+          "resumed": {
+            "open": true,
+            "index": 0,
+            "steps": 2,
+            "explicit": false,
+            "waitingAction": null,
+            "kicker": "MISSION GUIDE // 实时通讯",
+            "title": "先看清数字管哪些格",
+            "message": "“数字关系开始变复杂了。对一个已翻开的数字按住右键，它负责的所有相邻单元格就会一起亮起来。这个操作只查看范围，不会挖掘或标记。”",
+            "art": "assets/parallax-easy-neighbors.webp",
+            "artLoaded": true,
+            "role": "dialog",
+            "ariaModal": "true",
+            "labelledBy": "tutorial-title",
+            "dialogInView": true,
+            "nextInView": true,
+            "nextOnTop": true,
+            "messageOnTop": true,
+            "textClipped": false,
+            "horizontalOverflow": false,
+            "focusInside": true
+          }
+        }
+      },
+      {
+        "name": "desktop-compact en medium: dialogue is a labelled modal dialog with focus inside",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 0,
+          "steps": 4,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // LIVE COMMS",
+          "title": "MISSION 02 // HANDSHAKE MAZE",
+          "message": "“The coordinates from Phantom Port are valid. The Handshake Maze split its path beacons across a five-layer matrix.”",
+          "art": "assets/parallax-neighbor-perspective.png",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-compact en medium: Tab and Shift+Tab stay inside the dialogue",
+        "pass": true,
+        "detail": {
+          "steps": 22,
+          "escapes": []
+        }
+      },
+      {
+        "name": "desktop-compact en medium page 0: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 0,
+          "steps": 4,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // LIVE COMMS",
+          "title": "MISSION 02 // HANDSHAKE MAZE",
+          "message": "“The coordinates from Phantom Port are valid. The Handshake Maze split its path beacons across a five-layer matrix.”",
+          "art": "assets/parallax-neighbor-perspective.png",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-compact en medium page 0: one click advances exactly one page",
+        "pass": true,
+        "detail": {
+          "before": 0,
+          "after": 1
+        }
+      },
+      {
+        "name": "desktop-compact en medium page 1: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 1,
+          "steps": 4,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // LIVE COMMS",
+          "title": "SECTOR PURGE // NEW PROTOCOL",
+          "message": "“New rule: carve out a solid island that no longer shares a face with any other unopened cube. If every cube on that island is a correctly flagged mine, I erase the mine island and recalculate every affected clue.”",
+          "art": "assets/parallax-medium-tip.webp",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-compact en medium page 1: one click advances exactly one page",
+        "pass": true,
+        "detail": {
+          "before": 1,
+          "after": 2
+        }
+      },
+      {
+        "name": "desktop-compact en medium page 2: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 2,
+          "steps": 4,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // LIVE COMMS",
+          "title": "LU JI’S PERSPECTIVE TRICK",
+          "message": "“The nodes are denser here. Remember the neighborhood highlight from beginner training: use it whenever you need to see exactly which cells a number controls.”",
+          "art": "assets/parallax-medium-tip.webp",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-compact en medium page 2: one click advances exactly one page",
+        "pass": true,
+        "detail": {
+          "before": 2,
+          "after": 3
+        }
+      },
+      {
+        "name": "desktop-compact en medium page 3: dialogue, text, and Continue are in view and uncovered",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 3,
+          "steps": 4,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // LIVE COMMS",
+          "title": "MISSION 02 // HANDSHAKE MAZE",
+          "message": "“The five-layer matrix is denser, but you can ask me for the next move whenever you need it. Keep working inward from the edges and dismantle the handshake layer by layer.”",
+          "art": "assets/parallax-medium-ready.webp",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-compact en medium: focus leaves the dialogue when it closes",
+        "pass": true,
+        "detail": {
+          "inHiddenOverlay": false,
+          "active": "btn-return-lobby"
+        }
+      }
+    ],
+    "screenshots": []
+  },
+  "desktop-gameplay-controls": {
+    "checks": [
+      {
+        "name": "desktop-wide en: the first click digs the corner cube",
+        "pass": true,
+        "detail": {
+          "phase": "playing",
+          "revealed": 88,
+          "flags": 0,
+          "revision": 3,
+          "save": "bc870019-3f40-4e0a-aeeb-541bd1ff9b17"
+        }
+      },
+      {
+        "name": "desktop-wide en: the highlighted cube is the cube under the pointer",
+        "pass": true,
+        "detail": {
+          "hover": {
+            "x": 4,
+            "y": 4,
+            "z": 2
+          },
+          "target": {
+            "x": 4,
+            "y": 4,
+            "z": 2
+          }
+        }
+      },
+      {
+        "name": "desktop-wide en: a right click flags that same cube and the HUD counter follows",
+        "pass": true,
+        "detail": {
+          "flagged": {
+            "x": 4,
+            "y": 4,
+            "z": 2
+          },
+          "minesBefore": "0 / 10",
+          "minesAfter": "1 / 10"
+        }
+      },
+      {
+        "name": "desktop-wide en: pressing both buttons on a number opens its unflagged neighbours",
+        "pass": true,
+        "detail": {
+          "cell": {
+            "x": 4,
+            "y": 4,
+            "z": 3
+          },
+          "flaggedMines": 1,
+          "revealedBefore": 88,
+          "revealedAfter": 91,
+          "phase": "playing"
+        }
+      },
+      {
+        "name": "desktop-wide en: reasoning hint explains a target and its panel is usable",
+        "pass": true,
+        "detail": {
+          "reason": "Single-clue rule: gold 1 has 0 flags, still needs 1 mines, and has exactly 1 hidden neighbors left. Every remaining neighbor must be a mine.",
+          "coordinate": "Coordinate check only: X3 / Y4 / Z3",
+          "inView": true,
+          "closeOnTop": true,
+          "collapseOnTop": true
+        }
+      },
+      {
+        "name": "desktop-wide en: hint collapses, expands, and exits reasoning",
+        "pass": true,
+        "detail": {
+          "collapsed": "false",
+          "expanded": "true"
+        }
+      },
+      {
+        "name": "desktop-wide en: right-drag orbits around the fixed centre and the wheel zooms",
+        "pass": true,
+        "detail": {
+          "view": {
+            "position": [
+              10.999999999999998,
+              9.9,
+              11
+            ],
+            "target": [
+              0,
+              0,
+              0
+            ],
+            "distance": 18.43936007566423
+          },
+          "rotated": {
+            "position": [
+              12.302004619238812,
+              13.457680014640268,
+              -2.7498238074063677
+            ],
+            "target": [
+              0,
+              0,
+              0
+            ],
+            "distance": 18.43936007566423
+          },
+          "zoomed": {
+            "position": [
+              17.009333555930954,
+              18.607225033901216,
+              -3.8020364881750677
+            ],
+            "target": [
+              0,
+              0,
+              0
+            ],
+            "distance": 25.495131553623594
+          }
+        }
+      },
+      {
+        "name": "desktop-wide en: settings dialog keeps keyboard focus inside",
+        "pass": true,
+        "detail": {
+          "steps": 24,
+          "escapes": []
+        }
+      },
+      {
+        "name": "desktop-wide en: saving settings returns focus to the settings button",
+        "pass": true,
+        "detail": "btn-control-settings"
+      },
+      {
+        "name": "desktop-wide en: with a movable centre, right-drag pans the matrix",
+        "pass": true,
+        "detail": {
+          "centreMode": "movable",
+          "before": [
+            0,
+            0,
+            0
+          ],
+          "after": [
+            -1.807104157445277,
+            1.1180761500245757,
+            -2.61263742416464
+          ]
+        }
+      },
+      {
+        "name": "desktop-wide en: Reset View brings the panned centre and the camera back to the default view",
+        "pass": true,
+        "detail": {
+          "position": [
+            10.999999999999998,
+            9.9,
+            11
+          ],
+          "target": [
+            0,
+            0,
+            0
+          ],
+          "distance": 18.43936007566423
+        }
+      },
+      {
+        "name": "desktop-wide en: slicing from the keyboard hides layers and Reset brings them back",
+        "pass": true,
+        "detail": {
+          "sliced": {
+            "slice": [
+              0,
+              2
+            ],
+            "visibility": true
+          },
+          "unsliced": true
+        }
+      },
+      {
+        "name": "desktop-wide en: HUD and guide comms panels stay in view and leave the board centre clear",
+        "pass": true,
+        "detail": {
+          "centre": "CANVAS",
+          "panels": [
+            {
+              "id": "control-panel",
+              "inView": true
+            },
+            {
+              "id": "social-panel",
+              "inView": true
+            },
+            {
+              "id": "btn-return-lobby",
+              "inView": true
+            }
+          ],
+          "covered": [],
+          "comms": "“Coordinate beacon exposed. Clear the last nodes and I’ll rebuild the core route"
+        }
+      },
+      {
+        "name": "desktop-wide en: every control the side panel shows can be clicked at its centre",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "desktop-wide en: Return to Lobby leaves the room",
+        "pass": true
+      },
+      {
+        "name": "desktop-wide en: completed without an exception",
+        "pass": true
+      },
+      {
+        "name": "desktop-compact zh: the first click digs the corner cube",
+        "pass": true,
+        "detail": {
+          "phase": "playing",
+          "revealed": 88,
+          "flags": 0,
+          "revision": 3,
+          "save": "0facc5e0-5c6e-4d09-a975-e061294769de"
+        }
+      },
+      {
+        "name": "desktop-compact zh: the highlighted cube is the cube under the pointer",
+        "pass": true,
+        "detail": {
+          "hover": {
+            "x": 4,
+            "y": 4,
+            "z": 2
+          },
+          "target": {
+            "x": 4,
+            "y": 4,
+            "z": 2
+          }
+        }
+      },
+      {
+        "name": "desktop-compact zh: a right click flags that same cube and the HUD counter follows",
+        "pass": true,
+        "detail": {
+          "flagged": {
+            "x": 4,
+            "y": 4,
+            "z": 2
+          },
+          "minesBefore": "0 / 10",
+          "minesAfter": "1 / 10"
+        }
+      },
+      {
+        "name": "desktop-compact zh: pressing both buttons on a number opens its unflagged neighbours",
+        "pass": true,
+        "detail": {
+          "cell": {
+            "x": 4,
+            "y": 4,
+            "z": 3
+          },
+          "flaggedMines": 1,
+          "revealedBefore": 88,
+          "revealedAfter": 91,
+          "phase": "playing"
+        }
+      },
+      {
+        "name": "desktop-compact zh: reasoning hint explains a target and its panel is usable",
+        "pass": true,
+        "detail": {
+          "reason": "单数字规则：金色数字 1 已标出 0 雷、还缺 1 雷，而它恰好只剩 1 个未开邻格；剩余格必须全部是雷，所以应标记目标格。",
+          "coordinate": "坐标仅供核对：X3 / Y4 / Z3",
+          "inView": true,
+          "closeOnTop": true,
+          "collapseOnTop": true
+        }
+      },
+      {
+        "name": "desktop-compact zh: hint collapses, expands, and exits reasoning",
+        "pass": true,
+        "detail": {
+          "collapsed": "false",
+          "expanded": "true"
+        }
+      },
+      {
+        "name": "desktop-compact zh: right-drag orbits around the fixed centre and the wheel zooms",
+        "pass": true,
+        "detail": {
+          "view": {
+            "position": [
+              10.999999999999998,
+              9.9,
+              11
+            ],
+            "target": [
+              0,
+              0,
+              0
+            ],
+            "distance": 18.43936007566423
+          },
+          "rotated": {
+            "position": [
+              10.456584404235436,
+              14.222635775946285,
+              -5.327895849383038
+            ],
+            "target": [
+              0,
+              0,
+              0
+            ],
+            "distance": 18.43936007566423
+          },
+          "zoomed": {
+            "position": [
+              14.457768263609314,
+              19.664889057332964,
+              -7.366600853523362
+            ],
+            "target": [
+              0,
+              0,
+              0
+            ],
+            "distance": 25.495131553623594
+          }
+        }
+      },
+      {
+        "name": "desktop-compact zh: settings dialog keeps keyboard focus inside",
+        "pass": true,
+        "detail": {
+          "steps": 24,
+          "escapes": []
+        }
+      },
+      {
+        "name": "desktop-compact zh: saving settings returns focus to the settings button",
+        "pass": true,
+        "detail": "btn-control-settings"
+      },
+      {
+        "name": "desktop-compact zh: with a movable centre, right-drag pans the matrix",
+        "pass": true,
+        "detail": {
+          "centreMode": "movable",
+          "before": [
+            0,
+            0,
+            0
+          ],
+          "after": [
+            -3.07565153055426,
+            1.3011496558364597,
+            -2.5629315045573327
+          ]
+        }
+      },
+      {
+        "name": "desktop-compact zh: Reset View brings the panned centre and the camera back to the default view",
+        "pass": true,
+        "detail": {
+          "position": [
+            10.999999999999998,
+            9.9,
+            11
+          ],
+          "target": [
+            0,
+            0,
+            0
+          ],
+          "distance": 18.43936007566423
+        }
+      },
+      {
+        "name": "desktop-compact zh: slicing from the keyboard hides layers and Reset brings them back",
+        "pass": true,
+        "detail": {
+          "sliced": {
+            "slice": [
+              0,
+              2
+            ],
+            "visibility": true
+          },
+          "unsliced": true
+        }
+      },
+      {
+        "name": "desktop-compact zh: HUD and guide comms panels stay in view and leave the board centre clear",
+        "pass": true,
+        "detail": {
+          "centre": "CANVAS",
+          "panels": [
+            {
+              "id": "control-panel",
+              "inView": true
+            },
+            {
+              "id": "social-panel",
+              "inView": true
+            },
+            {
+              "id": "btn-return-lobby",
+              "inView": true
+            }
+          ],
+          "covered": [],
+          "comms": "“坐标信标已经暴露。清完最后的节点，我来重建核心航迹。”"
+        }
+      },
+      {
+        "name": "desktop-compact zh: every control the side panel shows can be clicked at its centre",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "desktop-compact zh: Return to Lobby leaves the room",
+        "pass": true
+      },
+      {
+        "name": "desktop-compact zh: completed without an exception",
+        "pass": true
+      }
+    ],
+    "screenshots": [
+      "controls-desktop-wide-hint.jpg",
+      "controls-desktop-wide-settings.jpg",
+      "controls-desktop-wide-board.jpg",
+      "controls-desktop-compact-hint.jpg",
+      "controls-desktop-compact-settings.jpg",
+      "controls-desktop-compact-board.jpg"
+    ],
+    "notes": {
+      "desktop-wide en actions": [
+        "dig",
+        "flag",
+        "two-button chord",
+        "reasoning hint",
+        "rotate",
+        "zoom",
+        "pan",
+        "reset view",
+        "settings",
+        "slice",
+        "return to lobby"
+      ],
+      "desktop-compact zh actions": [
+        "dig",
+        "flag",
+        "two-button chord",
+        "reasoning hint",
+        "rotate",
+        "zoom",
+        "pan",
+        "reset view",
+        "settings",
+        "slice",
+        "return to lobby"
+      ]
+    }
+  },
+  "mobile-gameplay-controls": {
+    "checks": [
+      {
+        "name": "mobile-standard zh: a tap digs the tapped cube",
+        "pass": true,
+        "detail": {
+          "phase": "playing",
+          "revealed": 88,
+          "flags": 0,
+          "revision": 3,
+          "save": "19d49c8b-9b70-4c1f-8957-00136bd4f43f"
+        }
+      },
+      {
+        "name": "mobile-standard zh: all five dock buttons are in view, at least 40 px tall, uncovered, and apart",
+        "pass": true,
+        "detail": {
+          "inView": true,
+          "overlapping": [],
+          "onTop": [
+            "btn-mobile-controls",
+            "btn-mobile-slices",
+            "btn-mobile-dig",
+            "btn-mobile-flag",
+            "btn-mobile-mission"
+          ],
+          "statusbar": {
+            "x": 60,
+            "y": 8,
+            "width": 270,
+            "height": 42,
+            "top": 8,
+            "right": 330,
+            "bottom": 50,
+            "left": 60
+          }
+        }
+      },
+      {
+        "name": "mobile-standard zh: in flag mode a tap flags the tapped cube",
+        "pass": true,
+        "detail": {
+          "flagMode": "flag",
+          "flagged": [
+            {
+              "x": 4,
+              "y": 4,
+              "z": 2
+            }
+          ],
+          "target": {
+            "x": 4,
+            "y": 4,
+            "z": 2
+          }
+        }
+      },
+      {
+        "name": "mobile-standard zh: holding a number inspects its neighbours without digging or flagging",
+        "pass": true,
+        "detail": {
+          "number": {
+            "x": 0,
+            "y": 3,
+            "z": 1
+          },
+          "during": {
+            "inspecting": true,
+            "highlightCentre": {
+              "x": 0,
+              "y": 3,
+              "z": 1
+            },
+            "panning": false
+          },
+          "before": {
+            "phase": "playing",
+            "revealed": 88,
+            "flags": 1,
+            "revision": 4,
+            "save": "19d49c8b-9b70-4c1f-8957-00136bd4f43f"
+          },
+          "after": {
+            "phase": "playing",
+            "revealed": 88,
+            "flags": 1,
+            "revision": 4,
+            "save": "19d49c8b-9b70-4c1f-8957-00136bd4f43f"
+          }
+        }
+      },
+      {
+        "name": "mobile-standard zh: hold-then-drag pans the matrix",
+        "pass": true,
+        "detail": {
+          "hold": {
+            "inspecting": false,
+            "highlightCentre": null,
+            "panning": true
+          },
+          "beforePan": {
+            "position": [
+              10.999999999999998,
+              9.9,
+              11
+            ],
+            "target": [
+              0,
+              0,
+              0
+            ],
+            "distance": 18.43936007566423
+          },
+          "afterPan": {
+            "position": [
+              9.546595837175497,
+              10.751323449308519,
+              11.687213058446833
+            ],
+            "target": [
+              -1.4534041628245056,
+              0.8513234493085297,
+              0.6872130584468296
+            ],
+            "distance": 18.43936007566423
+          }
+        }
+      },
+      {
+        "name": "mobile-standard zh: a two-finger pinch zooms",
+        "pass": true,
+        "detail": {
+          "afterPan": {
+            "position": [
+              9.546595837175497,
+              10.751323449308519,
+              11.687213058446833
+            ],
+            "target": [
+              -1.4534041628245056,
+              0.8513234493085297,
+              0.6872130584468296
+            ],
+            "distance": 18.43936007566423
+          },
+          "afterPinch": {
+            "position": [
+              1.8465958371754965,
+              3.8213234493085286,
+              3.987213058446832
+            ],
+            "target": [
+              -1.4534041628245056,
+              0.8513234493085297,
+              0.6872130584468296
+            ],
+            "distance": 5.531808022699272
+          }
+        }
+      },
+      {
+        "name": "mobile-standard zh: pan and pinch gestures leave the board untouched",
+        "pass": true,
+        "detail": {
+          "boardBeforeGestures": {
+            "phase": "playing",
+            "revealed": 88,
+            "flags": 1,
+            "revision": 4,
+            "save": "19d49c8b-9b70-4c1f-8957-00136bd4f43f"
+          },
+          "boardAfterGestures": {
+            "phase": "playing",
+            "revealed": 88,
+            "flags": 1,
+            "revision": 4,
+            "save": "19d49c8b-9b70-4c1f-8957-00136bd4f43f"
+          }
+        }
+      },
+      {
+        "name": "mobile-standard zh: the centre button puts the panned matrix back in the middle",
+        "pass": true,
+        "detail": {
+          "position": [
+            10.999999999999998,
+            9.9,
+            11
+          ],
+          "target": [
+            0,
+            0,
+            0
+          ],
+          "distance": 18.43936007566423
+        }
+      },
+      {
+        "name": "mobile-standard zh: btn-mobile-controls opens control-panel inside the screen",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "inView": true,
+          "top": 58
+        }
+      },
+      {
+        "name": "mobile-standard zh: control-panel closes again",
+        "pass": true
+      },
+      {
+        "name": "mobile-standard zh: btn-mobile-slices opens slicing-panel inside the screen",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "inView": true,
+          "top": 518
+        }
+      },
+      {
+        "name": "mobile-standard zh: slicing-panel closes again",
+        "pass": true
+      },
+      {
+        "name": "mobile-standard zh: btn-mobile-mission opens social-panel inside the screen",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "inView": true,
+          "top": 58
+        }
+      },
+      {
+        "name": "mobile-standard zh: social-panel closes again",
+        "pass": true
+      },
+      {
+        "name": "mobile-standard zh: reasoning hint explains a target and its panel is usable",
+        "pass": true,
+        "detail": {
+          "reason": "单数字规则：金色数字 1 已标出 0 雷、还缺 1 雷，而它恰好只剩 1 个未开邻格；剩余格必须全部是雷，所以应标记目标格。",
+          "coordinate": "坐标仅供核对：X3 / Y4 / Z3",
+          "inView": true,
+          "closeOnTop": true,
+          "collapseOnTop": true
+        }
+      },
+      {
+        "name": "mobile-standard zh: hint collapses, expands, and exits reasoning",
+        "pass": true,
+        "detail": {
+          "collapsed": "false",
+          "expanded": "true"
+        }
+      },
+      {
+        "name": "mobile-standard zh: rotating to landscape and back keeps the game and its state",
+        "pass": true,
+        "detail": {
+          "landscape": {
+            "inRoom": true,
+            "overflow": false
+          },
+          "beforeTurn": {
+            "phase": "playing",
+            "revealed": 88,
+            "flags": 1,
+            "revision": 4,
+            "save": "19d49c8b-9b70-4c1f-8957-00136bd4f43f"
+          },
+          "afterTurn": {
+            "phase": "playing",
+            "revealed": 88,
+            "flags": 1,
+            "revision": 4,
+            "save": "19d49c8b-9b70-4c1f-8957-00136bd4f43f"
+          }
+        }
+      },
+      {
+        "name": "mobile-standard zh: the board still takes a tap after rotating",
+        "pass": true,
+        "detail": {
+          "afterTurn": {
+            "phase": "playing",
+            "revealed": 88,
+            "flags": 1,
+            "revision": 4,
+            "save": "19d49c8b-9b70-4c1f-8957-00136bd4f43f"
+          },
+          "after": {
+            "phase": "playing",
+            "revealed": 89,
+            "flags": 1,
+            "revision": 5,
+            "save": "19d49c8b-9b70-4c1f-8957-00136bd4f43f"
+          }
+        }
+      },
+      {
+        "name": "mobile-standard zh: completed without an exception",
+        "pass": true
+      },
+      {
+        "name": "mobile-small en: a tap digs the tapped cube",
+        "pass": true,
+        "detail": {
+          "phase": "playing",
+          "revealed": 88,
+          "flags": 0,
+          "revision": 3,
+          "save": "b62af1db-aff9-42c6-8bde-e2b5fb4502d6"
+        }
+      },
+      {
+        "name": "mobile-small en: all five dock buttons are in view, at least 40 px tall, uncovered, and apart",
+        "pass": true,
+        "detail": {
+          "inView": true,
+          "overlapping": [],
+          "onTop": [
+            "btn-mobile-controls",
+            "btn-mobile-slices",
+            "btn-mobile-dig",
+            "btn-mobile-flag",
+            "btn-mobile-mission"
+          ],
+          "statusbar": {
+            "x": 60,
+            "y": 8,
+            "width": 240,
+            "height": 42,
+            "top": 8,
+            "right": 300,
+            "bottom": 50,
+            "left": 60
+          }
+        }
+      },
+      {
+        "name": "mobile-small en: in flag mode a tap flags the tapped cube",
+        "pass": true,
+        "detail": {
+          "flagMode": "flag",
+          "flagged": [
+            {
+              "x": 4,
+              "y": 4,
+              "z": 2
+            }
+          ],
+          "target": {
+            "x": 4,
+            "y": 4,
+            "z": 2
+          }
+        }
+      },
+      {
+        "name": "mobile-small en: holding a number inspects its neighbours without digging or flagging",
+        "pass": true,
+        "detail": {
+          "number": {
+            "x": 0,
+            "y": 3,
+            "z": 1
+          },
+          "during": {
+            "inspecting": true,
+            "highlightCentre": {
+              "x": 0,
+              "y": 3,
+              "z": 1
+            },
+            "panning": false
+          },
+          "before": {
+            "phase": "playing",
+            "revealed": 88,
+            "flags": 1,
+            "revision": 4,
+            "save": "b62af1db-aff9-42c6-8bde-e2b5fb4502d6"
+          },
+          "after": {
+            "phase": "playing",
+            "revealed": 88,
+            "flags": 1,
+            "revision": 4,
+            "save": "b62af1db-aff9-42c6-8bde-e2b5fb4502d6"
+          }
+        }
+      },
+      {
+        "name": "mobile-small en: hold-then-drag pans the matrix",
+        "pass": true,
+        "detail": {
+          "hold": {
+            "inspecting": false,
+            "highlightCentre": null,
+            "panning": true
+          },
+          "beforePan": {
+            "position": [
+              10.999999999999998,
+              9.9,
+              11
+            ],
+            "target": [
+              0,
+              0,
+              0
+            ],
+            "distance": 18.43936007566423
+          },
+          "afterPan": {
+            "position": [
+              9.083323260275176,
+              11.022682798775632,
+              11.906262220826763
+            ],
+            "target": [
+              -1.9166767397248181,
+              1.1226827987756234,
+              0.9062622208267562
+            ],
+            "distance": 18.439360075664236
+          }
+        }
+      },
+      {
+        "name": "mobile-small en: a two-finger pinch zooms",
+        "pass": true,
+        "detail": {
+          "afterPan": {
+            "position": [
+              9.083323260275176,
+              11.022682798775632,
+              11.906262220826763
+            ],
+            "target": [
+              -1.9166767397248181,
+              1.1226827987756234,
+              0.9062622208267562
+            ],
+            "distance": 18.439360075664236
+          },
+          "afterPinch": {
+            "position": [
+              1.3833232602751862,
+              4.0926827987756305,
+              4.206262220826763
+            ],
+            "target": [
+              -1.9166767397248181,
+              1.1226827987756234,
+              0.9062622208267562
+            ],
+            "distance": 5.53180802269928
+          }
+        }
+      },
+      {
+        "name": "mobile-small en: pan and pinch gestures leave the board untouched",
+        "pass": true,
+        "detail": {
+          "boardBeforeGestures": {
+            "phase": "playing",
+            "revealed": 88,
+            "flags": 1,
+            "revision": 4,
+            "save": "b62af1db-aff9-42c6-8bde-e2b5fb4502d6"
+          },
+          "boardAfterGestures": {
+            "phase": "playing",
+            "revealed": 88,
+            "flags": 1,
+            "revision": 4,
+            "save": "b62af1db-aff9-42c6-8bde-e2b5fb4502d6"
+          }
+        }
+      },
+      {
+        "name": "mobile-small en: the centre button puts the panned matrix back in the middle",
+        "pass": true,
+        "detail": {
+          "position": [
+            10.999999999999998,
+            9.9,
+            11
+          ],
+          "target": [
+            0,
+            0,
+            0
+          ],
+          "distance": 18.43936007566423
+        }
+      },
+      {
+        "name": "mobile-small en: btn-mobile-controls opens control-panel inside the screen",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "inView": true,
+          "top": 58
+        }
+      },
+      {
+        "name": "mobile-small en: control-panel closes again",
+        "pass": true
+      },
+      {
+        "name": "mobile-small en: btn-mobile-slices opens slicing-panel inside the screen",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "inView": true,
+          "top": 314
+        }
+      },
+      {
+        "name": "mobile-small en: slicing-panel closes again",
+        "pass": true
+      },
+      {
+        "name": "mobile-small en: btn-mobile-mission opens social-panel inside the screen",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "inView": true,
+          "top": 58
+        }
+      },
+      {
+        "name": "mobile-small en: social-panel closes again",
+        "pass": true
+      },
+      {
+        "name": "mobile-small en: reasoning hint explains a target and its panel is usable",
+        "pass": true,
+        "detail": {
+          "reason": "Single-clue rule: gold 1 has 0 flags, still needs 1 mines, and has exactly 1 hidden neighbors left. Every remaining neighbor must be a mine.",
+          "coordinate": "Coordinate check only: X3 / Y4 / Z3",
+          "inView": true,
+          "closeOnTop": true,
+          "collapseOnTop": true
+        }
+      },
+      {
+        "name": "mobile-small en: hint collapses, expands, and exits reasoning",
+        "pass": true,
+        "detail": {
+          "collapsed": "false",
+          "expanded": "true"
+        }
+      },
+      {
+        "name": "mobile-small en: rotating to landscape and back keeps the game and its state",
+        "pass": true,
+        "detail": {
+          "landscape": {
+            "inRoom": true,
+            "overflow": false
+          },
+          "beforeTurn": {
+            "phase": "playing",
+            "revealed": 88,
+            "flags": 1,
+            "revision": 4,
+            "save": "b62af1db-aff9-42c6-8bde-e2b5fb4502d6"
+          },
+          "afterTurn": {
+            "phase": "playing",
+            "revealed": 88,
+            "flags": 1,
+            "revision": 4,
+            "save": "b62af1db-aff9-42c6-8bde-e2b5fb4502d6"
+          }
+        }
+      },
+      {
+        "name": "mobile-small en: the board still takes a tap after rotating",
+        "pass": true,
+        "detail": {
+          "afterTurn": {
+            "phase": "playing",
+            "revealed": 88,
+            "flags": 1,
+            "revision": 4,
+            "save": "b62af1db-aff9-42c6-8bde-e2b5fb4502d6"
+          },
+          "after": {
+            "phase": "playing",
+            "revealed": 89,
+            "flags": 1,
+            "revision": 5,
+            "save": "b62af1db-aff9-42c6-8bde-e2b5fb4502d6"
+          }
+        }
+      },
+      {
+        "name": "mobile-small en: completed without an exception",
+        "pass": true
+      }
+    ],
+    "screenshots": [
+      "controls-mobile-standard-dock.jpg",
+      "controls-mobile-standard-flag.jpg",
+      "controls-mobile-standard-settings.jpg",
+      "controls-mobile-standard-control-panel.jpg",
+      "controls-mobile-standard-slicing-panel.jpg",
+      "controls-mobile-standard-social-panel.jpg",
+      "controls-mobile-standard-hint.jpg",
+      "controls-mobile-standard-landscape.jpg",
+      "controls-mobile-standard-board.jpg",
+      "controls-mobile-small-dock.jpg",
+      "controls-mobile-small-flag.jpg",
+      "controls-mobile-small-settings.jpg",
+      "controls-mobile-small-control-panel.jpg",
+      "controls-mobile-small-slicing-panel.jpg",
+      "controls-mobile-small-social-panel.jpg",
+      "controls-mobile-small-hint.jpg",
+      "controls-mobile-small-landscape.jpg",
+      "controls-mobile-small-board.jpg"
+    ],
+    "notes": {
+      "mobile-standard zh actions": [
+        "tap dig",
+        "flag mode tap",
+        "long-press number inspection",
+        "hold-drag pan",
+        "pinch zoom",
+        "centre button",
+        "controls drawer",
+        "slices drawer",
+        "mission drawer",
+        "reasoning hint and exit",
+        "rotation"
+      ],
+      "mobile-small en actions": [
+        "tap dig",
+        "flag mode tap",
+        "long-press number inspection",
+        "hold-drag pan",
+        "pinch zoom",
+        "centre button",
+        "controls drawer",
+        "slices drawer",
+        "mission drawer",
+        "reasoning hint and exit",
+        "rotation"
+      ]
+    }
+  },
+  "multiplayer-two-client": {
+    "checks": [
+      {
+        "name": "creating a squad puts the room code in the page URL",
+        "pass": true,
+        "detail": "?room=C5XWCH"
+      },
+      {
+        "name": "the invite link fills in the room code",
+        "pass": true,
+        "detail": "C5XWCH"
+      },
+      {
+        "name": "both clients list the same two members",
+        "pass": true,
+        "detail": {
+          "host": [
+            "● Release Host 👑",
+            "● Release Guest"
+          ],
+          "guest": [
+            "● Release Host 👑",
+            "● Release Guest"
+          ]
+        }
+      },
+      {
+        "name": "a chat line reaches the other client",
+        "pass": true
+      },
+      {
+        "name": "the host dig shows on both clients",
+        "pass": true,
+        "detail": {
+          "revision": 4,
+          "revealed": 16,
+          "flags": 0,
+          "phase": "playing"
+        }
+      },
+      {
+        "name": "the guest flag shows on both clients",
+        "pass": true,
+        "detail": {
+          "revision": 5,
+          "revealed": 16,
+          "flags": 1,
+          "phase": "playing"
+        }
+      },
+      {
+        "name": "the guest dig shows on both clients",
+        "pass": true,
+        "detail": {
+          "beforeGuestDig": {
+            "revision": 5,
+            "revealed": 16,
+            "flags": 1,
+            "phase": "playing"
+          },
+          "board": {
+            "revision": 6,
+            "revealed": 17,
+            "flags": 1,
+            "phase": "playing"
+          }
+        }
+      },
+      {
+        "name": "the host flag shows on both clients",
+        "pass": true,
+        "detail": {
+          "revision": 7,
+          "revealed": 17,
+          "flags": 2,
+          "phase": "playing"
+        }
+      },
+      {
+        "name": "each client describes the same activity in its own language",
+        "pass": true,
+        "detail": {
+          "host": "-- 已接入视差测绘小队频道 --\n[系统] Release Guest 接入了零域网络\nRelease Host: v4.1.2 release sync\n[系统] Release Host 挖开了空间方块\n[系统] Release Guest 切换了空间标记\n[系统] Release Guest 挖开了空间方块\n[系统] Release Host 切换了空间标记",
+          "guest": "-- Connected to the Parallax Survey Squad channel --\n[SYSTEM] Release Guest connected to the zero-domain network\nRelease Host: v4.1.2 release sync\n[SYSTEM] Release Host excavated a spatial cell\n[SYSTEM] Release Guest toggled a spatial marker\n[SYSTEM] Release Guest excavated a spatial cell\n[SYSTEM] Release Host toggled a spatial marker"
+        }
+      },
+      {
+        "name": "a reload rejoins the same squad without a duplicate or ghost member",
+        "pass": true,
+        "detail": {
+          "host": [
+            "● Release Host 👑",
+            "● Release Guest"
+          ],
+          "guest": [
+            "● Release Host 👑",
+            "● Release Guest"
+          ]
+        }
+      },
+      {
+        "name": "the reloaded client restores the shared board",
+        "pass": true,
+        "detail": {
+          "revision": 7,
+          "revealed": 17,
+          "flags": 2,
+          "phase": "playing"
+        }
+      },
+      {
+        "name": "when the host leaves, the remaining member becomes host",
+        "pass": true,
+        "detail": [
+          "● Release Guest 👑"
+        ]
+      },
+      {
+        "name": "leaving clears the room from the URL",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "the last member leaves cleanly",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "desktop host zh with mobile guest en: completed without an exception",
+        "pass": true
+      }
+    ],
+    "screenshots": [
+      "squad-lobby.jpg",
+      "squad-host.jpg",
+      "squad-guest.jpg"
+    ],
+    "notes": {
+      "room": {
+        "code": "C5XWCH",
+        "testedAt": "2026-10-01T16:47:12.200Z"
+      }
+    }
+  },
+  "failure-replay-recovery": {
+    "checks": [
+      {
+        "name": "desktop zh: a mine hit opens the failure dialog with a rewind action and focus inside",
+        "pass": true,
+        "detail": {
+          "phase": "revive",
+          "title": "任务演算失败",
+          "message": "陆霁已保存失败前的数据。点击回溯，重新演算当前任务。",
+          "rewind": "↺ 回溯",
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop zh: the mine hit loads the new blast sample",
+        "pass": true,
+        "detail": {
+          "url": "http://127.0.0.1:26615/audio/sfx/mine-hit-cartoon-pop.wav",
+          "status": 200,
+          "mimeType": "audio/wav",
+          "headers": {
+            "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+            "content-security-policy": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; frame-src 'none'; form-action 'self'; script-src 'self' 'unsafe-inline'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' ws: wss:; worker-src 'self' blob:; manifest-src 'self'",
+            "Cache-Control": "public, max-age=0, must-revalidate",
+            "CF-Cache-Status": "HIT",
+            "ETag": "\"f2de9c0ddbde2770d1da1a45c4ba4aa3\"",
+            "referrer-policy": "no-referrer",
+            "x-content-type-options": "nosniff",
+            "permissions-policy": "camera=(), geolocation=(), microphone=(), payment=(), usb=()",
+            "Content-Length": "63550",
+            "Content-Type": "audio/wav",
+            "x-frame-options": "DENY"
+          },
+          "type": "Fetch"
+        }
+      },
+      {
+        "name": "desktop zh: Tab stays inside the failure dialog",
+        "pass": true,
+        "detail": {
+          "steps": 14,
+          "escapes": []
+        }
+      },
+      {
+        "name": "desktop zh: rewinding returns to the board just before the mine",
+        "pass": true,
+        "detail": {
+          "before": {
+            "phase": "playing",
+            "revealed": 88,
+            "flags": 0,
+            "revision": 3,
+            "save": "85c1dad5-84cf-464a-87be-bbf962bbc9e4"
+          },
+          "rewound": {
+            "phase": "playing",
+            "revealed": 88,
+            "flags": 0,
+            "revision": 5,
+            "save": "85c1dad5-84cf-464a-87be-bbf962bbc9e4"
+          },
+          "beforeProgress": "77%",
+          "rewoundProgress": "77%"
+        }
+      },
+      {
+        "name": "desktop zh: the next task starts clean, with no leftover dialog, hint, or replay",
+        "pass": true,
+        "detail": {
+          "phase": "ready",
+          "revealed": 0,
+          "modal": false,
+          "adModal": false,
+          "hint": false,
+          "replay": false
+        }
+      },
+      {
+        "name": "desktop-wide zh solo loss: completed without an exception",
+        "pass": true
+      },
+      {
+        "name": "desktop-wide en: the win dialogue offers the success replay and is fully in view",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 0,
+          "steps": 1,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // LIVE COMMS",
+          "title": "FREE MODE CLEARED",
+          "message": "“Nice. The entire matrix is clear—that was a clean run.”",
+          "art": "assets/guide-zero-domain-cartographer.png",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "desktop-wide en: the paused replay HUD is in view, usable, and locks board input",
+        "pass": true,
+        "detail": {
+          "paused": true,
+          "pressed": "true",
+          "locked": true,
+          "hudInView": true,
+          "pauseOnTop": true,
+          "exitOnTop": true,
+          "lobbyButtonShown": true,
+          "progress": "Step 1 / 4"
+        }
+      },
+      {
+        "name": "desktop-wide en: exiting the replay returns to the finished board and its dialogue",
+        "pass": true,
+        "detail": {
+          "dialogue": true,
+          "phase": "won",
+          "hud": false
+        }
+      },
+      {
+        "name": "desktop-wide en: Keep Exploring opens one fresh board with nothing left over",
+        "pass": true,
+        "detail": {
+          "revealed": 0,
+          "dialogue": false,
+          "replay": false,
+          "modal": false
+        }
+      },
+      {
+        "name": "desktop-wide en win and replay: completed without an exception",
+        "pass": true
+      },
+      {
+        "name": "mobile-standard zh: the win dialogue offers the success replay and is fully in view",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 0,
+          "steps": 1,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // 实时通讯",
+          "title": "自由模式通关",
+          "message": "“漂亮。整个矩阵都清空了——这局赢得很干净。”",
+          "art": "assets/guide-zero-domain-cartographer.png",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "mobile-standard zh: the paused replay HUD is in view, usable, and locks board input",
+        "pass": true,
+        "detail": {
+          "paused": true,
+          "pressed": "true",
+          "locked": true,
+          "hudInView": true,
+          "pauseOnTop": true,
+          "exitOnTop": true,
+          "lobbyButtonShown": false,
+          "progress": "步骤 0 / 4"
+        }
+      },
+      {
+        "name": "mobile-standard zh: the lobby button stays hidden behind the replay HUD",
+        "pass": true,
+        "detail": {
+          "paused": true,
+          "pressed": "true",
+          "locked": true,
+          "hudInView": true,
+          "pauseOnTop": true,
+          "exitOnTop": true,
+          "lobbyButtonShown": false,
+          "progress": "步骤 0 / 4"
+        }
+      },
+      {
+        "name": "mobile-standard zh: exiting the replay returns to the finished board and its dialogue",
+        "pass": true,
+        "detail": {
+          "dialogue": true,
+          "phase": "won",
+          "hud": false
+        }
+      },
+      {
+        "name": "mobile-standard zh: Keep Exploring opens one fresh board with nothing left over",
+        "pass": true,
+        "detail": {
+          "revealed": 0,
+          "dialogue": false,
+          "replay": false,
+          "modal": false
+        }
+      },
+      {
+        "name": "mobile-standard zh win and replay: completed without an exception",
+        "pass": true
+      },
+      {
+        "name": "mobile-small en: the win dialogue offers the success replay and is fully in view",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 0,
+          "steps": 1,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // LIVE COMMS",
+          "title": "FREE MODE CLEARED",
+          "message": "“Nice. The entire matrix is clear—that was a clean run.”",
+          "art": "assets/guide-zero-domain-cartographer.png",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "mobile-small en: the paused replay HUD is in view, usable, and locks board input",
+        "pass": true,
+        "detail": {
+          "paused": true,
+          "pressed": "true",
+          "locked": true,
+          "hudInView": true,
+          "pauseOnTop": true,
+          "exitOnTop": true,
+          "lobbyButtonShown": false,
+          "progress": "Step 1 / 4"
+        }
+      },
+      {
+        "name": "mobile-small en: the lobby button stays hidden behind the replay HUD",
+        "pass": true,
+        "detail": {
+          "paused": true,
+          "pressed": "true",
+          "locked": true,
+          "hudInView": true,
+          "pauseOnTop": true,
+          "exitOnTop": true,
+          "lobbyButtonShown": false,
+          "progress": "Step 1 / 4"
+        }
+      },
+      {
+        "name": "mobile-small en: exiting the replay returns to the finished board and its dialogue",
+        "pass": true,
+        "detail": {
+          "dialogue": true,
+          "phase": "won",
+          "hud": false
+        }
+      },
+      {
+        "name": "mobile-small en: Keep Exploring opens one fresh board with nothing left over",
+        "pass": true,
+        "detail": {
+          "revealed": 0,
+          "dialogue": false,
+          "replay": false,
+          "modal": false
+        }
+      },
+      {
+        "name": "mobile-small en win and replay: completed without an exception",
+        "pass": true
+      }
+    ],
+    "screenshots": [
+      "failure-desktop-wide-loss.jpg",
+      "failure-desktop-wide-rewound.jpg",
+      "failure-desktop-wide-new-task.jpg",
+      "replay-desktop-wide-won.jpg",
+      "replay-desktop-wide-paused.jpg",
+      "replay-desktop-wide-fresh.jpg",
+      "replay-mobile-standard-won.jpg",
+      "replay-mobile-standard-paused.jpg",
+      "replay-mobile-standard-fresh.jpg",
+      "replay-mobile-small-won.jpg",
+      "replay-mobile-small-paused.jpg",
+      "replay-mobile-small-fresh.jpg"
+    ],
+    "notes": {
+      "loss trigger": "real click on a visible mine"
+    }
+  },
+  "accessibility-keyboard": {
+    "checks": [
+      {
+        "name": "lobby: Tab and Shift+Tab stay inside the lobby dialog",
+        "pass": true,
+        "detail": {
+          "steps": 32,
+          "escapes": []
+        }
+      },
+      {
+        "name": "lobby: every focused control is visible, named, and shows a focus ring",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "lobby: Enter on the language button switches the language both ways",
+        "pass": true
+      },
+      {
+        "name": "settings: opens from the keyboard with focus inside, Escape closes it and returns focus",
+        "pass": true,
+        "detail": {
+          "settingsFocus": true,
+          "settingsReturn": "btn-control-settings-lobby"
+        }
+      },
+      {
+        "name": "dialogue: starting a mission with Enter moves focus into the guide dialogue",
+        "pass": true,
+        "detail": {
+          "open": true,
+          "index": 0,
+          "steps": 3,
+          "explicit": false,
+          "waitingAction": null,
+          "kicker": "MISSION GUIDE // LIVE COMMS",
+          "title": "Lu Ji",
+          "message": "“I’m joining your mission channel. Don’t just read the manual—perform every action once before we enter a live zero-domain route.”",
+          "art": "assets/guide-zero-domain-cartographer.png",
+          "artLoaded": true,
+          "role": "dialog",
+          "ariaModal": "true",
+          "labelledBy": "tutorial-title",
+          "dialogInView": true,
+          "nextInView": true,
+          "nextOnTop": true,
+          "messageOnTop": true,
+          "textClipped": false,
+          "horizontalOverflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "name": "dialogue: Enter reads through the dialogue and focus does not stay on the closed dialogue",
+        "pass": true,
+        "detail": {
+          "presses": 3,
+          "closed": true,
+          "focusInHidden": false
+        }
+      },
+      {
+        "name": "in game: Tab reaches Return to Lobby through visible, named controls",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "in game: Enter on Return to Lobby reopens the lobby with focus inside",
+        "pass": true
+      },
+      {
+        "name": "replay: Enter on Reinitialize Minefield during the replay leaves the board and the replay alone",
+        "pass": true,
+        "detail": {
+          "lockedBefore": {
+            "phase": "won",
+            "revision": 7
+          },
+          "lockedAfter": {
+            "phase": "won",
+            "revision": 7,
+            "replay": true
+          }
+        }
+      },
+      {
+        "name": "replay: Space pauses and Enter exits the replay from the keyboard",
+        "pass": true
+      },
+      {
+        "name": "accessibility tree: every exposed button has a name",
+        "pass": true,
+        "detail": {
+          "buttons": 2,
+          "unnamed": 0
+        }
+      },
+      {
+        "name": "every dialog is modal and labelled",
+        "pass": true,
+        "detail": [
+          {
+            "id": "modal-overlay",
+            "modal": "true",
+            "label": "ROUTE SIGNAL LOST"
+          },
+          {
+            "id": "ad-modal-overlay",
+            "modal": "true",
+            "label": "Revive with an Ad?"
+          },
+          {
+            "id": "lobby-overlay",
+            "modal": "true",
+            "label": "SELECT OPERATION MODE"
+          },
+          {
+            "id": "",
+            "modal": "true",
+            "label": "Key Bindings"
+          },
+          {
+            "id": "tutorial-overlay",
+            "modal": "true",
+            "label": "FREE MODE CLEARED"
+          }
+        ]
+      },
+      {
+        "name": "desktop-wide en keyboard only: completed without an exception",
+        "pass": true
+      }
+    ],
+    "screenshots": [
+      "keyboard-lobby-focus.jpg",
+      "keyboard-dialogue-focus.jpg",
+      "keyboard-replay-focus.jpg"
+    ],
+    "notes": {
+      "lobby tab order": [
+        "btn-random-nickname (Roll another nickname)",
+        "btn-task-campaign (Story Campaign)",
+        "btn-task-freeplay (Free Mode)",
+        "button.task-mission-option active (01 Beginner · Phantom Port 3×3×3 · Classic scan tutorial)",
+        "button.task-mission-option (02 Intermediate · Handshake Maze 5×5×5 · Isolated Sector Pur)",
+        "button.task-mission-option (03 Advanced · Final Protocol 7×7×7 · Auto-Purge + Entropy-Fi)",
+        "btn-start-task (Accept Mission)",
+        "btn-control-settings-lobby (⚙️ Key Bindings)",
+        "btn-language-toggle-lobby (中文)",
+        "btn-lobby-task (▰ Mission Mode Lu Ji guide · Solo story)",
+        "btn-lobby-multiplayer (⌘ Multiplayer Form squad · Map together)",
+        "input-nickname (Nickname (required):)",
+        "btn-random-nickname (Roll another nickname)",
+        "btn-task-campaign (Story Campaign)"
+      ],
+      "in-game tab order": [
+        "btn-language-toggle (中文)",
+        "btn-mode-dig (⛏️ Dig Mode)",
+        "btn-mode-flag (🚩 Flag Mode)",
+        "btn-restart (Reinitialize Minefield)",
+        "btn-control-settings (⚙️ Key Bindings)",
+        "btn-reset-camera (◎ Recenter View)",
+        "btn-sound-toggle (🔊 Sound: On)",
+        "btn-music-toggle (🎵 Music: On)",
+        "sound-volume (Sound Effects Volume)",
+        "music-volume (Music Volume)",
+        "slice-x-min (X axis first layer)",
+        "slice-x-max (X axis last layer)",
+        "slice-y-min (Y axis first layer)",
+        "slice-y-max (Y axis last layer)",
+        "slice-z-min (Z axis first layer)",
+        "slice-z-max (Z axis last layer)",
+        "btn-reset-slices (Show All)",
+        "guided-cell-pointer (SAFE · LEFT-CLICK HERE Evidence: protected first move)",
+        "body ()",
+        "btn-return-lobby (Back to Main Menu)"
+      ],
+      "keyboard path": [
+        "btn-task-freeplay",
+        "button.task-mission-option active",
+        "button.task-mission-option",
+        "button.task-mission-option",
+        "btn-start-task",
+        "btn-control-settings-lobby",
+        "btn-language-toggle-lobby",
+        "btn-lobby-task",
+        "btn-lobby-multiplayer",
+        "input-nickname",
+        "btn-random-nickname",
+        "btn-task-campaign",
+        "btn-task-freeplay",
+        "button.task-mission-option active",
+        "button.task-mission-option",
+        "button.task-mission-option",
+        "btn-start-task",
+        "btn-control-settings-lobby",
+        "btn-language-toggle-lobby",
+        "btn-lobby-task",
+        "btn-lobby-multiplayer",
+        "input-nickname",
+        "btn-random-nickname",
+        "btn-task-campaign",
+        "btn-task-freeplay",
+        "button.task-mission-option active",
+        "button.task-mission-option",
+        "button.task-mission-option",
+        "btn-start-task",
+        "btn-tutorial-next",
+        "btn-language-toggle-lobby",
+        "btn-lobby-task",
+        "btn-lobby-multiplayer",
+        "input-nickname",
+        "btn-random-nickname",
+        "btn-task-campaign",
+        "btn-task-freeplay",
+        "button.task-mission-option active",
+        "button.task-mission-option",
+        "button.task-mission-option",
+        "btn-start-task",
+        "btn-return-lobby",
+        "btn-language-toggle",
+        "btn-preset-easy",
+        "btn-preset-medium",
+        "btn-preset-hard",
+        "button.btn-ruleset feature-toggle active",
+        "button.btn-ruleset feature-toggle active",
+        "btn-auto-survey-start",
+        "btn-tutorial-next",
+        "btn-tutorial-replay",
+        "btn-language-toggle",
+        "btn-preset-easy",
+        "btn-preset-medium",
+        "btn-preset-hard",
+        "button.btn-ruleset feature-toggle active",
+        "button.btn-ruleset feature-toggle active",
+        "btn-mode-dig",
+        "btn-mode-flag",
+        "btn-restart",
+        "btn-control-settings",
+        "btn-reset-camera",
+        "btn-sound-toggle",
+        "btn-music-toggle",
+        "sound-volume",
+        "music-volume",
+        "slice-x-min",
+        "slice-x-max",
+        "slice-y-min",
+        "slice-y-max",
+        "slice-z-min",
+        "slice-z-max",
+        "btn-reset-slices",
+        "btn-replay-pause",
+        "btn-replay-exit",
+        "body",
+        "btn-return-lobby",
+        "btn-language-toggle",
+        "btn-preset-easy",
+        "btn-preset-medium",
+        "btn-preset-hard",
+        "button.btn-ruleset feature-toggle active",
+        "button.btn-ruleset feature-toggle active",
+        "btn-mode-dig",
+        "btn-mode-flag",
+        "btn-restart",
+        "btn-control-settings",
+        "btn-reset-camera",
+        "btn-sound-toggle",
+        "btn-music-toggle",
+        "sound-volume",
+        "music-volume",
+        "slice-x-min",
+        "slice-x-max",
+        "slice-y-min",
+        "slice-y-max",
+        "slice-z-min",
+        "slice-z-max",
+        "btn-reset-slices",
+        "btn-replay-pause",
+        "btn-replay-exit"
+      ],
+      "accessibility tree buttons": [
+        "▶ Successful Replay",
+        "Keep Exploring"
+      ]
+    }
+  }
+}

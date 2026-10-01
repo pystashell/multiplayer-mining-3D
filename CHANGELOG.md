@@ -1,5 +1,89 @@
 # Changelog
 
+## [4.1.2] - 2026-10-02
+
+This release also ships the 4.1.1 changes below, which were not released on
+their own.
+
+### Security
+
+- Wrangler is upgraded from 4.110.0 to 4.145.0, which clears the four
+  high-severity advisories `npm audit` reported in its local-development
+  chain (miniflare, sharp, undici). The deployed Worker code is unchanged.
+
+### Fixed
+
+- Resetting the view right after rotating the board lands exactly on the
+  default view. The reset used to add the drag's remaining eased motion on
+  top of the new view, which could leave the camera far from it.
+- The site now has a tab icon (an SVG with a 16/32/48-pixel ICO fallback),
+  so browsers no longer log a 404 for `/favicon.ico` on every visit.
+- On phones, the lobby's English "ZERO DOMAIN // SURVEY TERMINAL" label no
+  longer runs under the settings button in the top-right corner.
+- On desktop windows narrower than about 1300 px, the slice bar's range
+  labels no longer run into the next axis or under Show All. Between 1121
+  and 1365 px the three axes now take their own row below the title, and
+  between 901 and 1120 px they stack, with the Sector Purge banner moved
+  below the taller bar.
+- The volume labels no longer break mid-word ("音效音 / 量") or take three
+  lines ("Sound Effects Volume"): each label now sits on its own line above a
+  full-width slider.
+- On phones the status bar keeps the flag count on one line (it showed
+  "2 /" over "3" in English), the Chinese label breaks only at its slash, and
+  a three-digit count still fits its cell on 360 px screens.
+- From 901 to 1000 px the slice bar narrows to fit between the side panels
+  instead of running over them, and in squads it also clears the wider chat
+  panel; from 1121 to 1365 px the squad chat panel starts below the taller
+  bar.
+- On desktops the bottom hint bar and the reasoning panel stay between the
+  side panels from 1080 px up (at 1280 px they covered the edge of the left
+  panel); narrower windows keep a 360 px minimum.
+- These layout problems were found in the v4.1.2 UI review. A browser test
+  now checks the lobby label and the phone status bar at both phone sizes,
+  and the slice bar, hint bar, and volume labels from 901 to 1920 px, in
+  Chinese and English, for solo and squad layouts.
+
+### Changed
+
+- Mine hits play a new short cartoon-style blast
+  (`audio/sfx/mine-hit-cartoon-pop.wav`, 0.72 s), chosen by ear from a set
+  of candidates. The previous sample held a flat low drone for about a
+  quarter of a second after its click, which sounded odd. It still plays
+  through the SFX volume and mute controls.
+- Three.js is upgraded from 0.150.0 (r150) to 0.186.1 (r186) with the look
+  kept as it was. Newer releases changed several rendering defaults, so the
+  game now sets them explicitly: colour management off, linear canvas
+  output, the r150 light scale (×π) for the scene lights, and the r150
+  transmission buffer and alpha for the glass cubes. The frame clock moves
+  from the deprecated `THREE.Clock` to `THREE.Timer`.
+- Since r171 the Three.js module build is split into `three.module.js` and
+  `three.core.js`, and both are now vendored. The first visit downloads
+  about 417 KB of gzipped Three.js instead of 239 KB; the files stay
+  immutably cached afterwards.
+- WebGL 2 is now required: Three.js removed its WebGL 1 fallback in r163.
+  Current desktop and mobile browsers all support WebGL 2 (Safari since 15).
+- The bundled Inter, Orbitron, and Share Tech Mono fonts move to
+  @fontsource 5.3.0. The font files and licenses are byte-identical to the
+  5.2 releases; only their versioned asset paths change.
+
+### Verification
+
+- Browser regression tests run the real page in headless Chrome or Edge with
+  software WebGL. They check the board build, mouse and touch picking against
+  a per-cube raster oracle, hover, slicing, the camera controls, the success
+  replay, asset and font loading, and console warnings.
+- Render fingerprints of six fixed board scenes, recorded from the r150
+  build, confirm the upgraded renderer reproduces the same colours, lighting,
+  and glass.
+- Worker tests now also run under `wrangler dev --local` (real workerd):
+  static asset headers, Durable Object alarms, WebSocket sync and close codes,
+  presence, and a two-browser squad revive.
+- The coverage report includes code executed in the browser tests. Runtime
+  coverage rises from 50% to 82% of executable lines, and `public/app.js`
+  from 0% to 65%.
+- The page exposes a test hook, defined only by the browser tests, for
+  inspecting the running game. Players see no change.
+
 ## [4.1.1] - Unreleased
 
 ### Security

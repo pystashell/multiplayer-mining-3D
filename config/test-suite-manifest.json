@@ -42,6 +42,12 @@
       "automationLevelZh": "资源完整性与映射自动化",
       "failureActionZh": "检查配置映射、文件存在性、尺寸/格式、缓存版本和运行时引用。素材替换应改配置或资源，不应把当前角色文件名写死进测试。",
       "validityReviewZh": "允许更换具体素材，但完整覆盖、可加载、版本化和配置驱动这些契约必须保留。"
+    },
+    "runtime-integration": {
+      "labelZh": "真实浏览器与 Workers 运行时集成",
+      "automationLevelZh": "行为级自动化：无头 Chrome（SwiftShader WebGL）与 wrangler dev（workerd）",
+      "failureActionZh": "先按失败信息复现玩家可见的行为（页面状态、控制台、wrangler 输出）。依赖升级引起的失败要修兼容性或配置，不能放宽容差、删除断言或重录基线；只有经过人工 UI 验收的有意视觉变化，才可以运行 npm run test:render-baseline 重新录制画面指纹。本机没有 Chrome 或 Edge 时，把 HOLO_SWEEPER_BROWSER 指向可执行文件。",
+      "validityReviewZh": "这些测试以玩家看到和操作到的结果为准，内部重构不应使其失效；只有交互方式、画面设计或联机协议被正式改变时，才评审更新断言或基线。"
     }
   },
   "suites": {
@@ -56,6 +62,30 @@
     "auto-survey-ui.test.js": {
       "category": "ui-source-contract",
       "purposeZh": "验证自动测绘入口、HUD、移动端锁定、协议命令和任务进度的 UI 源码契约。"
+    },
+    "browser-board.test.js": {
+      "category": "runtime-integration",
+      "purposeZh": "在真实 Chrome（WebGL）中验证棋盘构建，用光栅真值校验鼠标与触屏拾取（含穿透数字、多个视角和切片），以及悬停高亮、相机旋转缩放和重置，防止 Three.js 升级改变交互。"
+    },
+    "browser-boot.test.js": {
+      "category": "runtime-integration",
+      "purposeZh": "在生产 CSP 下启动真实页面，确认 vendored Three.js 与全部字体按正确类型加载、运行版本与清单一致、控制台没有错误或弃用警告，并锁定字体字宽。"
+    },
+    "browser-layout.test.js": {
+      "category": "runtime-integration",
+      "purposeZh": "以中英文在发布验收尺寸下排版真实页面：手机大厅顶部协议标签不被右上角设置与语言按钮遮挡、页面不横向滚动；单人棋盘中 901–1920 像素桌面宽度下切片栏内部互不重叠且（单人与多人布局都）不压到两侧面板，底部提示栏留在两侧面板之间，音量标签不拆行；手机状态栏的标记数不换行、标签只在空格处换行、内容不出格。"
+    },
+    "browser-multiplayer.test.js": {
+      "category": "runtime-integration",
+      "purposeZh": "两个隔离的浏览器通过 wrangler dev 组成小队，验证邀请链接、加入即显示在线、共享复活倒计时同时锁定双方，以及闹钟结束后双方恢复操作。"
+    },
+    "browser-render.test.js": {
+      "category": "runtime-integration",
+      "purposeZh": "用固定时钟渲染六个确定性棋盘场景（含终局雷区与点光源），与录制的画面指纹比对，捕捉颜色管理、光照单位和材质着色的变化，并证明比对能发现这种量级的偏移。"
+    },
+    "browser-replay.test.js": {
+      "category": "runtime-integration",
+      "purposeZh": "在真实浏览器中打赢一局自由模式并驱动成功回放：逐步重建、锁定普通输入、暂停和继续不跳步、退出后恢复终局，继续探索只开启一局新棋盘。"
     },
     "camera-gestures.test.js": {
       "category": "client-runtime",
@@ -201,6 +231,10 @@
       "category": "release-security",
       "purposeZh": "验证 HTML、API、静态资源、异常响应和 WebSocket 的安全头与缓存策略。"
     },
+    "site-icon.test.js": {
+      "category": "media-assets",
+      "purposeZh": "确认页面声明了网站图标（SVG 与 16/32/48 像素 ICO 备用），两个文件格式完整，浏览器不再在每次访问时请求到 /favicon.ico 404。"
+    },
     "solver-explanation.test.js": {
       "category": "ui-source-contract",
       "purposeZh": "验证求解证据以可读、可滚动的逐条证明呈现，而不是不可解释的文本块。"
@@ -216,6 +250,10 @@
     "success-replay-ui.test.js": {
       "category": "ui-source-contract",
       "purposeZh": "验证成功回放入口、HUD、暂停退出、动画路径、多人/单人路由、移动端和双语文案。"
+    },
+    "three-api-contract.test.js": {
+      "category": "release-security",
+      "purposeZh": "列出浏览器代码使用的全部 THREE 导出与鼠标、触屏枚举，确认 vendored Three.js 仍然提供它们，升级时直接给出缺失的名称。"
     },
     "tutorial-triggers.test.js": {
       "category": "solver-reasoning",
@@ -236,6 +274,10 @@
     "worker-routes.test.js": {
       "category": "release-security",
       "purposeZh": "验证 Worker 建房、加入和 WebSocket 路由的昵称规范化、令牌哈希、来源校验、请求体上限、限流与错误码映射。"
+    },
+    "worker-runtime.test.js": {
+      "category": "runtime-integration",
+      "purposeZh": "在 wrangler dev（workerd）真实运行时中验证静态资源与安全响应头、来源和体积限制、WebSocket 同步与在线状态、会话恢复与替换、协议关闭码和闹钟驱动的复活。"
     }
   },
   "gates": [

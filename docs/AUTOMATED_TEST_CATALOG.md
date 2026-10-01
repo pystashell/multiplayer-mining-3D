@@ -5,7 +5,7 @@
 
 ## 如何使用
 
-当前登记 **48 个测试套件、424 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
+当前登记 **57 个测试套件、455 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
 
 - “测试内容”直接取自可执行用例名称，因此目录不会与代码分叉。
 - 每个套件都明确说明失败处理和测试何时可能需要评审。
@@ -82,6 +82,93 @@
 | [L121](../tests/auto-survey-ui.test.js#L121) | `locks competing mobile controls and keeps a 44px abort target at the top safe area` |
 | [L133](../tests/auto-survey-ui.test.js#L133) | `localizes the automated-survey surface without touching internal protocol keys` |
 | [L156](../tests/auto-survey-ui.test.js#L156) | `keeps the successful replay entry and lifecycle available after auto-solving` |
+
+### browser-board.test.js
+
+- 分类：真实浏览器与 Workers 运行时集成
+- 自动化层级：行为级自动化：无头 Chrome（SwiftShader WebGL）与 wrangler dev（workerd）
+- 套件目的：在真实 Chrome（WebGL）中验证棋盘构建，用光栅真值校验鼠标与触屏拾取（含穿透数字、多个视角和切片），以及悬停高亮、相机旋转缩放和重置，防止 Three.js 升级改变交互。
+- 任一用例失败：先按失败信息复现玩家可见的行为（页面状态、控制台、wrangler 输出）。依赖升级引起的失败要修兼容性或配置，不能放宽容差、删除断言或重录基线；只有经过人工 UI 验收的有意视觉变化，才可以运行 npm run test:render-baseline 重新录制画面指纹。本机没有 Chrome 或 Edge 时，把 HOLO_SWEEPER_BROWSER 指向可执行文件。
+- 有效性评审：这些测试以玩家看到和操作到的结果为准，内部重构不应使其失效；只有交互方式、画面设计或联机协议被正式改变时，才评审更新断言或基线。
+
+| 源码 | 测试内容 |
+| --- | --- |
+| [L95](../tests/browser-board.test.js#L95) | `builds the free-mode matrix as one cube and one edge outline per cell, framed by the default camera` |
+| [L138](../tests/browser-board.test.js#L138) | `a right click flags exactly the cube drawn under the pointer from front, side, and underside views` |
+| [L170](../tests/browser-board.test.js#L170) | `a left click digs the cube drawn under the pointer, passing through revealed number sprites` |
+| [L221](../tests/browser-board.test.js#L221) | `hovering highlights the cube under the pointer and leaving the board restores it` |
+| [L244](../tests/browser-board.test.js#L244) | `slicing hides cubes outside the range and clicks reach the layer it uncovers` |
+| [L286](../tests/browser-board.test.js#L286) | `right-dragging orbits the camera, the wheel zooms within limits, and reset restores the default view` |
+| [L331](../tests/browser-board.test.js#L331) | `resetting the view while the camera still eases after a drag lands exactly on the default view` |
+| [L347](../tests/browser-board.test.js#L347) | `on a touch phone a tap digs the tapped cube once the double-tap window closes` |
+
+### browser-boot.test.js
+
+- 分类：真实浏览器与 Workers 运行时集成
+- 自动化层级：行为级自动化：无头 Chrome（SwiftShader WebGL）与 wrangler dev（workerd）
+- 套件目的：在生产 CSP 下启动真实页面，确认 vendored Three.js 与全部字体按正确类型加载、运行版本与清单一致、控制台没有错误或弃用警告，并锁定字体字宽。
+- 任一用例失败：先按失败信息复现玩家可见的行为（页面状态、控制台、wrangler 输出）。依赖升级引起的失败要修兼容性或配置，不能放宽容差、删除断言或重录基线；只有经过人工 UI 验收的有意视觉变化，才可以运行 npm run test:render-baseline 重新录制画面指纹。本机没有 Chrome 或 Edge 时，把 HOLO_SWEEPER_BROWSER 指向可执行文件。
+- 有效性评审：这些测试以玩家看到和操作到的结果为准，内部重构不应使其失效；只有交互方式、画面设计或联机协议被正式改变时，才评审更新断言或基线。
+
+| 源码 | 测试内容 |
+| --- | --- |
+| [L72](../tests/browser-boot.test.js#L72) | `serves the page with the production Content Security Policy and logs no errors or warnings` |
+| [L82](../tests/browser-boot.test.js#L82) | `loads the vendored Three.js modules and every font face with the right content types` |
+| [L97](../tests/browser-boot.test.js#L97) | `runs the vendored Three.js revision on a WebGL2 context with the game settings` |
+| [L155](../tests/browser-boot.test.js#L155) | `loads every bundled font face and keeps its recorded text metrics` |
+
+### browser-layout.test.js
+
+- 分类：真实浏览器与 Workers 运行时集成
+- 自动化层级：行为级自动化：无头 Chrome（SwiftShader WebGL）与 wrangler dev（workerd）
+- 套件目的：以中英文在发布验收尺寸下排版真实页面：手机大厅顶部协议标签不被右上角设置与语言按钮遮挡、页面不横向滚动；单人棋盘中 901–1920 像素桌面宽度下切片栏内部互不重叠且（单人与多人布局都）不压到两侧面板，底部提示栏留在两侧面板之间，音量标签不拆行；手机状态栏的标记数不换行、标签只在空格处换行、内容不出格。
+- 任一用例失败：先按失败信息复现玩家可见的行为（页面状态、控制台、wrangler 输出）。依赖升级引起的失败要修兼容性或配置，不能放宽容差、删除断言或重录基线；只有经过人工 UI 验收的有意视觉变化，才可以运行 npm run test:render-baseline 重新录制画面指纹。本机没有 Chrome 或 Edge 时，把 HOLO_SWEEPER_BROWSER 指向可执行文件。
+- 有效性评审：这些测试以玩家看到和操作到的结果为准，内部重构不应使其失效；只有交互方式、画面设计或联机协议被正式改变时，才评审更新断言或基线。
+
+| 源码 | 测试内容 |
+| --- | --- |
+| [L205](../tests/browser-layout.test.js#L205) | `keeps the lobby's protocol label clear of the corner buttons on ${profile} in ${language}` |
+| [L223](../tests/browser-layout.test.js#L223) | `keeps the slice bar, hint stack, side panels, and volume labels apart at desktop widths in ${language}` |
+| [L263](../tests/browser-layout.test.js#L263) | `keeps phone status-bar counts and volume labels whole in ${language}` |
+
+### browser-multiplayer.test.js
+
+- 分类：真实浏览器与 Workers 运行时集成
+- 自动化层级：行为级自动化：无头 Chrome（SwiftShader WebGL）与 wrangler dev（workerd）
+- 套件目的：两个隔离的浏览器通过 wrangler dev 组成小队，验证邀请链接、加入即显示在线、共享复活倒计时同时锁定双方，以及闹钟结束后双方恢复操作。
+- 任一用例失败：先按失败信息复现玩家可见的行为（页面状态、控制台、wrangler 输出）。依赖升级引起的失败要修兼容性或配置，不能放宽容差、删除断言或重录基线；只有经过人工 UI 验收的有意视觉变化，才可以运行 npm run test:render-baseline 重新录制画面指纹。本机没有 Chrome 或 Edge 时，把 HOLO_SWEEPER_BROWSER 指向可执行文件。
+- 有效性评审：这些测试以玩家看到和操作到的结果为准，内部重构不应使其失效；只有交互方式、画面设计或联机协议被正式改变时，才评审更新断言或基线。
+
+| 源码 | 测试内容 |
+| --- | --- |
+| [L56](../tests/browser-multiplayer.test.js#L56) | `two browsers share a squad: the joiner is online at once and one revive countdown locks both until the alarm ends it` |
+
+### browser-render.test.js
+
+- 分类：真实浏览器与 Workers 运行时集成
+- 自动化层级：行为级自动化：无头 Chrome（SwiftShader WebGL）与 wrangler dev（workerd）
+- 套件目的：用固定时钟渲染六个确定性棋盘场景（含终局雷区与点光源），与录制的画面指纹比对，捕捉颜色管理、光照单位和材质着色的变化，并证明比对能发现这种量级的偏移。
+- 任一用例失败：先按失败信息复现玩家可见的行为（页面状态、控制台、wrangler 输出）。依赖升级引起的失败要修兼容性或配置，不能放宽容差、删除断言或重录基线；只有经过人工 UI 验收的有意视觉变化，才可以运行 npm run test:render-baseline 重新录制画面指纹。本机没有 Chrome 或 Edge 时，把 HOLO_SWEEPER_BROWSER 指向可执行文件。
+- 有效性评审：这些测试以玩家看到和操作到的结果为准，内部重构不应使其失效；只有交互方式、画面设计或联机协议被正式改变时，才评审更新断言或基线。
+
+| 源码 | 测试内容 |
+| --- | --- |
+| [L55](../tests/browser-render.test.js#L55) | `the recorded baseline covers every render scene with the board drawn` |
+| [L67](../tests/browser-render.test.js#L67) | `the ${name} scene renders like the recorded baseline` |
+| [L77](../tests/browser-render.test.js#L77) | `rendering the scenes logs no errors and loads every requested file` |
+| [L81](../tests/browser-render.test.js#L81) | `the comparison notices a lighting change the size of the Three.js light-unit switch` |
+
+### browser-replay.test.js
+
+- 分类：真实浏览器与 Workers 运行时集成
+- 自动化层级：行为级自动化：无头 Chrome（SwiftShader WebGL）与 wrangler dev（workerd）
+- 套件目的：在真实浏览器中打赢一局自由模式并驱动成功回放：逐步重建、锁定普通输入、暂停和继续不跳步、退出后恢复终局，继续探索只开启一局新棋盘。
+- 任一用例失败：先按失败信息复现玩家可见的行为（页面状态、控制台、wrangler 输出）。依赖升级引起的失败要修兼容性或配置，不能放宽容差、删除断言或重录基线；只有经过人工 UI 验收的有意视觉变化，才可以运行 npm run test:render-baseline 重新录制画面指纹。本机没有 Chrome 或 Edge 时，把 HOLO_SWEEPER_BROWSER 指向可执行文件。
+- 有效性评审：这些测试以玩家看到和操作到的结果为准，内部重构不应使其失效；只有交互方式、画面设计或联机协议被正式改变时，才评审更新断言或基线。
+
+| 源码 | 测试内容 |
+| --- | --- |
+| [L60](../tests/browser-replay.test.js#L60) | `a free-mode win replays step by step, pauses and resumes in place, and returns to the finished board` |
 
 ### camera-gestures.test.js
 
@@ -796,6 +883,20 @@
 | [L150](../tests/security-headers.test.js#L150) | `HTTP rejections on the WebSocket path still receive security headers` |
 | [L162](../tests/security-headers.test.js#L162) | `thrown HTTP errors are also covered by the security baseline` |
 
+### site-icon.test.js
+
+- 分类：美术、字体、音频与静态资源
+- 自动化层级：资源完整性与映射自动化
+- 套件目的：确认页面声明了网站图标（SVG 与 16/32/48 像素 ICO 备用），两个文件格式完整，浏览器不再在每次访问时请求到 /favicon.ico 404。
+- 任一用例失败：检查配置映射、文件存在性、尺寸/格式、缓存版本和运行时引用。素材替换应改配置或资源，不应把当前角色文件名写死进测试。
+- 有效性评审：允许更换具体素材，但完整覆盖、可加载、版本化和配置驱动这些契约必须保留。
+
+| 源码 | 测试内容 |
+| --- | --- |
+| [L11](../tests/site-icon.test.js#L11) | `the page declares an SVG icon with a 32-pixel ICO fallback` |
+| [L16](../tests/site-icon.test.js#L16) | `the SVG icon is a self-contained square vector image` |
+| [L23](../tests/site-icon.test.js#L23) | `the ICO bundles 16, 32, and 48 pixel PNG images that match their entries` |
+
 ### solver-explanation.test.js
 
 - 分类：UI 结构与源码契约
@@ -885,6 +986,19 @@
 | [L285](../tests/success-replay-ui.test.js#L285) | `keeps the replay controls compact on phones and removes competing mobile chrome during playback` |
 | [L301](../tests/success-replay-ui.test.js#L301) | `localizes replay entry, progress, pause, resume, exit, and completion copy in both languages` |
 
+### three-api-contract.test.js
+
+- 分类：版本、供应链、安全与发布门禁
+- 自动化层级：交付链自动化
+- 套件目的：列出浏览器代码使用的全部 THREE 导出与鼠标、触屏枚举，确认 vendored Three.js 仍然提供它们，升级时直接给出缺失的名称。
+- 任一用例失败：停止发布，定位版本漂移、依赖漂移、安全头、工作流顺序或部署门禁缺失。不得跳过失败步骤；修复后从完整测试重新开始。
+- 有效性评审：仅在正式更换发布平台、版本规则、安全基线或依赖管理方式时评审更新，并保留同等或更强的门禁。
+
+| 源码 | 测试内容 |
+| --- | --- |
+| [L30](../tests/three-api-contract.test.js#L30) | `the vendored Three.js build exports every class, constant, and enum the game uses` |
+| [L46](../tests/three-api-contract.test.js#L46) | `the vendored OrbitControls module exports the camera controller the game constructs` |
+
 ### tutorial-triggers.test.js
 
 - 分类：求解器、推理证据与教程判定
@@ -952,10 +1066,10 @@
 
 | 源码 | 测试内容 |
 | --- | --- |
-| [L31](../tests/vendor-assets.test.js#L31) | `the application has no runtime Google Fonts or jsDelivr dependency` |
-| [L39](../tests/vendor-assets.test.js#L39) | `vendored OrbitControls resolves the local pinned Three.js module` |
-| [L44](../tests/vendor-assets.test.js#L44) | `only the selected local WOFF2 weights are declared` |
-| [L58](../tests/vendor-assets.test.js#L58) | `vendored runtime files and upstream licenses are present` |
+| [L32](../tests/vendor-assets.test.js#L32) | `the application has no runtime Google Fonts or jsDelivr dependency` |
+| [L40](../tests/vendor-assets.test.js#L40) | `vendored OrbitControls resolves the local pinned Three.js module` |
+| [L45](../tests/vendor-assets.test.js#L45) | `only the selected local WOFF2 weights are declared` |
+| [L59](../tests/vendor-assets.test.js#L59) | `vendored runtime files and upstream licenses are present` |
 
 ### worker-routes.test.js
 
@@ -977,3 +1091,19 @@
 | [L185](../tests/worker-routes.test.js#L185) | `rate limits room creation, joins, and sockets per hashed client address and scope` |
 | [L221](../tests/worker-routes.test.js#L221) | `routes only well-formed room codes and returns JSON 404 for unknown API paths` |
 | [L243](../tests/worker-routes.test.js#L243) | `converts unexpected Worker failures into a generic 500 response` |
+
+### worker-runtime.test.js
+
+- 分类：真实浏览器与 Workers 运行时集成
+- 自动化层级：行为级自动化：无头 Chrome（SwiftShader WebGL）与 wrangler dev（workerd）
+- 套件目的：在 wrangler dev（workerd）真实运行时中验证静态资源与安全响应头、来源和体积限制、WebSocket 同步与在线状态、会话恢复与替换、协议关闭码和闹钟驱动的复活。
+- 任一用例失败：先按失败信息复现玩家可见的行为（页面状态、控制台、wrangler 输出）。依赖升级引起的失败要修兼容性或配置，不能放宽容差、删除断言或重录基线；只有经过人工 UI 验收的有意视觉变化，才可以运行 npm run test:render-baseline 重新录制画面指纹。本机没有 Chrome 或 Edge 时，把 HOLO_SWEEPER_BROWSER 指向可执行文件。
+- 有效性评审：这些测试以玩家看到和操作到的结果为准，内部重构不应使其失效；只有交互方式、画面设计或联机协议被正式改变时，才评审更新断言或基线。
+
+| 源码 | 测试内容 |
+| --- | --- |
+| [L117](../tests/worker-runtime.test.js#L117) | `serves the game and its vendored files through Workers Static Assets with the production headers` |
+| [L153](../tests/worker-runtime.test.js#L153) | `refuses cross-origin and oversized room requests before any room is created` |
+| [L162](../tests/worker-runtime.test.js#L162) | `two players stay in sync over hibernatable WebSockets, see each other online, and resume sessions` |
+| [L209](../tests/worker-runtime.test.js#L209) | `protocol violations close the socket with the documented close codes` |
+| [L230](../tests/worker-runtime.test.js#L230) | `a watched ad revives the squad when the Durable Object alarm fires ten seconds later` |

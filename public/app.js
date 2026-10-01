@@ -1,12 +1,12 @@
-import * as THREE from './vendor/three-0.150.0/build/three.module.js';
-import { OrbitControls } from './vendor/three-0.150.0/examples/jsm/controls/OrbitControls.js';
-import { HybridRoomClient } from './local-room-client.js?v=4.1.1';
-import { initialLanguage, randomNickname, translateForInput } from './i18n.js?v=4.1.1';
+import * as THREE from './vendor/three-0.186.1/build/three.module.js';
+import { OrbitControls } from './vendor/three-0.186.1/examples/jsm/controls/OrbitControls.js';
+import { HybridRoomClient } from './local-room-client.js?v=4.1.2';
+import { initialLanguage, randomNickname, translateForInput } from './i18n.js?v=4.1.2';
 import { GUIDE_ART } from './guide-character.js';
 import {
   detectInitialInputMode,
   inputModeFromPointerType,
-} from './input-mode.js?v=4.1.1';
+} from './input-mode.js?v=4.1.2';
 import {
   interruptedGesturePatch,
   recenterCameraKeepingOffset,
@@ -14,14 +14,14 @@ import {
   shouldStartMousePan,
   shouldStartTouchPan,
   touchHoldDecision,
-} from './camera-gestures.js?v=4.1.1';
+} from './camera-gestures.js?v=4.1.2';
 import { solveMinesweeperHint } from './minesweeper-solver.js';
 import {
   chordOpportunityAt,
   findChordOpportunity,
   findNewChordOpportunity,
   isNewSuccessfulChord,
-} from './tutorial-triggers.js?v=4.1.1';
+} from './tutorial-triggers.js?v=4.1.2';
 import { chooseFloatingAxisPlacement, chooseGuidedCalloutPlacement } from './guided-callout.js';
 import {
   BOARD_ANIMATION_TIMING,
@@ -49,7 +49,7 @@ import {
   settingsWithCenterMode,
   validateControlSettings,
   wheelActionForEvent,
-} from './control-settings.js?v=4.1.1';
+} from './control-settings.js?v=4.1.2';
 import {
   SciFiMusicDirector,
   getSharedAudioContext,
@@ -59,9 +59,38 @@ import {
   persistSfxEnabled,
   persistSfxVolume,
   resumeSharedAudioContext,
-} from './soundtrack.js?v=4.1.1';
-import { MineHitSound } from './mine-hit-sound.js?v=4.1.1';
-import { installModalFocusManager } from './modal-focus.js?v=4.1.1';
+} from './soundtrack.js?v=4.1.2';
+import { MineHitSound } from './mine-hit-sound.js?v=4.1.2';
+import { installModalFocusManager } from './modal-focus.js?v=4.1.2';
+
+// The scene's colours and light levels were tuned under Three.js r150, whose
+// defaults newer releases changed: hex colours and canvas textures were used
+// as given (no colour management, so textures keep the default colour space),
+// the canvas received linear output, and "legacy" light units were π times
+// brighter than today's physical units. Keeping those settings preserves the
+// tuned look; tests/browser-render.test.js checks it.
+THREE.ColorManagement.enabled = false;
+const LEGACY_LIGHT_SCALE = Math.PI;
+
+// Glass (transmission) changed too. Newer releases clear the buffer that glass
+// samples to half-transparent white whenever the canvas is transparent, and
+// scale glass alpha by the glass colour. The cubes were tuned against r150's
+// transparent-black buffer, so keep that clear colour for the transmission
+// pass, and convert each glass opacity so it keeps its r150 alpha over empty
+// space (r150 output opacity × (1 − transmission + 0.1)).
+function keepLegacyTransmissionBuffer(renderer) {
+  const setClearColor = renderer.setClearColor.bind(renderer);
+  renderer.setClearColor = (color, alpha) => (
+    renderer.getRenderTarget() !== null && color === 0xffffff && alpha === 0.5
+      ? setClearColor(0x000000, 0)
+      : setClearColor(color, alpha)
+  );
+}
+
+function legacyGlassOpacity(opacity, transmission, color) {
+  const transmittance = (color.r + color.g + color.b) / 3;
+  return (opacity * (1.1 - transmission)) / (1 - transmission * transmittance);
+}
 
 const TASK_MISSIONS = Object.freeze({
   easy: Object.freeze({ width: 3, height: 3, depth: 3, mineCount: 3, ruleset: 'classic', autoPurge: false, reduction: false, campaign: true }),
@@ -528,7 +557,7 @@ class HoloSweeperGame {
     this.hoveredNumberCell = null;
     
     // 初始化三维时钟
-    this.clock = new THREE.Clock();
+    this.clock = new THREE.Timer();
     
     // UI 绑定
     this.bindUI();
@@ -2520,7 +2549,6 @@ class HoloSweeperGame {
       context.fillText(String(label), 96, 29);
     }
     const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
     const marker = new THREE.Sprite(new THREE.SpriteMaterial({
       map: texture,
       color: 0xffffff,
@@ -2584,7 +2612,6 @@ class HoloSweeperGame {
     context.fillText(label, 64, 37);
 
     const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
       map: texture,
       transparent: true,
@@ -4375,6 +4402,8 @@ class HoloSweeperGame {
     
     // 创建渲染器
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+    keepLegacyTransmissionBuffer(this.renderer);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
@@ -4400,14 +4429,14 @@ class HoloSweeperGame {
     this.particles = new ParticleSystem(this.scene);
 
     // 光源设置
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.35);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.35 * LEGACY_LIGHT_SCALE);
     this.scene.add(ambientLight);
 
-    const dirLight1 = new THREE.DirectionalLight(0x29e7ff, 0.7);
+    const dirLight1 = new THREE.DirectionalLight(0x29e7ff, 0.7 * LEGACY_LIGHT_SCALE);
     dirLight1.position.set(10, 20, 15);
     this.scene.add(dirLight1);
 
-    const dirLight2 = new THREE.DirectionalLight(0xff4fd8, 0.42);
+    const dirLight2 = new THREE.DirectionalLight(0xff4fd8, 0.42 * LEGACY_LIGHT_SCALE);
     dirLight2.position.set(-15, -10, -10);
     this.scene.add(dirLight2);
 
@@ -4468,20 +4497,22 @@ class HoloSweeperGame {
     this.geometries.automatedFlag = automatedFlagGroup;
 
     // 初始化重用材质
+    const unrevealedGlass = new THREE.Color(0x6d5dfc);
     this.materials.cellUnrevealed = new THREE.MeshPhysicalMaterial({
-      color: 0x6d5dfc,
+      color: unrevealedGlass,
       transparent: true,
-      opacity: 0.15,
+      opacity: legacyGlassOpacity(0.15, 0.6, unrevealedGlass),
       roughness: 0.2,
       transmission: 0.6,
       thickness: 0.5,
       clearcoat: 0.8
     });
-    
+
+    const hoveredGlass = new THREE.Color(0x29e7ff);
     this.materials.cellHovered = new THREE.MeshPhysicalMaterial({
-      color: 0x29e7ff,
+      color: hoveredGlass,
       transparent: true,
-      opacity: 0.45,
+      opacity: legacyGlassOpacity(0.45, 0.4, hoveredGlass),
       roughness: 0.1,
       transmission: 0.4,
       thickness: 0.8,
@@ -5507,7 +5538,6 @@ class HoloSweeperGame {
       context.stroke();
     }
     const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
     const marker = new THREE.Sprite(new THREE.SpriteMaterial({
       map: texture,
       transparent: true,
@@ -5901,6 +5931,11 @@ class HoloSweeperGame {
             cell.mineInstance = mineMesh;
             
             // 踩雷方块添加强烈的霓虹红色点光源
+            // Point-light falloff also changed shape after r150 (legacy: linear to
+            // the cutoff distance; now inverse-square). At the neighbouring cubes,
+            // 0.6–1 unit away where the glow shows, the unscaled physical light
+            // already matches the old brightness, so it keeps its original
+            // intensity instead of LEGACY_LIGHT_SCALE.
             if (x === explosionX && y === explosionY && z === explosionZ) {
               const bombLight = new THREE.PointLight(0xff3366, 2.5, 3);
               cell.group.add(bombLight);
@@ -6176,8 +6211,24 @@ class HoloSweeperGame {
   // -------------------------------------------------------------
   // 12. 摄像机控制
   // -------------------------------------------------------------
+  // OrbitControls keeps easing the camera for a moment after a drag (damping).
+  // An update with damping off applies and clears that pending motion, so run
+  // one and put the camera back: the motion stops where it is instead of being
+  // added on top of the view placed next.
+  stopCameraEasing() {
+    const position = this.camera.position.clone();
+    const target = this.controls.target.clone();
+    const dampingEnabled = this.controls.enableDamping;
+    this.controls.enableDamping = false;
+    this.controls.update();
+    this.controls.enableDamping = dampingEnabled;
+    this.camera.position.copy(position);
+    this.controls.target.copy(target);
+  }
+
   centerCameraTarget() {
     if (!this.camera || !this.controls) return;
+    this.stopCameraEasing();
     const offset = this.camera.position.clone().sub(this.controls.target);
     const recentered = recenterCameraKeepingOffset(this.camera.position, this.controls.target);
     offset.set(
@@ -6203,6 +6254,7 @@ class HoloSweeperGame {
     // 设置斜向下看 45 度的初始透视视角
     this.endMousePan();
     this.endTouchPan({ force: true });
+    this.stopCameraEasing();
     const dampingEnabled = this.controls.enableDamping;
     this.controls.enableDamping = false;
     this.camera.position.set(distance, distance * 0.9, distance);
@@ -6227,7 +6279,7 @@ class HoloSweeperGame {
   animate() {
     requestAnimationFrame(() => this.animate());
 
-    const delta = Math.min(0.1, this.clock.getDelta()); // 限制 delta 避免后台切换突然跳帧
+    const delta = Math.min(0.1, this.clock.update().getDelta()); // 限制 delta 避免后台切换突然跳帧
     
     // 更新粒子效果
     if (this.particles) {
@@ -6302,5 +6354,8 @@ class HoloSweeperGame {
 
 // 启动游戏实例
 window.addEventListener('DOMContentLoaded', () => {
-  new HoloSweeperGame();
+  const game = new HoloSweeperGame();
+  // Browser regression tests install this hook before any page script runs so
+  // they can inspect the live game; the shipped page never defines it.
+  window.__holoSweeperTestHook?.(game);
 });

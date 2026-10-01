@@ -7,7 +7,7 @@
   font-style: normal;
   font-display: swap;
   font-weight: 800;
-  src: url('./vendor/fonts/orbitron-5.2.8/orbitron-latin-800-normal.woff2') format('woff2');
+  src: url('./vendor/fonts/orbitron-5.3.0/orbitron-latin-800-normal.woff2') format('woff2');
 }
 
 @font-face {
@@ -15,7 +15,7 @@
   font-style: normal;
   font-display: swap;
   font-weight: 900;
-  src: url('./vendor/fonts/orbitron-5.2.8/orbitron-latin-900-normal.woff2') format('woff2');
+  src: url('./vendor/fonts/orbitron-5.3.0/orbitron-latin-900-normal.woff2') format('woff2');
 }
 
 @font-face {
@@ -23,7 +23,7 @@
   font-style: normal;
   font-display: swap;
   font-weight: 400;
-  src: url('./vendor/fonts/share-tech-mono-5.2.7/share-tech-mono-latin-400-normal.woff2') format('woff2');
+  src: url('./vendor/fonts/share-tech-mono-5.3.0/share-tech-mono-latin-400-normal.woff2') format('woff2');
 }
 
 @font-face {
@@ -31,7 +31,7 @@
   font-style: normal;
   font-display: swap;
   font-weight: 400;
-  src: url('./vendor/fonts/inter-5.2.8/inter-latin-400-normal.woff2') format('woff2');
+  src: url('./vendor/fonts/inter-5.3.0/inter-latin-400-normal.woff2') format('woff2');
 }
 
 @font-face {
@@ -39,7 +39,7 @@
   font-style: normal;
   font-display: swap;
   font-weight: 600;
-  src: url('./vendor/fonts/inter-5.2.8/inter-latin-600-normal.woff2') format('woff2');
+  src: url('./vendor/fonts/inter-5.3.0/inter-latin-600-normal.woff2') format('woff2');
 }
 
 @font-face {
@@ -47,7 +47,7 @@
   font-style: normal;
   font-display: swap;
   font-weight: 700;
-  src: url('./vendor/fonts/inter-5.2.8/inter-latin-700-normal.woff2') format('woff2');
+  src: url('./vendor/fonts/inter-5.3.0/inter-latin-700-normal.woff2') format('woff2');
 }
 
 @font-face {
@@ -55,7 +55,7 @@
   font-style: normal;
   font-display: swap;
   font-weight: 800;
-  src: url('./vendor/fonts/inter-5.2.8/inter-latin-800-normal.woff2') format('woff2');
+  src: url('./vendor/fonts/inter-5.3.0/inter-latin-800-normal.woff2') format('woff2');
 }
 
 /* -------------------------------------------------------------
@@ -854,14 +854,19 @@ body[data-game-mode="task"][data-task-flow="campaign"] .settings-section { displ
   border-radius: 10px;
   background: linear-gradient(110deg, rgba(109,93,252,.075), rgba(41,231,255,.025));
 }
+/* 标签独占一行、滑块占满下一行，中英文标签都不再被窄列拆字换行 */
 .audio-volume-row {
   display: grid;
-  grid-template-columns: 62px minmax(72px, 1fr) 34px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "label value" "slider slider";
   align-items: center;
-  gap: 8px;
+  gap: 2px 8px;
   color: #cfd8f8;
-  font: 700 8px/1.2 var(--font-ui);
+  font: 600 12px/1.3 var(--font-sans);
 }
+.audio-volume-row > span { grid-area: label; }
+.audio-volume-row > input { grid-area: slider; }
+.audio-volume-row > output { grid-area: value; }
 .audio-volume-row output {
   color: var(--neon-cyan);
   font: 700 8px var(--font-mono);
@@ -1617,7 +1622,8 @@ body[data-story-art="squad"] .tutorial-portrait img { object-position: 48% 29%; 
   z-index: 175;
   left: 50%;
   bottom: 22px;
-  width: min(720px, calc(100vw - 32px));
+  /* 留在左右面板之间（左侧 340px、右侧 320px），窄桌面最少保留 360px */
+  width: min(720px, max(360px, calc(100vw - 720px)));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2146,7 +2152,7 @@ body.replay-active #slicing-panel {
 .slice-axis-row {
   min-width:0;
   display:grid;
-  grid-template-columns:14px minmax(28px, 1fr) 7px minmax(28px, 1fr) 31px;
+  grid-template-columns:14px minmax(28px, 1fr) 7px minmax(28px, 1fr) 24px;
   align-items:center;
   gap:3px;
   padding:4px 5px;
@@ -2181,9 +2187,26 @@ body.replay-active #slicing-panel {
 }
 .slice-reset-button:hover { border-color:var(--neon-magenta); background:rgba(255,79,216,.18); }
 .slice-close-button { width:32px; padding:0; font:19px/1 var(--font-mono); }
+/* 两侧面板之间放不下 300px 时收窄切片栏，避免压到左右面板 */
 @media (min-width: 901px) and (max-width: 1120px) {
-  .slicing-panel { grid-template-columns:1fr; width:300px; }
+  .slicing-panel { grid-template-columns:1fr; width:min(300px, calc(100vw - 700px)); }
+  /* 多人模式右侧面板宽 340px，再收窄 40px 才不压到它的左上角 */
+  body[data-game-mode="multiplayer"] .slicing-panel { width:min(300px, calc(100vw - 740px)); }
   .slice-panel-header > div { flex-direction:row; align-items:center; gap:8px; }
+  .slice-axis-list { grid-template-columns:1fr; }
+  .sector-purge-banner { top:212px; }
+}
+/* 三个坐标轴放不进标题与按钮之间时，单独占一行，避免数值标签压到相邻轴 */
+@media (min-width: 1121px) and (max-width: 1365px) {
+  .slicing-panel { grid-template-columns:minmax(0, 1fr) auto; row-gap:6px; }
+  .slice-axis-list { grid-column:1 / -1; grid-row:2; }
+  .sector-purge-banner { top:116px; }
+  /* 两行切片栏更高，多人模式的右侧面板从它下方开始 */
+  body[data-game-mode="multiplayer"] #social-panel {
+    margin-top:96px;
+    height:calc(100vh - 136px);
+    max-height:calc(100vh - 136px);
+  }
 }
 
 .mobile-only { display: none; }
@@ -2375,8 +2398,8 @@ body.replay-active #slicing-panel {
   }
 
   .mobile-statusbar > div:last-child { border-right: 0; }
-  .mobile-statusbar span { color: var(--text-muted); font: 7px var(--font-mono); letter-spacing: 1px; }
-  .mobile-statusbar strong { color: #fff; font: 12px var(--font-mono); text-shadow: 0 0 8px var(--neon-cyan); }
+  .mobile-statusbar span { color: var(--text-muted); font: 7px var(--font-mono); letter-spacing: 1px; word-break: keep-all; }
+  .mobile-statusbar strong { color: #fff; font: 12px var(--font-mono); text-shadow: 0 0 8px var(--neon-cyan); white-space: nowrap; }
 
   .mobile-panel-backdrop {
     position: fixed;
@@ -2498,6 +2521,8 @@ body.replay-active #slicing-panel {
     height: clamp(44px, 7.6dvh, 50px);
     font-size: clamp(28px, 4.7dvh, 31px);
   }
+  /* 为右上角的设置与语言按钮留出位置，避免较长的协议标签被遮挡 */
+  .lobby-protocol { padding-right: 84px; }
   .lobby-title { padding: 0 34px; font-size: 18px; }
   .lobby-subtitle { font-size: 11px; }
   .lobby-mode-card { min-height: 58px; padding: 8px; }
@@ -2726,4 +2751,10 @@ body.replay-active #slicing-panel {
   .control-binding-grid select,.control-key-capture { min-height:44px; font-size:10px; }
   .control-settings-footer { padding:10px 12px calc(10px + env(safe-area-inset-bottom)); }
   .control-settings-footer button { min-height:44px; padding:9px 11px; }
+}
+
+/* 小屏手机状态栏：三位数的“已标记 / 剩余”也保持在本格内 */
+@media (max-width: 380px) {
+  .mobile-statusbar > div { gap: 4px; }
+  .mobile-statusbar strong { font-size: 11px; }
 }
