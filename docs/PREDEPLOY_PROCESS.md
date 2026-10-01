@@ -25,7 +25,8 @@ npm test
 WebGL 固定走 SwiftShader 软件渲染，所以开发机和 CI 得到相同的像素。它们覆盖
 Three.js 相关的实际行为：棋盘构建、鼠标与触屏拾取（用逐方块着色的光栅结果作为
 真值，不依赖被测的射线检测）、悬停、切片、相机、成功回放、字体和资源加载、控制台
-警告，以及六个固定场景的画面指纹。`tests/worker-runtime.test.js` 和
+警告、六个固定场景的画面指纹，以及发布验收发现过重叠的界面排版（手机大厅顶部标签、
+桌面各宽度下的切片栏）。`tests/worker-runtime.test.js` 和
 `tests/browser-multiplayer.test.js` 通过 `wrangler dev --local` 启动真实 workerd，
 覆盖 Durable Object 闹钟、WebSocket 同步与关闭码、在线状态和静态资源响应头。
 

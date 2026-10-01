@@ -71,6 +71,10 @@
       "category": "runtime-integration",
       "purposeZh": "在生产 CSP 下启动真实页面，确认 vendored Three.js 与全部字体按正确类型加载、运行版本与清单一致、控制台没有错误或弃用警告，并锁定字体字宽。"
     },
+    "browser-layout.test.js": {
+      "category": "runtime-integration",
+      "purposeZh": "以中英文在发布验收尺寸下排版真实页面：两种手机尺寸的大厅顶部协议标签不被右上角设置与语言按钮遮挡、页面不横向滚动；1024–1920 像素桌面宽度下切片栏的标题、坐标轴、滑块、范围数值和“显示全部”互不重叠且不超出切片栏。"
+    },
     "browser-multiplayer.test.js": {
       "category": "runtime-integration",
       "purposeZh": "两个隔离的浏览器通过 wrangler dev 组成小队，验证邀请链接、加入即显示在线、共享复活倒计时同时锁定双方，以及闹钟结束后双方恢复操作。"

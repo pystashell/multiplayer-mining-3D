@@ -15,6 +15,16 @@
   top of the new view, which could leave the camera far from it.
 - The site now has a tab icon (an SVG with a 16/32/48-pixel ICO fallback),
   so browsers no longer log a 404 for `/favicon.ico` on every visit.
+- On phones, the lobby's English "ZERO DOMAIN // SURVEY TERMINAL" label no
+  longer runs under the settings button in the top-right corner.
+- On desktop windows narrower than about 1300 px, the slice bar's range
+  labels no longer run into the next axis or under Show All. Between 1121
+  and 1365 px the three axes now take their own row below the title, and
+  between 901 and 1120 px they stack, with the Sector Purge banner moved
+  below the taller bar.
+- Both layout problems were found in the v4.1.2 UI review. A browser test
+  now checks the lobby label at both phone sizes and the slice bar from 1024
+  to 1920 px, in Chinese and English.
 
 ### Changed
 

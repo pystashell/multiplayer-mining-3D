@@ -44,7 +44,7 @@ npm run deploy:dry
 
 `npm test` 中的测试是配置驱动的通用契约，不依赖当前角色姓名或素材文件名。
 其中一部分在真实运行时里执行：无头 Chrome（用 SwiftShader 软件渲染 WebGL，
-任何机器上像素一致）驱动真实页面检查棋盘拾取、相机、回放、画面颜色和双人联机，
+任何机器上像素一致）驱动真实页面检查棋盘拾取、相机、回放、画面颜色、关键界面排版和双人联机，
 `wrangler dev --local` 启动真实 workerd 检查 Durable Object、闹钟、WebSocket 和
 静态资源响应头。因此本机需要安装 Chrome、Chromium 或 Edge；安装在非常规位置时，
 把 `HOLO_SWEEPER_BROWSER` 设为浏览器可执行文件路径。这些重型测试一次只运行一个，

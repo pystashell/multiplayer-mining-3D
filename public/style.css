@@ -2146,7 +2146,7 @@ body.replay-active #slicing-panel {
 .slice-axis-row {
   min-width:0;
   display:grid;
-  grid-template-columns:14px minmax(28px, 1fr) 7px minmax(28px, 1fr) 31px;
+  grid-template-columns:14px minmax(28px, 1fr) 7px minmax(28px, 1fr) 24px;
   align-items:center;
   gap:3px;
   padding:4px 5px;
@@ -2184,6 +2184,14 @@ body.replay-active #slicing-panel {
 @media (min-width: 901px) and (max-width: 1120px) {
   .slicing-panel { grid-template-columns:1fr; width:300px; }
   .slice-panel-header > div { flex-direction:row; align-items:center; gap:8px; }
+  .slice-axis-list { grid-template-columns:1fr; }
+  .sector-purge-banner { top:212px; }
+}
+/* 三个坐标轴放不进标题与按钮之间时，单独占一行，避免数值标签压到相邻轴 */
+@media (min-width: 1121px) and (max-width: 1365px) {
+  .slicing-panel { grid-template-columns:minmax(0, 1fr) auto; row-gap:6px; }
+  .slice-axis-list { grid-column:1 / -1; grid-row:2; }
+  .sector-purge-banner { top:116px; }
 }
 
 .mobile-only { display: none; }
@@ -2498,6 +2506,8 @@ body.replay-active #slicing-panel {
     height: clamp(44px, 7.6dvh, 50px);
     font-size: clamp(28px, 4.7dvh, 31px);
   }
+  /* 为右上角的设置与语言按钮留出位置，避免较长的协议标签被遮挡 */
+  .lobby-protocol { padding-right: 84px; }
   .lobby-title { padding: 0 34px; font-size: 18px; }
   .lobby-subtitle { font-size: 11px; }
   .lobby-mode-card { min-height: 58px; padding: 8px; }

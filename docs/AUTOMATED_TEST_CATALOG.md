@@ -5,7 +5,7 @@
 
 ## 如何使用
 
-当前登记 **56 个测试套件、452 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
+当前登记 **57 个测试套件、454 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
 
 - “测试内容”直接取自可执行用例名称，因此目录不会与代码分叉。
 - 每个套件都明确说明失败处理和测试何时可能需要评审。
@@ -116,6 +116,19 @@
 | [L82](../tests/browser-boot.test.js#L82) | `loads the vendored Three.js modules and every font face with the right content types` |
 | [L97](../tests/browser-boot.test.js#L97) | `runs the vendored Three.js revision on a WebGL2 context with the game settings` |
 | [L155](../tests/browser-boot.test.js#L155) | `loads every bundled font face and keeps its recorded text metrics` |
+
+### browser-layout.test.js
+
+- 分类：真实浏览器与 Workers 运行时集成
+- 自动化层级：行为级自动化：无头 Chrome（SwiftShader WebGL）与 wrangler dev（workerd）
+- 套件目的：以中英文在发布验收尺寸下排版真实页面：两种手机尺寸的大厅顶部协议标签不被右上角设置与语言按钮遮挡、页面不横向滚动；1024–1920 像素桌面宽度下切片栏的标题、坐标轴、滑块、范围数值和“显示全部”互不重叠且不超出切片栏。
+- 任一用例失败：先按失败信息复现玩家可见的行为（页面状态、控制台、wrangler 输出）。依赖升级引起的失败要修兼容性或配置，不能放宽容差、删除断言或重录基线；只有经过人工 UI 验收的有意视觉变化，才可以运行 npm run test:render-baseline 重新录制画面指纹。本机没有 Chrome 或 Edge 时，把 HOLO_SWEEPER_BROWSER 指向可执行文件。
+- 有效性评审：这些测试以玩家看到和操作到的结果为准，内部重构不应使其失效；只有交互方式、画面设计或联机协议被正式改变时，才评审更新断言或基线。
+
+| 源码 | 测试内容 |
+| --- | --- |
+| [L110](../tests/browser-layout.test.js#L110) | `keeps the lobby's protocol label clear of the corner buttons on ${profile} in ${language}` |
+| [L128](../tests/browser-layout.test.js#L128) | `keeps every slice-bar label and control apart and inside the bar at desktop widths in ${language}` |
 
 ### browser-multiplayer.test.js
 
