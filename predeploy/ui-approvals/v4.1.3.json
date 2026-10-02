@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "checklistVersion": "2026-09-23.1",
+  "releaseTag": "v4.1.3",
+  "status": "passed",
+  "uiDigest": "sha256:5d1dca7f24aa61bef32315bbff1e21a49de45e0931a791532dc89add50d9e5d3",
+  "reviewer": "Claude browser and screenshot review",
+  "reviewedAt": "2026-10-02T00:06:55.577Z",
+  "browsers": [
+    "Chrome 154.0.8037.59 on Windows 11 (headless, SwiftShader WebGL)"
+  ],
+  "results": [
+    {
+      "id": "desktop-lobby-bilingual",
+      "status": "passed",
+      "evidence": [
+        "predeploy/evidence/v4.1.3/README.md"
+      ]
+    },
+    {
+      "id": "story-guide-consistency",
+      "status": "passed",
+      "evidence": [
+        "predeploy/evidence/v4.1.3/README.md"
+      ]
+    },
+    {
+      "id": "desktop-dialogue-readability",
+      "status": "passed",
+      "evidence": [
+        "predeploy/evidence/v4.1.3/README.md"
+      ]
+    },
+    {
+      "id": "desktop-gameplay-controls",
+      "status": "passed",
+      "evidence": [
+        "predeploy/evidence/v4.1.3/README.md"
+      ]
+    },
+    {
+      "id": "mobile-lobby-dialogue",
+      "status": "passed",
+      "evidence": [
+        "predeploy/evidence/v4.1.3/README.md"
+      ]
+    },
+    {
+      "id": "mobile-gameplay-controls",
+      "status": "passed",
+      "evidence": [
+        "predeploy/evidence/v4.1.3/README.md"
+      ]
+    },
+    {
+      "id": "multiplayer-two-client",
+      "status": "passed",
+      "evidence": [
+        "predeploy/evidence/v4.1.3/README.md"
+      ]
+    },
+    {
+      "id": "failure-replay-recovery",
+      "status": "passed",
+      "evidence": [
+        "predeploy/evidence/v4.1.3/README.md"
+      ]
+    },
+    {
+      "id": "accessibility-keyboard",
+      "status": "passed",
+      "evidence": [
+        "predeploy/evidence/v4.1.3/README.md"
+      ]
+    },
+    {
+      "id": "console-network-clean",
+      "status": "passed",
+      "evidence": [
+        "predeploy/evidence/v4.1.3/README.md"
+      ]
+    }
+  ]
+}

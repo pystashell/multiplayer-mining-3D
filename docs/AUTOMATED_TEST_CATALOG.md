@@ -5,7 +5,7 @@
 
 ## 如何使用
 
-当前登记 **57 个测试套件、455 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
+当前登记 **58 个测试套件、459 个静态用例定义**。参数化用例会在运行时展开为多个实际结果。
 
 - “测试内容”直接取自可执行用例名称，因此目录不会与代码分叉。
 - 每个套件都明确说明失败处理和测试何时可能需要评审。
@@ -121,15 +121,17 @@
 
 - 分类：真实浏览器与 Workers 运行时集成
 - 自动化层级：行为级自动化：无头 Chrome（SwiftShader WebGL）与 wrangler dev（workerd）
-- 套件目的：以中英文在发布验收尺寸下排版真实页面：手机大厅顶部协议标签不被右上角设置与语言按钮遮挡、页面不横向滚动；单人棋盘中 901–1920 像素桌面宽度下切片栏内部互不重叠且（单人与多人布局都）不压到两侧面板，底部提示栏留在两侧面板之间，音量标签不拆行；手机状态栏的标记数不换行、标签只在空格处换行、内容不出格。
+- 套件目的：以中英文在发布验收尺寸下排版真实页面：手机大厅顶部协议标签不被右上角设置与语言按钮遮挡、页面不横向滚动；大厅右上角设置与语言按钮等高、齐平、间距固定；桌面对话框的“跳过”与“成功回放”在人物图下方左右留白相等、底边与“继续”对齐、文字一行；单人棋盘中 901–1920 像素桌面宽度下切片栏内部互不重叠且（单人与多人布局都）不压到两侧面板，底部提示栏留在两侧面板之间，音量标签不拆行；手机状态栏的标记数不换行、标签只在空格处换行、内容不出格。
 - 任一用例失败：先按失败信息复现玩家可见的行为（页面状态、控制台、wrangler 输出）。依赖升级引起的失败要修兼容性或配置，不能放宽容差、删除断言或重录基线；只有经过人工 UI 验收的有意视觉变化，才可以运行 npm run test:render-baseline 重新录制画面指纹。本机没有 Chrome 或 Edge 时，把 HOLO_SWEEPER_BROWSER 指向可执行文件。
 - 有效性评审：这些测试以玩家看到和操作到的结果为准，内部重构不应使其失效；只有交互方式、画面设计或联机协议被正式改变时，才评审更新断言或基线。
 
 | 源码 | 测试内容 |
 | --- | --- |
-| [L205](../tests/browser-layout.test.js#L205) | `keeps the lobby's protocol label clear of the corner buttons on ${profile} in ${language}` |
-| [L223](../tests/browser-layout.test.js#L223) | `keeps the slice bar, hint stack, side panels, and volume labels apart at desktop widths in ${language}` |
-| [L263](../tests/browser-layout.test.js#L263) | `keeps phone status-bar counts and volume labels whole in ${language}` |
+| [L256](../tests/browser-layout.test.js#L256) | `keeps the lobby's protocol label clear of the corner buttons on ${profile} in ${language}` |
+| [L274](../tests/browser-layout.test.js#L274) | `keeps the slice bar, hint stack, side panels, and volume labels apart at desktop widths in ${language}` |
+| [L314](../tests/browser-layout.test.js#L314) | `keeps phone status-bar counts and volume labels whole in ${language}` |
+| [L342](../tests/browser-layout.test.js#L342) | `keeps the lobby's settings and language buttons equally tall, level, and a fixed gap apart in ${language}` |
+| [L362](../tests/browser-layout.test.js#L362) | `puts the dialogue's Skip and Replay buttons under the portrait with equal margins, level with Continue, in ${language}` |
 
 ### browser-multiplayer.test.js
 
@@ -962,6 +964,19 @@
 | [L23](../tests/story-art.test.js#L23) | `ships a configured guide illustration for every story route` |
 | [L43](../tests/story-art.test.js#L43) | `uses mobile-sized master-derived art for each dialogue beat` |
 | [L57](../tests/story-art.test.js#L57) | `reuses the advanced chapter main art for every advanced dialogue` |
+
+### stylesheet-variables.test.js
+
+- 分类：UI 结构与源码契约
+- 自动化层级：源码级自动化，必须配合人工视觉验收
+- 套件目的：样式表读取的每个 CSS 变量都必须有定义（或带默认值），防止未定义变量让整条声明静默失效；引用 --font-ui 的字体声明一律用 1em，保持玩家一直看到的继承字号。
+- 任一用例失败：检查 DOM、CSS、可访问性属性和事件绑定是否丢失。通过源码测试不代表视觉正确，修复后仍必须执行发布前 UI 人工手册。
+- 有效性评审：大规模 UI 架构重构时可替换选择器或结构断言，但必须保留等价的用户行为保护，并由人工清单确认像素级结果。
+
+| 源码 | 测试内容 |
+| --- | --- |
+| [L12](../tests/stylesheet-variables.test.js#L12) | `every custom property the stylesheet reads is defined in it or has a fallback` |
+| [L23](../tests/stylesheet-variables.test.js#L23) | `interface text that uses --font-ui keeps the font size it inherits` |
 
 ### success-replay-ui.test.js
 

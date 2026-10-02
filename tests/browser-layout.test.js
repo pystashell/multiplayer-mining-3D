@@ -9,6 +9,11 @@
 // - the bottom hint stack ran over the side panels on 1280 px desktops;
 // - the volume labels broke mid-word in their narrow column, and the phone
 //   status bar broke the flag count ("2 /" over "3") and its Chinese label.
+// And spots the owner flagged after v4.1.2:
+// - the lobby's settings and language buttons differed in height, and the
+//   gap between them changed with the toggle's label ("EN" or "中文");
+// - the dialogue's Skip and Replay buttons spilled over the portrait with
+//   a wider margin on the left than on the right.
 // The board HUD is checked in a solo game, where it differs from the layout
 // behind the lobby. The squad layout differs only through the side-panel
 // rules keyed on body[data-game-mode], so it is checked by switching that
@@ -45,6 +50,17 @@ const DESKTOP_SIZES = Object.freeze([
 const HINT_STACK_FITS_FROM = 1080;
 // Flag counts from a fresh hard board up to the largest custom board.
 const FLAG_COUNTS = Object.freeze(['0 / 30', '10 / 30', '200 / 200']);
+const CORNER_SIZES = Object.freeze([
+  { width: 1440, height: 900 },
+  { width: 1280, height: 720 },
+  { width: 390, height: 844, mobile: true, touch: true },
+  { width: 360, height: 640, mobile: true, touch: true },
+]);
+const DIALOGUE_SIZES = Object.freeze([
+  { width: 1440, height: 900 },
+  { width: 1280, height: 720 },
+]);
+const NO_TRANSITIONS = '*, *::before, *::after { transition: none !important; animation: none !important; }';
 
 let browser;
 let server;
@@ -69,12 +85,47 @@ const overlaps = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bot
 async function openBoard(size, language, input = {}) {
   const page = await openGame(browser, server.url, { isolated: true, language, ...size, ...input });
   await startFreeplay(page, 'easy');
-  await page.evaluate(() => {
-    const style = document.createElement('style');
-    style.textContent = '*, *::before, *::after { transition: none !important; animation: none !important; }';
-    document.head.append(style);
-  });
+  await stopTransitions(page);
   return page;
+}
+
+function stopTransitions(page) {
+  return page.evaluate((css) => {
+    const style = document.createElement('style');
+    style.textContent = css;
+    document.head.append(style);
+  }, NO_TRANSITIONS);
+}
+
+// The lobby's two corner buttons as drawn, and the language toggle's label.
+function cornerButtons(page) {
+  return page.evaluate(async (ids) => {
+    await document.fonts.ready;
+    const [settings, language] = ids.map((id) => {
+      const { left, right, top, height } = document.getElementById(id).getBoundingClientRect();
+      return { left, right, top, height };
+    });
+    return { settings, language, label: document.getElementById(ids[1]).textContent.trim() };
+  }, CORNER_BUTTONS);
+}
+
+// A dialogue button in the slot under the portrait: its margins inside the
+// portrait, its bottom against Continue's, and how many lines its text takes.
+function portraitSlot(page, id) {
+  return page.evaluate((buttonId) => {
+    const button = document.getElementById(buttonId);
+    const box = button.getBoundingClientRect();
+    const portrait = document.querySelector('.tutorial-portrait').getBoundingClientRect();
+    const next = document.getElementById('btn-tutorial-next').getBoundingClientRect();
+    const range = document.createRange();
+    range.selectNodeContents(button);
+    return {
+      leftMargin: box.left - portrait.left,
+      rightMargin: portrait.right - box.right,
+      bottomGap: next.bottom - box.bottom,
+      lines: new Set([...range.getClientRects()].map((line) => Math.round(line.top))).size,
+    };
+  }, id);
 }
 
 // Boxes of the protocol label's rendered text (not its padding), the corner
@@ -279,6 +330,67 @@ for (const language of ['en', 'zh']) {
       for (const [profile, hud] of Object.entries(huds)) {
         for (const label of hud.volumeLabels) {
           assert.equal(label.lines, 1, `${profile}: "${label.text}" takes ${label.lines} lines`);
+        }
+      }
+    } finally {
+      await page.close();
+    }
+  });
+}
+
+for (const language of ['en', 'zh']) {
+  test(`keeps the lobby's settings and language buttons equally tall, level, and a fixed gap apart in ${language}`, { timeout: 240_000 }, async () => {
+    const page = await openGame(browser, server.url, { isolated: true, language, ...CORNER_SIZES[0] });
+    try {
+      const gaps = new Set();
+      for (const size of CORNER_SIZES) {
+        await page.setViewport(size);
+        const { settings, language: toggle, label } = await cornerButtons(page);
+        const at = `${size.width}px with "${label}"`;
+        assert.ok(Math.abs(settings.height - toggle.height) < 0.5, `${at}: heights ${settings.height} and ${toggle.height}`);
+        assert.ok(Math.abs(settings.top - toggle.top) < 0.5, `${at}: tops ${settings.top} and ${toggle.top}`);
+        const gap = toggle.left - settings.right;
+        assert.ok(gap >= 4 && gap <= 10, `${at}: the buttons are ${gap}px apart`);
+        gaps.add(Math.round(gap));
+      }
+      assert.equal(gaps.size, 1, `the gap changes with the viewport: ${[...gaps].join(', ')}px`);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test(`puts the dialogue's Skip and Replay buttons under the portrait with equal margins, level with Continue, in ${language}`, { timeout: 240_000 }, async () => {
+    const page = await openGame(browser, server.url, { isolated: true, language, ...DIALOGUE_SIZES[0] });
+    try {
+      await stopTransitions(page);
+      await page.click('#btn-lobby-task');
+      await page.click('#btn-task-campaign');
+      await page.click('#lobby-campaign-panel [data-mission="easy"]');
+      await page.click('#btn-start-task');
+      await page.waitFor(() => !document.getElementById('tutorial-overlay').classList.contains('hidden')
+        && getComputedStyle(document.getElementById('btn-skip-tutorial')).display !== 'none',
+      { timeoutMs: 30_000, message: 'the opening beginner dialogue with Skip' });
+      for (const size of DIALOGUE_SIZES) {
+        await page.setViewport(size);
+        // The opening beginner dialogue offers Skip; success dialogues offer
+        // Replay in the same slot, shown here by swapping the two buttons.
+        const slots = { Skip: await portraitSlot(page, 'btn-skip-tutorial') };
+        await page.evaluate(() => {
+          document.getElementById('btn-skip-tutorial').style.display = 'none';
+          document.getElementById('btn-tutorial-replay').classList.remove('hidden');
+        });
+        slots.Replay = await portraitSlot(page, 'btn-tutorial-replay');
+        await page.evaluate(() => {
+          document.getElementById('btn-tutorial-replay').classList.add('hidden');
+          document.getElementById('btn-skip-tutorial').style.display = '';
+        });
+        for (const [name, slot] of Object.entries(slots)) {
+          const at = `${size.width}px ${name}`;
+          assert.ok(Math.abs(slot.leftMargin - slot.rightMargin) < 0.5,
+            `${at}: ${slot.leftMargin}px from the portrait's left edge but ${slot.rightMargin}px from its right`);
+          assert.ok(slot.leftMargin >= 6 && slot.leftMargin <= 14, `${at}: ${slot.leftMargin}px margins`);
+          assert.ok(Math.abs(slot.bottomGap) < 0.5, `${at}: its bottom is ${slot.bottomGap}px off Continue's`);
+          assert.equal(slot.lines, 1, `${at}: the label wraps onto ${slot.lines} lines`);
         }
       }
     } finally {

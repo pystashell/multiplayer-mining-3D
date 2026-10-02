@@ -8,7 +8,7 @@
   <meta name="description" content="旋转零域矩阵，从不同视角验证数字证据并清除异常节点。">
   <link rel="icon" href="favicon.ico" sizes="32x32">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=4.1.2">
+  <link rel="stylesheet" href="style.css?v=4.1.3">
   <!-- 错误捕获脚本：如果发生任何 JS 运行错误，在页面顶部弹出红色提示栏 -->
   <script>
     window.addEventListener('error', function(e) {
@@ -386,8 +386,10 @@
     <div id="lobby-modal" class="game-modal glass guide-lobby" style="width: 420px; padding: 40px;">
       <div class="lobby-protocol" data-i18n="lobby.protocol">零域协议 // 测绘终端</div>
       <div class="modal-icon lobby-icon">⌁</div>
-      <button id="btn-control-settings-lobby" class="btn-secondary lobby-control-settings" type="button" aria-label="键位设置" title="键位设置" data-i18n-aria-label="controls.open" data-i18n-title="controls.openTitle">⚙</button>
-      <button id="btn-language-toggle-lobby" class="btn-secondary" style="position:absolute; top:16px; right:16px; padding:5px 9px; min-height:0; font-size:12px;" data-i18n="language.toggle">EN</button>
+      <div class="lobby-corner-controls">
+        <button id="btn-control-settings-lobby" class="btn-secondary lobby-control-settings" type="button" aria-label="键位设置" title="键位设置" data-i18n-aria-label="controls.open" data-i18n-title="controls.openTitle">⚙</button>
+        <button id="btn-language-toggle-lobby" class="btn-secondary" data-i18n="language.toggle">EN</button>
+      </div>
       <h2 id="lobby-title" class="modal-title lobby-title" data-i18n="lobby.title">零域：测绘协议</h2>
       <p class="modal-message lobby-subtitle" data-i18n="lobby.subtitle">选择任务模式接受导航员的个人引导，或进入多人联机模式组建测绘小队。</p>
 
@@ -673,6 +675,6 @@
     <span>▼</span>
   </button>
 
-  <script type="module" src="app.js?v=4.1.2"></script>
+  <script type="module" src="app.js?v=4.1.3"></script>
 </body>
 </html>
